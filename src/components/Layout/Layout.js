@@ -187,7 +187,7 @@ function Layout(props) {
             component={UsersFormPage}
           />
         </Switch>
-        <Fab
+        {/* <Fab
           color='primary'
           aria-label='settings'
           onClick={(e) => handleClick(e)}
@@ -195,7 +195,7 @@ function Layout(props) {
           style={{ zIndex: 100 }}
         >
           <SettingsIcon style={{ color: '#fff' }} />
-        </Fab>
+        </Fab> */}
         <ColorChangeThemePopper id={id} open={open} anchorEl={anchorEl} />
         <Footer>
           <div>

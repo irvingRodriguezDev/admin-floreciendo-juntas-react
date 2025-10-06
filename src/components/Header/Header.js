@@ -109,7 +109,7 @@ export default function Header(props) {
           )}
         </IconButton>
         <Typography variant='h6' weight='medium' className={classes.logotype}>
-          React Material Admin Full
+          Floreciendo Juntas
         </Typography>
         <div className={classes.grow} />
         <IconButton
@@ -135,7 +135,7 @@ export default function Header(props) {
           block
           style={{ display: 'flex', alignItems: 'center', marginLeft: 8 }}
         >
-          <div className={classes.profileLabel}>Hi,&nbsp;</div>
+          <div className={classes.profileLabel}>Hola Admin,&nbsp;</div>
           <Typography weight={'bold'} className={classes.profileLabel}>
             {currentUser?.firstName}
           </Typography>
@@ -170,7 +170,7 @@ export default function Header(props) {
           >
             <AccountIcon className={classes.profileMenuIcon} />
             <Link to='/app/user/edit' style={{ textDecoration: 'none' }}>
-              Profile
+              Perfil
             </Link>
           </MenuItem>
           <div className={classes.profileMenuUser}>
@@ -179,7 +179,7 @@ export default function Header(props) {
               color='primary'
               onClick={() => signOut(userDispatch, props.history)}
             >
-              Sign Out
+              Cerrar Sesión
             </Typography>
           </div>
         </Menu>

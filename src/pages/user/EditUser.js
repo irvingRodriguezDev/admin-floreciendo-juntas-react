@@ -170,12 +170,12 @@ const EditUser = () => {
                 classes={{ wrapper: classes.icon }}
               />
               <Tab
-                label='PROFILE'
+                label='PERFIL'
                 icon={<PersonOutlineIcon />}
                 classes={{ wrapper: classes.icon }}
               />
               <Tab
-                label='CHANGE PASSWORD'
+                label='CAMBIAR CONTRASEÑA'
                 icon={<LockIcon />}
                 classes={{ wrapper: classes.icon }}
               />
@@ -238,9 +238,9 @@ const EditUser = () => {
                     weight={'medium'}
                     style={{ marginBottom: 35 }}
                   >
-                    Personal Information
+                    Informacion Personal
                   </Typography>
-                  <Typography weight={'medium'}>Photo:</Typography>
+                  <Typography weight={'medium'}>Imagen:</Typography>
                   <div className={classes.galleryWrap}>
                     {data && data.avatar && data.avatar.length !== 0
                       ? data.avatar.map((avatar, idx) => (
@@ -262,7 +262,7 @@ const EditUser = () => {
                     className={classes.uploadLabel}
                     style={{ cursor: 'pointer' }}
                   >
-                    {'Upload an image'}
+                    {'Sube tu imagen'}
                     <input
                       style={{ display: 'none' }}
                       accept='image/*'
@@ -276,7 +276,7 @@ const EditUser = () => {
                     .PNG, .JPG, .JPEG
                   </Typography>
                   <TextField
-                    label='Name'
+                    label='Nombre'
                     variant='outlined'
                     defaultValue='Name'
                     value={data && data.firstName}
@@ -285,7 +285,7 @@ const EditUser = () => {
                     style={{ marginBottom: 35 }}
                   />
                   <TextField
-                    label='Last Name'
+                    label='Apellido'
                     variant='outlined'
                     defaultValue={'Last Name'}
                     value={data && data.lastName}
@@ -294,7 +294,7 @@ const EditUser = () => {
                     style={{ marginBottom: 35 }}
                   />
                   <TextField
-                    label='Phone'
+                    label='Telefono'
                     variant='outlined'
                     style={{ marginBottom: 35 }}
                     defaultValue={'1-555-666-7070'}
@@ -311,7 +311,7 @@ const EditUser = () => {
                     value={data && data.email}
                     name='email'
                     onChange={handleChange}
-                    disabled
+                    // disabled
                   />
                 </>
               ) : tab === 2 ? (
@@ -321,10 +321,10 @@ const EditUser = () => {
                     weight={'medium'}
                     style={{ marginBottom: 35 }}
                   >
-                    Password
+                    Constraseña
                   </Typography>
                   <TextField
-                    label='Current Password'
+                    label='Contraseña actual'
                     type='password'
                     variant='outlined'
                     style={{ marginBottom: 35 }}
@@ -334,7 +334,7 @@ const EditUser = () => {
                     onChange={handleChangePassword}
                   />
                   <TextField
-                    label='New Password'
+                    label='Nueva contraseña'
                     type='password'
                     variant='outlined'
                     style={{ marginBottom: 35 }}
@@ -344,7 +344,7 @@ const EditUser = () => {
                     onChange={handleChangePassword}
                   />
                   <TextField
-                    label='Confirm Password'
+                    label='Confirma tu contraseña'
                     type='password'
                     variant='outlined'
                     style={{ marginBottom: 35 }}
@@ -410,22 +410,22 @@ const EditUser = () => {
                   {tab !== 2 ? (
                     <>
                       <Button variant={'outlined'} color={'primary'}>
-                        Reset
+                        Resetear
                       </Button>
                       <Button variant={'contained'} onClick={handleSubmit}>
-                        Save
+                        Guardar
                       </Button>
                     </>
                   ) : (
                     <>
                       <Button variant={'outlined'} color={'primary'}>
-                        Reset
+                        Resetear
                       </Button>
                       <Button
                         variant={'contained'}
                         onClick={handleUpdatePassword}
                       >
-                        Save Password
+                        Guardar contraseña
                       </Button>
                     </>
                   )}

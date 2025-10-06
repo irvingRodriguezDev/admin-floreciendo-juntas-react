@@ -82,17 +82,17 @@ const BreadCrumbs = () => {
   };
 
   const date = () => {
-    let dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const monthNames = ["January", "February", "March", "April", "May", "June",
-      "July", "August", "September", "October", "November", "December"
-    ];
-    let d = new Date()
-    let year = d.getFullYear()
-    let month = d.getMonth()
-    let date = d.getDate()
-    let day = d.getDay() + 1
-    return `${date} ${monthNames[month]} ${year}, ${dayNames[day - 1]}`
-  }
+  const d = new Date();
+  const meses = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+  const dias = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
+
+  const dia = d.getDate();
+  const mes = meses[d.getMonth()];
+  const anio = d.getFullYear();
+  const diaSemana = dias[d.getDay()];
+
+  return `${dia} ${mes} ${anio}, ${diaSemana}`;
+}
 
   function a11yProps(index) {
     return {
@@ -128,7 +128,7 @@ const BreadCrumbs = () => {
                   <Breadcrumbs aria-label='breadcrumb'>
                     <Typography variant='h4'>{c.label}</Typography>
                   </Breadcrumbs>
-                  {window.location.hash.includes('/app/dashboard') && (
+                  {/* {window.location.hash.includes('/app/dashboard') && (
                     <Tabs
                       value={value}
                       onChange={handleChange}
@@ -142,7 +142,7 @@ const BreadCrumbs = () => {
                       <CustomTab label='This month' {...a11yProps(2)} />
                       <CustomTab label='This year' {...a11yProps(3)} />
                     </Tabs>
-                  )}
+                  )} */}
                 </Box>
               );
             }
@@ -155,13 +155,13 @@ const BreadCrumbs = () => {
               {/*29 Oct 2019, Tuesday*/}
               {date()}
             </Typography>
-            <Button
+            {/* <Button
               variant='contained'
               color='secondary'
               className={classes.button}
             >
               Latest Reports
-            </Button>
+            </Button> */}
           </Box>
         ) : (
           <Breadcrumbs

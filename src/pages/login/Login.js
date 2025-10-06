@@ -10,6 +10,8 @@ import {
 } from '@mui/material';
 import { withRouter } from 'react-router-dom';
 import classnames from 'classnames';
+import { InputAdornment, IconButton } from '@mui/material';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
 
 // styles
 import useStyles from './styles';
@@ -35,19 +37,21 @@ import config from '../../config';
 const getGreeting = () => {
   const d = new Date();
   if (d.getHours() >= 4 && d.getHours() <= 12) {
-    return 'Good Morning';
+    return 'Buen día';
   } else if (d.getHours() >= 13 && d.getHours() <= 16) {
-    return 'Good Day';
+    return 'Buen día';
   } else if (d.getHours() >= 17 && d.getHours() <= 23) {
-    return 'Good Evening';
+    return 'Buenas noches';
   } else {
-    return 'Good Night';
+    return 'Buenas noches';
   }
 };
 
 function Login(props) {
   let classes = useStyles();
   const tab = new URLSearchParams(props.location.search).get('tab');
+  const [showPassword, setShowPassword] = useState(false);
+
 
   // global
   let userDispatch = useUserDispatch();
@@ -106,7 +110,7 @@ function Login(props) {
             <div>
               <Input
                 id='password'
-                InputProps={{
+                InputProps={{ 
                   classes: {
                     underline: classes.InputUnderline,
                     input: classes.Input,
@@ -129,25 +133,25 @@ function Login(props) {
                       sendPasswordResetEmail(forgotEmail)(userDispatch)
                     }
                     variant='contained'
-                    color='primary'
+                    color='secondary'
                     size='large'
                   >
-                    Send
+                    Enviar
                   </Button>
                 )}
                 <Button
-                  color='primary'
+                  color='secondary'
                   size='large'
                   onClick={() => setIsForgot(!isForgot)}
                   className={classes.forgetButton}
                 >
-                  Back to login
+                  Volver al inicio de sesión
                 </Button>
               </div>
             </div>
           ) : (
             <>
-              <Tabs
+              {/* <Tabs
                 value={activeTabId}
                 onChange={(e, id) => setActiveTabId(id)}
                 indicatorColor='primary'
@@ -156,7 +160,7 @@ function Login(props) {
               >
                 <Tab label='Login' classes={{ root: classes.tab }} />
                 <Tab label='New User' classes={{ root: classes.tab }} />
-              </Tabs>
+              </Tabs> */}
               {activeTabId === 0 && (
                 <React.Fragment>
                   {config.isBackend ? (
@@ -178,118 +182,92 @@ function Login(props) {
                       </Typography>
                     </Widget>
                   ) : null}
-                  <Typography variant='h1' className={classes.greeting}>
-                    {getGreeting()}, User
-                  </Typography>
-                  <Button
-                    size='large'
-                    className={classes.googleButton}
-                    onClick={() =>
-                      loginUser(
-                        userDispatch,
-                        loginValue,
-                        passwordValue,
-                        props.history,
-                        setIsLoading,
-                        setError,
-                        'google',
-                      )
-                    }
-                  >
-                    <img
-                      src={google}
-                      alt='google'
-                      className={classes.googleIcon}
-                    />
-                    &nbsp;Sign in with Google
-                  </Button>
-                  <div className={classes.formDividerContainer}>
-                    <div className={classes.formDivider} />
-                    <Typography className={classes.formDividerWord}>
-                      or
-                    </Typography>
-                    <div className={classes.formDivider} />
-                  </div>
-                  <Grow
-                    in={error}
-                    style={
-                      !error ? { display: 'none' } : { display: 'inline-block' }
-                    }
-                  >
-                    <Typography className={classes.errorMessage}>
-                      Something is wrong with your login or password :(
-                    </Typography>
-                  </Grow>
-                  <Input
-                    id='email'
-                    InputProps={{
-                      classes: {
-                        underline: classes.InputUnderline,
-                        input: classes.Input,
-                      },
-                    }}
-                    value={loginValue}
-                    onChange={(e) => setLoginValue(e.target.value)}
-                    margin='normal'
-                    placeholder='Email Adress'
-                    type='email'
-                    fullWidth
-                    onKeyDown={(e) => loginOnEnterKey(e)}
-                  />
-                  <Input
-                    id='password'
-                    InputProps={{
-                      classes: {
-                        underline: classes.InputUnderline,
-                        input: classes.Input,
-                      },
-                    }}
-                    value={passwordValue}
-                    onChange={(e) => setPasswordValue(e.target.value)}
-                    margin='normal'
-                    placeholder='Password'
-                    type='password'
-                    fullWidth
-                    onKeyDown={(e) => loginOnEnterKey(e)}
-                  />
-                  <div className={classes.formButtons}>
-                    {isLoading ? (
-                      <CircularProgress
-                        size={26}
-                        className={classes.loginLoader}
-                      />
-                    ) : (
-                      <Button
-                        disabled={!isLoginFormValid()}
-                        onClick={() =>
-                          loginUser(
-                            userDispatch,
-                            loginValue,
-                            passwordValue,
-                            props.history,
-                            setIsLoading,
-                            setError,
-                          )
-                        }
-                        variant='contained'
-                        color='primary'
-                        size='large'
-                      >
-                        Login
-                      </Button>
-                    )}
-                    <Button
-                      color='primary'
-                      size='large'
-                      onClick={() => setIsForgot(!isForgot)}
-                      className={classes.forgetButton}
-                    >
-                      Forgot Password?
-                    </Button>
-                  </div>
+                 <div className={classes.container}>
+  <div className={classes.formWrapper}>
+    <Typography variant="h1" className={classes.greeting}>
+      {getGreeting()}
+    </Typography>
+
+    <Grow in={error} style={!error ? { display: 'none' } : { display: 'inline-block' }}>
+      <Typography className={classes.errorMessage}>
+        Something is wrong with your login or password :(
+      </Typography>
+    </Grow>
+
+    <Input
+      id="email"
+      InputProps={{ classes: { underline: classes.InputUnderline, input: classes.Input } }}
+      value={loginValue}
+      onChange={(e) => setLoginValue(e.target.value)}
+      margin="normal"
+      placeholder="Email Address"
+      type="email"
+      fullWidth
+      onKeyDown={(e) => loginOnEnterKey(e)}
+    />
+
+    <Input
+  id="password"
+  type={showPassword ? 'text' : 'password'}
+  InputProps={{
+    classes: { underline: classes.InputUnderline, input: classes.Input },
+    endAdornment: (
+      <InputAdornment position="end">
+        <IconButton
+          onClick={() => setShowPassword(!showPassword)}
+          edge="end"
+        >
+          {showPassword ? <VisibilityOff /> : <Visibility />}
+        </IconButton>
+      </InputAdornment>
+    ),
+  }}
+  value={passwordValue}
+  onChange={(e) => setPasswordValue(e.target.value)}
+  margin="normal"
+  placeholder="Password"
+  fullWidth
+  onKeyDown={(e) => loginOnEnterKey(e)}
+/>
+
+    <div className={classes.formButtons}>
+      {isLoading ? (
+        <CircularProgress size={26} className={classes.loginLoader} />
+      ) : (
+        <Button
+          disabled={!isLoginFormValid()}
+          onClick={() =>
+            loginUser(
+              userDispatch,
+              loginValue,
+              passwordValue,
+              props.history,
+              setIsLoading,
+              setError,
+            )
+          }
+          variant="contained"
+          color="secondary"
+          size="large"
+        >
+          Acceder
+        </Button>
+      )}
+      <Button
+        color="secondary"
+        size="large"
+        onClick={() => setIsForgot(!isForgot)}
+        className={classes.forgetButton}
+      >
+        Has olvidado tu contraseña?
+      </Button>
+    </div>
+  </div>
+</div>
+
                 </React.Fragment>
               )}
-              {activeTabId === 1 && (
+              {/* {activeTabId === 1 && (
                 <React.Fragment>
                   <Typography variant='h1' className={classes.greeting}>
                     Welcome!
@@ -410,11 +388,11 @@ function Login(props) {
                     &nbsp;Sign in with Google
                   </Button>
                 </React.Fragment>
-              )}
+              )} */}
             </>
           )}
         </div>
-        <Typography color='primary' className={classes.copyright}>
+        <Typography color='secondary' className={classes.copyright}>
           2014-{new Date().getFullYear()}{' '}
           <a
             style={{ textDecoration: 'none', color: 'inherit' }}
@@ -426,7 +404,7 @@ function Login(props) {
           </a>
           , LLC. All rights reserved.
         </Typography>
-      </div>
+      </div>  
     </Grid>
   );
 }

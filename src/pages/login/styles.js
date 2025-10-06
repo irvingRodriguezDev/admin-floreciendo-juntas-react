@@ -2,15 +2,23 @@ import { makeStyles } from '@mui/styles';
 
 export default makeStyles((theme) => ({
   container: {
-    height: '100vh',
-    width: '100%',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'absolute',
-    top: 0,
-    left: 0,
-  },
+  height: '100vh',
+  width: '100%',
+  display: 'flex',
+  justifyContent: 'center', // centra verticalmente
+  alignItems: 'center', // centra horizontalmente
+},
+
+formWrapper: {
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  width: '100%',
+  maxWidth: 400,
+  padding: 20,
+  gap: 16, // espacio entre elementos
+},
+
   logotypeContainer: {
     backgroundColor: theme.palette.primary.main,
     width: '60%',
@@ -155,10 +163,8 @@ export default makeStyles((theme) => ({
     marginLeft: theme.spacing(4),
   },
   copyright: {
-    marginTop: theme.spacing(4),
-    whiteSpace: 'nowrap',
-    [theme.breakpoints.up('md')]: {
-      bottom: theme.spacing(2),
-    },
-  },
+  position: 'absolute',
+  bottom: 20,
+  textAlign: 'center',
+},
 }));

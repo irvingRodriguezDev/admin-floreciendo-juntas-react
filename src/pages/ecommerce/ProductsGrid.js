@@ -10,352 +10,251 @@ import {
   CardActions,
   CardContent,
   CardActionArea,
-  CardMedia
+  CardMedia,
+  TextField,
+  InputAdornment,
+  Button,
+  Paper,
+  Fade,
 } from "@mui/material";
-import { Star as StarIcon } from "@mui/icons-material";
+import { useHistory } from "react-router-dom";
+import {
+  Star as StarIcon,
+  Search as SearchIcon,
+  Tune as TuneIcon,
+} from "@mui/icons-material";
 import { yellow } from "@mui/material/colors";
 import useStyles from "./styles";
-
-//components
 import { Typography, Chip } from "../../components/Wrappers";
-
-//products array
 import { rows } from "./mock";
 
-const Product = props => {
+const Product = () => {
+  const history = useHistory();
   const typeRef = React.useRef(null);
   const brandsRef = React.useRef(null);
   const sizeRef = React.useRef(null);
-  const colourRef = React.useRef(null);
-  const rangeRef = React.useRef(null);
-  const sortRef = React.useRef(null);
 
-  const widthReducer = (state, action) => {
-    switch (action.type) {
-      case "TYPE":
-        return {
-          ...state,
-          type: action.typeWidth
-        };
-      case "BRANDS":
-        return {
-          ...state,
-          brands: action.brandsWidth
-        };
-      case "SIZE":
-        return {
-          ...state,
-          size: action.sizeWidth
-        };
-      case "COLOUR":
-        return {
-          ...state,
-          colour: action.colourWidth
-        };
-      case "RANGE":
-        return {
-          ...state,
-          range: action.rangeWidth
-        };
-      case "SORT":
-        return {
-          ...state,
-          sort: action.sortWidth
-        };
-      default:
-        return {
-          ...state
-        };
-    }
-  };
+  const [width, setWidth] = React.useReducer(
+    (s, a) => ({ ...s, ...a }),
+    { type: 0, brands: 0, size: 0 }
+  );
 
-  const [width, setWidth] = React.useReducer(widthReducer, {
-    type: 0,
-    brands: 0,
-    size: 0,
-    colour: 0,
-    range: 0,
-    sort: 0
-  });
   React.useEffect(() => {
-    setWidth({ type: "TYPE", typeWidth: typeRef.current.offsetWidth });
-    setWidth({ type: "BRANDS", brandsWidth: brandsRef.current.offsetWidth });
-    setWidth({ type: "SIZE", sizeWidth: sizeRef.current.offsetWidth });
-    setWidth({ type: "COLOUR", colourWidth: colourRef.current.offsetWidth });
-    setWidth({ type: "RANGE", rangeWidth: rangeRef.current.offsetWidth });
-    setWidth({ type: "SORT", sortWidth: sortRef.current.offsetWidth });
+    setWidth({
+      type: typeRef.current.offsetWidth,
+      brands: brandsRef.current.offsetWidth,
+      size: sizeRef.current.offsetWidth,
+    });
   }, []);
-  const classes = useStyles();
 
-  const selectReducer = (state, action) => {
-    switch (action.type) {
-      case "SELECT_TYPE":
-        return {
-          ...state,
-          valueType: action.valueType
-        };
-      case "SELECT_BRANDS":
-        return {
-          ...state,
-          valueBrands: action.valueBrands
-        };
-      case "SELECT_SIZE":
-        return {
-          ...state,
-          valueSize: action.valueSize
-        };
-      case "SELECT_COLOUR":
-        return {
-          ...state,
-          valueColor: action.valueColor
-        };
-      case "SELECT_RANGE":
-        return {
-          ...state,
-          valueRange: action.valueRange
-        };
-      case "SELECT_SORT":
-        return {
-          ...state,
-          valueSort: action.valueSort
-        };
-      default:
-        return {
-          ...state
-        };
+  const [state, dispatch] = React.useReducer(
+    (s, a) => ({ ...s, ...a }),
+    {
+      valueType: "Shoes",
+      valueBrands: "All",
+      valueSize: 7,
+      searchTerm: "",
     }
-  };
+  );
 
-  const [state, dispatch] = React.useReducer(selectReducer, {
-    valueType: "Shoes",
-    valueBrands: "All",
-    valueSize: 7,
-    valueColour: "All",
-    valueRange: "All",
-    valueSort: "Favorite"
-  });
+  const filteredRows = rows.filter((c) =>
+    c.title.toLowerCase().includes(state.searchTerm.toLowerCase())
+  );
+
   return (
-    <>
-      <Grid container spacing={3}>
-        <Grid item xs={12}>
-          <Box display="flex">
-            <FormControl
-              variant="outlined"
-              className={classes.form}
-              style={{ marginRight: 15 }}
-            >
-              <InputLabel htmlFor="type_select" ref={typeRef}>
-                Type
-              </InputLabel>
-              <Select
-                value={state.valueType}
-                onChange={e =>
-                  dispatch({ type: "SELECT_TYPE", valueType: e.target.value })
-                }
-                labelWidth={width.type}
-                inputProps={{
-                  name: "type",
-                  id: "type_select"
-                }}
-              >
-                <MenuItem value={"Shoes"}>Shoes</MenuItem>
-                <MenuItem value={"Boots"}>Boots</MenuItem>
-                <MenuItem value={"Trainers"}>Trainers</MenuItem>
-              </Select>
-            </FormControl>
-            <FormControl
-              variant="outlined"
-              className={classes.form}
-              style={{ marginRight: 15 }}
-            >
-              <InputLabel htmlFor="brands_select" ref={brandsRef}>
-                Brands
-              </InputLabel>
-              <Select
-                value={state.valueBrands}
-                onChange={e =>
-                  dispatch({
-                    type: "SELECT_BRAND",
-                    valueBrands: e.target.value
-                  })
-                }
-                labelWidth={width.brands}
-                inputProps={{
-                  name: "brands",
-                  id: "brands_select"
-                }}
-              >
-                <MenuItem value={"All"}>All</MenuItem>
-                <MenuItem value={"Nike"}>Nike</MenuItem>
-                <MenuItem value={"Adidas"}>Adidas</MenuItem>
-              </Select>
-            </FormControl>
-            <FormControl
-              variant="outlined"
-              className={classes.form}
-              style={{ marginRight: 15 }}
-            >
-              <InputLabel htmlFor="size_select" ref={sizeRef}>
-                Size
-              </InputLabel>
-              <Select
-                value={state.valueSize}
-                onChange={e =>
-                  dispatch({ type: "SELECT_SIZE", valueSize: e.target.value })
-                }
-                labelWidth={width.size}
-                inputProps={{
-                  name: "size",
-                  id: "size_select"
-                }}
-              >
-                <MenuItem value={7}>7</MenuItem>
-                <MenuItem value={8}>8</MenuItem>
-                <MenuItem value={9}>9</MenuItem>
+    <Grid container spacing={3}>
+      {/* 🎛️ Filtros */}
+      <Grid item xs={12}>
+        <Paper
+          elevation={0}
+          sx={{
+            p: 3,
+            borderRadius: 4,
+            background:
+              "linear-gradient(135deg, rgba(240,244,248,0.9), rgba(255,255,255,0.95))",
+            backdropFilter: "blur(6px)",
+            border: "1px solid rgba(200,200,200,0.3)",
+          }}
+        >
+          <Box
+            display="flex"
+            flexWrap="wrap"
+            alignItems="center"
+            justifyContent="space-between"
+            gap={2}
+          >
+            <Box display="flex" flexWrap="wrap" alignItems="center" gap={2}>
+              {/* Categoria */}
+              <FormControl variant="outlined" size="small" sx={{ minWidth: 160 }}>
+                <InputLabel ref={typeRef}>Categoría</InputLabel>
+                <Select
+                  value={state.valueType}
+                  onChange={(e) =>
+                    dispatch({ valueType: e.target.value })
+                  }
+                  label="Categoría"
+                >
+                  <MenuItem value={"Shoes"}>Shoes</MenuItem>
+                  <MenuItem value={"Boots"}>Boots</MenuItem>
+                  <MenuItem value={"Trainers"}>Trainers</MenuItem>
+                </Select>
+              </FormControl>
 
-                <MenuItem value={10}>10</MenuItem>
-                <MenuItem value={11}>11</MenuItem>
+              {/* Sistema */}
+              <FormControl variant="outlined" size="small" sx={{ minWidth: 160 }}>
+                <InputLabel ref={brandsRef}>Sistema</InputLabel>
+                <Select
+                  value={state.valueBrands}
+                  onChange={(e) =>
+                    dispatch({ valueBrands: e.target.value })
+                  }
+                  label="Sistema"
+                >
+                  <MenuItem value={"All"}>Todos</MenuItem>
+                  <MenuItem value={"Nike"}>Nike</MenuItem>
+                  <MenuItem value={"Adidas"}>Adidas</MenuItem>
+                </Select>
+              </FormControl>
 
-                <MenuItem value={12}>12</MenuItem>
-                <MenuItem value={12.5}>12.5</MenuItem>
-                <MenuItem value={13}>13</MenuItem>
-              </Select>
-            </FormControl>
-            <FormControl
-              variant="outlined"
-              className={classes.form}
-              style={{ marginRight: 15 }}
-            >
-              <InputLabel htmlFor="colour_select" ref={colourRef}>
-                Colour
-              </InputLabel>
-              <Select
-                value={state.valueColour}
-                onChange={e =>
-                  dispatch({
-                    type: "SELECT_COLOUR",
-                    valueColor: e.target.value
-                  })
+              {/* Nivel */}
+              <FormControl variant="outlined" size="small" sx={{ minWidth: 160 }}>
+                <InputLabel ref={sizeRef}>Nivel</InputLabel>
+                <Select
+                  value={state.valueSize}
+                  onChange={(e) =>
+                    dispatch({ valueSize: e.target.value })
+                  }
+                  label="Nivel"
+                >
+                  {[7, 8, 9, 10, 11, 12, 12.5, 13].map((size) => (
+                    <MenuItem key={size} value={size}>
+                      {size}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
+
+            {/* Buscador con botón */}
+            <Box display="flex" alignItems="center" gap={1}>
+              <TextField
+                variant="outlined"
+                size="small"
+                placeholder="Buscar curso..."
+                value={state.searchTerm}
+                onChange={(e) =>
+                  dispatch({ searchTerm: e.target.value })
                 }
-                labelWidth={width.colour}
-                inputProps={{
-                  name: "colour",
-                  id: "colour_select"
+                sx={{
+                  backgroundColor: "white",
+                  borderRadius: 2,
+                  width: 250,
+                }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon color="action" />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+              {/* <Button
+                variant="contained"
+                startIcon={<TuneIcon />}
+                sx={{
+                  borderRadius: 2,
+                  textTransform: "none",
+                  px: 2.5,
+                  background:
+                    "linear-gradient(45deg, #536DFE, #23a075)",
+                  "&:hover": {
+                    background:
+                      "linear-gradient(45deg, #4359D8, #1f8b65)",
+                  },
                 }}
               >
-                <MenuItem value={"All"}>All</MenuItem>
-                <MenuItem value={"White"}>White</MenuItem>
-                <MenuItem value={"Black"}>Black</MenuItem>
-              </Select>
-            </FormControl>
-            <FormControl
-              variant="outlined"
-              className={classes.form}
-              style={{ marginRight: 15 }}
-            >
-              <InputLabel htmlFor="range_select" ref={rangeRef}>
-                Range
-              </InputLabel>
-              <Select
-                value={state.valueRange}
-                onChange={e =>
-                  dispatch({ type: "SELECT_RANGE", valueRange: e.target.value })
-                }
-                labelWidth={width.range}
-                inputProps={{
-                  name: "range",
-                  id: "range_select"
-                }}
-              >
-                <MenuItem value={"All"}>All</MenuItem>
-                <MenuItem value={"-"}>-</MenuItem>
-                <MenuItem value={"None"}>None</MenuItem>
-              </Select>
-            </FormControl>
-            <FormControl
-              variant="outlined"
-              className={classes.form}
-              style={{ marginRight: 15 }}
-            >
-              <InputLabel htmlFor="sort_select" ref={sortRef}>
-                Sort
-              </InputLabel>
-              <Select
-                value={state.valueSort}
-                onChange={e =>
-                  dispatch({ type: "SELECT_SORT", valueSort: e.target.value })
-                }
-                labelWidth={width.sort}
-                inputProps={{
-                  name: "sort",
-                  id: "sort_select"
-                }}
-              >
-                <MenuItem value={"Favorite"}>Favorite</MenuItem>
-                <MenuItem value={"Price"}>Price</MenuItem>
-                <MenuItem value={"Popular"}>Popular</MenuItem>
-              </Select>
-            </FormControl>
+                Filtrar
+              </Button> */}
+            </Box>
           </Box>
-        </Grid>
-        <Grid item xs={12}>
-          <Box display={"flex"} flexWrap={"wrap"}>
-            <Grid container item spacing={3}>
-              {rows.map(c => (
-                <Grid item xs={12} md={3} key={c.id}>
-                  <Card className={classes.card}>
-                    <CardActionArea>
+        </Paper>
+      </Grid>
+
+      {/* 🧱 Cards */}
+      <Grid item xs={12}>
+        <Grid container spacing={3}>
+          {filteredRows.map((c) => (
+            <Grid item xs={12} sm={6} md={3} key={c.id}>
+              <Fade in timeout={400 + c.id * 80}>
+                <Card
+                  sx={{
+                    borderRadius: 4,
+                    boxShadow:
+                      "0px 4px 15px rgba(0,0,0,0.08), 0px 1px 3px rgba(0,0,0,0.1)",
+                    transition: "transform 0.25s ease, box-shadow 0.25s ease",
+                    "&:hover": {
+                      transform: "translateY(-6px)",
+                      boxShadow:
+                        "0px 6px 18px rgba(0,0,0,0.12), 0px 3px 6px rgba(0,0,0,0.1)",
+                    },
+                  }}
+                >
+                  <CardActionArea
+                    onClick={() => history.push(`/app/ecommerce/product/${c.id}`)}
+                  >
+                    <Box sx={{ position: "relative" }}>
                       <CardMedia
-                        className={classes.media}
+                        component="img"
+                        height="190"
                         image={c.img}
-                        title={c.title}
-                      >
-                        {c.id % 2 ? (
-                          <Chip label={"New"} color={"success"} />
-                        ) : (
-                          <Chip label={"Sale"} color={"secondary"} />
-                        )}
-                      </CardMedia>
-                      <CardContent>
-                        <Typography gutterBottom variant="h5" component="h2">
-                          {c.title}
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          color="text"
-                          colorBrightness={"secondary"}
-                          component="p"
-                        >
-                          {c.subtitle}
-                        </Typography>
-                      </CardContent>
-                    </CardActionArea>
-                    <CardActions style={{ padding: 16 }}>
-                      <Box
-                        display={"flex"}
-                        justifyContent={"space-between"}
-                        alignItems="center"
-                        width={"100%"}
-                      >
-                        <Typography weight={"bold"}>${c.price}</Typography>
-                        <Typography block>
-                          <div style={{ color: yellow[700] }}>
-                            {rows[0].rating}
-                            <StarIcon
-                              style={{ color: yellow[700], marginTop: -5 }}
-                            />
-                          </div>
-                        </Typography>
+                        alt={c.title}
+                        sx={{ borderTopLeftRadius: 4, borderTopRightRadius: 4 }}
+                      />
+                      <Chip
+                        label={c.id % 2 ? "New" : "Sale"}
+                        color={c.id % 2 ? "success" : "secondary"}
+                        size="small"
+                        sx={{
+                          position: "absolute",
+                          top: 10,
+                          left: 10,
+                          borderRadius: "8px",
+                          fontWeight: 600,
+                        }}
+                      />
+                    </Box>
+
+                    <CardContent>
+                      <Typography variant="h6" fontWeight={600} gutterBottom>
+                        {c.title}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {c.subtitle}
+                      </Typography>
+                    </CardContent>
+                  </CardActionArea>
+
+                  <CardActions sx={{ px: 2, pb: 2 }}>
+                    <Box
+                      display="flex"
+                      justifyContent="space-between"
+                      alignItems="center"
+                      width="100%"
+                    >
+                      <Typography fontWeight="bold">${c.price}</Typography>
+                      <Box display="flex" alignItems="center" color={yellow[700]}>
+                        <Typography>{rows[0].rating}</Typography>
+                        <StarIcon sx={{ ml: 0.3, fontSize: 18 }} />
                       </Box>
-                    </CardActions>
-                  </Card>
-                </Grid>
-              ))}
+                    </Box>
+                  </CardActions>
+                </Card>
+              </Fade>
             </Grid>
-          </Box>
+          ))}
         </Grid>
       </Grid>
-    </>
+    </Grid>
   );
 };
 

@@ -38,11 +38,16 @@ export default function Widget({
       style={style}
     >
       <Paper
-        className={classnames(classes.paper, {
-          [props.paperClass]: props.paperClass,
-        })}
-        classes={{ root: classes.widgetRoot }}
-      >
+  className={classnames(classes.paper, {
+    [props.paperClass]: props.paperClass,
+  })}
+  classes={{ root: classes.widgetRoot }}
+  style={{
+    borderRadius: 16,       // border-radius
+    border: '1px solid #FF5C93'
+    }}
+>
+
         {!title ? (
           <>
             {header ? (

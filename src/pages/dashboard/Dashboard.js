@@ -443,7 +443,7 @@ function Dashboard() {
 
   return (
     <Grid container spacing={3}>
-      <Grid item lg={3} sm={6} xs={12}>
+      {/* <Grid item lg={3} sm={6} xs={12}>
         <Widget
             title="Support Tracker"
             bodyClass={classes.fullHeightBody}
@@ -786,7 +786,7 @@ function Dashboard() {
             </div>
           </div>
         </Widget>
-      </Grid>
+      </Grid> */}
       <Grid item xs={12}>
         <Widget
             bodyClass={classes.mainChartBody}
@@ -898,11 +898,11 @@ function Dashboard() {
           </ResponsiveContainer>
         </Widget>
       </Grid>
-      {mock.bigStat.map(stat => (
+      {/* {mock.bigStat.map(stat => (
           <Grid item md={4} sm={6} xs={12} key={stat.product}>
             <BigStat {...stat} />
           </Grid>
-      ))}
+      ))} */}
       <Grid item xs={12}>
         <Widget noBodyPadding bodyClass={classes.tableWidget}>
           <EnhancedTableToolbar numSelected={selected.length} />

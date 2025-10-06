@@ -25,12 +25,12 @@ import ViewCompactRoundedIcon from '@mui/icons-material/ViewCompactRounded';
 import Dot from './components/Dot';
 
 const structure = [
-  { id: 100, label: 'Profile', link: '/app/profile', icon: <ProfileIcon /> },
+  { id: 100, label: 'Perfil', link: '/app/profile', icon: <ProfileIcon /> },
   { id: 0, label: 'Dashboard', link: '/app/dashboard', icon: <HomeIcon /> },
   {
     id: 1,
-    label: 'E-commerce',
-    badge: 'NodeJS',
+    label: 'Cursos',
+    // badge: 'NodeJS',
     badgeColor: 'success',
     link: '/app/ecommerce',
     icon: <ShoppingCartIcon />,
@@ -40,7 +40,7 @@ const structure = [
         link: '/app/ecommerce/management',
       },
       {
-        label: 'Products Grid',
+        label: 'Cursos',
         link: '/app/ecommerce/gridproducts',
       },
       {
