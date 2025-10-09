@@ -7,7 +7,7 @@ import { Provider } from 'react-redux';
 import { routerMiddleware } from 'connected-react-router';
 import { ThemeProvider as ThemeProviderV5 } from '@mui/material/styles';
 import { StyledEngineProvider } from '@mui/material/styles';
-import App from './components/App';
+import App from './App';
 import * as serviceWorker from './serviceWorker';
 import { LayoutProvider } from './context/LayoutContext';
 import { UserProvider } from './context/UserContext';

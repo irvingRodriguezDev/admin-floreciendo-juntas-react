@@ -1,4 +1,4 @@
-  import React from "react";
+  import React, { useContext } from "react";
   import { Grid, Typography } from "@mui/material";
   import { useTheme } from "@mui/styles";
 
@@ -19,6 +19,7 @@
   import CloudIcon from './Icons/CloudIcon' 
   import { useHistory } from "react-router-dom"; // <- v5
   import EditIcon from '@mui/icons-material/Edit';
+  import AuthContext from "../../context/AuthContext/AuthContext";
 
 
   // styles
@@ -32,6 +33,8 @@
     let theme = useTheme();
     const history = useHistory();
 
+    // Obtenemos el usuario del contexto
+    const { usuario } = useContext(AuthContext);
 
     return (
       <Grid container spacing={4}>
@@ -53,9 +56,11 @@
               <Grid item xs={12} sm={7} md={7} lg={7}>
                 <div className={classes.profileDescription}>
                   <Typography variant="h3" className={classes.profileTitle}>
-                    Administrador
-                  </Typography>
-                  <span className={classes.profileSubtitle}>Correo: admin@flatlogic.com</span>
+                  {usuario?.user?.name || "Administrador"}
+                 </Typography>
+                  <span className={classes.profileSubtitle}>
+                  Correo: {usuario?.user?.email || "admin@flatlogic.com"}
+                </span>
                   <a className={classes.profileExternalRes} href="https://flatlogic.com">Flatlogic.com</a>
 
                   <EditIcon 

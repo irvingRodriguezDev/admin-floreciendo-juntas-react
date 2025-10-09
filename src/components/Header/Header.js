@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { AppBar, Toolbar, IconButton, Menu, MenuItem } from '@mui/material';
 import { useTheme } from '@mui/material';
@@ -32,6 +32,7 @@ import {
 
 import { actions } from '../../context/ManagementContext';
 import { useUserDispatch, signOut } from '../../context/UserContext';
+import AuthContext from '../../context/AuthContext/AuthContext';
 
 export default function Header(props) {
   let classes = useStyles();
@@ -49,6 +50,16 @@ export default function Header(props) {
   const [isSmall, setSmall] = useState(false);
 
   const managementValue = useManagementState();
+
+  // Obtenemos el usuario del contexto
+      const { usuario, cerrarSesion  } = useContext(AuthContext);
+
+      const handleLogout = () => {
+  cerrarSesion(); // actualiza el state global
+  localStorage.removeItem("token"); // limpia token
+  props.history.push("/login"); // redirige a login
+};
+
 
   useEffect(() => {
     actions.doFind(sessionStorage.getItem('user_id'))(managementDispatch);
@@ -135,7 +146,9 @@ export default function Header(props) {
           block
           style={{ display: 'flex', alignItems: 'center', marginLeft: 8 }}
         >
-          <div className={classes.profileLabel}>Hola Admin,&nbsp;</div>
+          <div className={classes.profileLabel}>
+            Hola {usuario?.user?.name || "Admin"},&nbsp;
+          </div>
           <Typography weight={'bold'} className={classes.profileLabel}>
             {currentUser?.firstName}
           </Typography>
@@ -169,7 +182,7 @@ export default function Header(props) {
             )}
           >
             <AccountIcon className={classes.profileMenuIcon} />
-            <Link to='/app/user/edit' style={{ textDecoration: 'none' }}>
+            <Link to='/app/profile' style={{ textDecoration: 'none' }}>
               Perfil
             </Link>
           </MenuItem>
@@ -177,7 +190,7 @@ export default function Header(props) {
             <Typography
               className={classes.profileMenuLink}
               color='primary'
-              onClick={() => signOut(userDispatch, props.history)}
+              onClick={handleLogout}
             >
               Cerrar Sesión
             </Typography>

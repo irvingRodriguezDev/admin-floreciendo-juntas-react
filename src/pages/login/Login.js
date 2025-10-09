@@ -1,410 +1,301 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useContext, useEffect } from "react";
 import {
   Grid,
   CircularProgress,
-  Tabs,
-  Tab,
   Grow,
   TextField as Input,
   Typography,
-} from '@mui/material';
-import { withRouter } from 'react-router-dom';
-import classnames from 'classnames';
-import { InputAdornment, IconButton } from '@mui/material';
-import { Visibility, VisibilityOff } from '@mui/icons-material';
+  InputAdornment,
+  IconButton,
+} from "@mui/material";
+import { withRouter } from "react-router-dom";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
+import Swal from "sweetalert2";
 
 // styles
-import useStyles from './styles';
+import useStyles from "./styles";
 
 // logo
-import logo from './logo.svg';
-import google from '../../images/google.svg';
+import logo from "./logo.svg";
+
+// components
+import { Button } from "../../components/Wrappers";
 
 // context
-import {
-  useUserDispatch,
-  loginUser,
-  registerUser,
-  sendPasswordResetEmail,
-} from '../../context/UserContext';
-import { receiveToken, doInit } from '../../context/UserContext';
-
-//components
-import { Button } from '../../components/Wrappers';
-import Widget from '../../components/Widget';
-import config from '../../config';
+import AuthContext from "../../context/AuthContext/AuthContext";
+import ResetPasswordContext from "../../context/ResetPasswordContext/ResetPasswordContext";
 
 const getGreeting = () => {
   const d = new Date();
-  if (d.getHours() >= 4 && d.getHours() <= 12) {
-    return 'Buen día';
-  } else if (d.getHours() >= 13 && d.getHours() <= 16) {
-    return 'Buen día';
-  } else if (d.getHours() >= 17 && d.getHours() <= 23) {
-    return 'Buenas noches';
-  } else {
-    return 'Buenas noches';
-  }
+  if (d.getHours() >= 4 && d.getHours() <= 12) return "Buen día";
+  if (d.getHours() >= 13 && d.getHours() <= 16) return "Buen día";
+  return "Buenas noches";
 };
 
 function Login(props) {
-  let classes = useStyles();
-  const tab = new URLSearchParams(props.location.search).get('tab');
+  const classes = useStyles();
+
+  // context
+  const { iniciarSesion, autenticado, enviarEmailRecuperacion } = useContext(AuthContext);
+
+  // estados locales
+  const [loginValue, setLoginValue] = useState("");
+  const [passwordValue, setPasswordValue] = useState("");
+  const [forgotEmail, setForgotEmail] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isForgot, setIsForgot] = useState(false);
 
+  // validar formulario
+  const isLoginFormValid = () => loginValue.length !== 0 && passwordValue.length !== 0;
 
-  // global
-  let userDispatch = useUserDispatch();
-
+  // redirigir después de login
   useEffect(() => {
-    const params = new URLSearchParams(props.location.search);
-    const token = params.get('token');
-    if (token) {
-      receiveToken(token, userDispatch);
-      doInit()(userDispatch);
+    if (autenticado) {
+      props.history.push("/app/profile"); // cambia a la ruta que necesites
     }
-  }, []); // eslint-disable-line
+  }, [autenticado, props.history]);
 
-  // local
-  let [isLoading, setIsLoading] = useState(false);
-  let [error, setError] = useState(null);
-  let [activeTabId, setActiveTabId] = useState(+tab ?? 0);
-  let [nameValue, setNameValue] = useState('');
-  let [loginValue, setLoginValue] = useState('admin@flatlogic.com');
-  let [passwordValue, setPasswordValue] = useState('password');
-  let [forgotEmail, setForgotEmail] = useState('');
-  let [isForgot, setIsForgot] = useState(false);
+  // login
+  const handleLogin = async () => {
+    if (!isLoginFormValid()) return;
 
-  let isLoginFormValid = () => {
-    return loginValue.length !== 0 && passwordValue.length !== 0;
+    setIsLoading(true);
+    await iniciarSesion({ email: loginValue, password: passwordValue });
+    setIsLoading(false);
   };
 
-  let loginOnEnterKey = (event) => {
-    if (event.key === 'Enter' && isLoginFormValid()) {
-      loginUser(
-        userDispatch,
-        loginValue,
-        passwordValue,
-        props.history,
-        setIsLoading,
-        setError,
-      );
-    }
+  // recuperación de contraseña
+  const handleForgotPassword = async () => {
+    if (!forgotEmail) return;
+    setIsLoading(true);
+    await enviarEmailRecuperacion(forgotEmail);
+    setIsLoading(false);
   };
+
+  const loginOnEnterKey = (event) => {
+    if (event.key === "Enter") handleLogin();
+  };
+
+ const { resetPassword } = useContext(ResetPasswordContext);
+
+
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  const handleResetPassword = async () => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  if (!forgotEmail || !newPassword || !confirmPassword) {
+    Swal.fire({
+      icon: "error",
+      title: "Error",
+      text: "Completa todos los campos",
+    });
+    return;
+  }
+
+  if (!emailRegex.test(forgotEmail)) {
+    Swal.fire({
+      icon: "error",
+      title: "Error",
+      text: "Por favor ingresa un email válido",
+    });
+    return;
+  }
+
+  if (newPassword !== confirmPassword) {
+    Swal.fire({
+      icon: "error",
+      title: "Error",
+      text: "Las contraseñas no coinciden",
+    });
+    return;
+  }
+
+  setIsLoading(true);
+
+  await resetPassword({
+    email: forgotEmail,
+    password: newPassword,
+    passwordConfirmation: confirmPassword,
+  });
+
+  setIsLoading(false);
+  setIsForgot(false);
+  setForgotEmail("");
+  setNewPassword("");
+  setConfirmPassword("");
+ };
+
+
 
   return (
     <Grid container className={classes.container}>
       <div className={classes.logotypeContainer}>
-        <img src={logo} alt='logo' className={classes.logotypeImage} />
-        <Typography className={classes.logotypeText}>
-          React Material Admin Full
-        </Typography>
+        <img src={logo} alt="logo" className={classes.logotypeImage} />
+        <Typography className={classes.logotypeText}>React Material Admin</Typography>
       </div>
-      <div
-        className={
-          !isForgot ? classes.formContainer : classes.customFormContainer
-        }
-      >
+
+      <div className={classes.formContainer}>
         <div className={classes.form}>
           {isForgot ? (
-            <div>
-              <Input
-                id='password'
-                InputProps={{ 
-                  classes: {
-                    underline: classes.InputUnderline,
-                    input: classes.Input,
-                  },
-                }}
-                value={forgotEmail}
-                onChange={(e) => setForgotEmail(e.target.value)}
-                margin='normal'
-                placeholder='Email'
-                type='Email'
-                fullWidth
-              />
-              <div className={classes.formButtons}>
-                {isLoading ? (
-                  <CircularProgress size={26} className={classes.loginLoader} />
-                ) : (
-                  <Button
-                    disabled={forgotEmail.length === 0}
-                    onClick={() =>
-                      sendPasswordResetEmail(forgotEmail)(userDispatch)
-                    }
-                    variant='contained'
-                    color='secondary'
-                    size='large'
-                  >
-                    Enviar
-                  </Button>
-                )}
-                <Button
-                  color='secondary'
-                  size='large'
-                  onClick={() => setIsForgot(!isForgot)}
-                  className={classes.forgetButton}
-                >
-                  Volver al inicio de sesión
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <>
-              {/* <Tabs
-                value={activeTabId}
-                onChange={(e, id) => setActiveTabId(id)}
-                indicatorColor='primary'
-                textColor='primary'
-                centered
-              >
-                <Tab label='Login' classes={{ root: classes.tab }} />
-                <Tab label='New User' classes={{ root: classes.tab }} />
-              </Tabs> */}
-              {activeTabId === 0 && (
-                <React.Fragment>
-                  {config.isBackend ? (
-                    <Widget
-                      disableWidgetMenu
-                      inheritHeight
-                      style={{ marginTop: 32 }}
-                    >
-                      <Typography
-                        variant={'body2'}
-                        component="div"
-                        style={{ textAlign: 'center' }}
-                      >
-                        This is a real app with Node.js backend - use
-                        <Typography variant={'body2'} weight={'bold'}>
-                          "admin@flatlogic.com / password"
-                        </Typography>{' '}
-                        to login!
-                      </Typography>
-                    </Widget>
-                  ) : null}
-                 <div className={classes.container}>
-  <div className={classes.formWrapper}>
-    <Typography variant="h1" className={classes.greeting}>
-      {getGreeting()}
-    </Typography>
-
-    <Grow in={error} style={!error ? { display: 'none' } : { display: 'inline-block' }}>
-      <Typography className={classes.errorMessage}>
-        Something is wrong with your login or password :(
-      </Typography>
-    </Grow>
-
+  <div>
     <Input
-      id="email"
-      InputProps={{ classes: { underline: classes.InputUnderline, input: classes.Input } }}
-      value={loginValue}
-      onChange={(e) => setLoginValue(e.target.value)}
+      id="forgotEmail"
+      InputProps={{
+        classes: {
+          underline: classes.InputUnderline,
+          input: classes.Input,
+        },
+      }}
+      value={forgotEmail}
+      onChange={(e) => setForgotEmail(e.target.value)}
       margin="normal"
-      placeholder="Email Address"
+      placeholder="Email"
       type="email"
       fullWidth
-      onKeyDown={(e) => loginOnEnterKey(e)}
     />
 
     <Input
-  id="password"
-  type={showPassword ? 'text' : 'password'}
-  InputProps={{
-    classes: { underline: classes.InputUnderline, input: classes.Input },
-    endAdornment: (
-      <InputAdornment position="end">
-        <IconButton
-          onClick={() => setShowPassword(!showPassword)}
-          edge="end"
-        >
-          {showPassword ? <VisibilityOff /> : <Visibility />}
-        </IconButton>
-      </InputAdornment>
-    ),
-  }}
-  value={passwordValue}
-  onChange={(e) => setPasswordValue(e.target.value)}
-  margin="normal"
-  placeholder="Password"
-  fullWidth
-  onKeyDown={(e) => loginOnEnterKey(e)}
-/>
+      id="newPassword"
+      InputProps={{
+        classes: {
+          underline: classes.InputUnderline,
+          input: classes.Input,
+        },
+      }}
+      value={newPassword}
+      onChange={(e) => setNewPassword(e.target.value)}
+      margin="normal"
+      placeholder="Nueva contraseña"
+      type="password"
+      fullWidth
+    />
+
+    <Input
+      id="confirmPassword"
+      InputProps={{
+        classes: {
+          underline: classes.InputUnderline,
+          input: classes.Input,
+        },
+      }}
+      value={confirmPassword}
+      onChange={(e) => setConfirmPassword(e.target.value)}
+      margin="normal"
+      placeholder="Confirmar contraseña"
+      type="password"
+      fullWidth
+    />
 
     <div className={classes.formButtons}>
       {isLoading ? (
         <CircularProgress size={26} className={classes.loginLoader} />
       ) : (
         <Button
-          disabled={!isLoginFormValid()}
-          onClick={() =>
-            loginUser(
-              userDispatch,
-              loginValue,
-              passwordValue,
-              props.history,
-              setIsLoading,
-              setError,
-            )
+          disabled={
+            !forgotEmail || !newPassword || !confirmPassword || newPassword !== confirmPassword
           }
+          onClick={handleResetPassword}
           variant="contained"
           color="secondary"
           size="large"
         >
-          Acceder
+          Restablecer contraseña
         </Button>
       )}
       <Button
         color="secondary"
         size="large"
-        onClick={() => setIsForgot(!isForgot)}
+        onClick={() => setIsForgot(false)}
         className={classes.forgetButton}
       >
-        Has olvidado tu contraseña?
+        Volver al inicio de sesión
       </Button>
     </div>
   </div>
-</div>
+          ) : (
+            <>
+              <Typography variant="h1" className={classes.greeting}>
+                {getGreeting()}
+              </Typography>
 
-                </React.Fragment>
-              )}
-              {/* {activeTabId === 1 && (
-                <React.Fragment>
-                  <Typography variant='h1' className={classes.greeting}>
-                    Welcome!
-                  </Typography>
-                  <Typography variant='h2' className={classes.subGreeting}>
-                    Create your account
-                  </Typography>
-                  <Grow in={error}>
-                    <Typography className={classes.errorMessage}>
-                      Something is wrong with your login or password :(
-                    </Typography>
-                  </Grow>
-                  <Input
-                    id='name'
-                    InputProps={{
-                      classes: {
-                        underline: classes.InputUnderline,
-                        input: classes.Input,
-                      },
-                    }}
-                    value={nameValue}
-                    onChange={(e) => setNameValue(e.target.value)}
-                    margin='normal'
-                    placeholder='Full Name'
-                    type='email'
-                    fullWidth
-                  />
-                  <Input
-                    id='email'
-                    InputProps={{
-                      classes: {
-                        underline: classes.InputUnderline,
-                        input: classes.Input,
-                      },
-                    }}
-                    value={loginValue}
-                    onChange={(e) => setLoginValue(e.target.value)}
-                    margin='normal'
-                    placeholder='Email Adress'
-                    type='email'
-                    fullWidth
-                  />
-                  <Input
-                    id='password'
-                    InputProps={{
-                      classes: {
-                        underline: classes.InputUnderline,
-                        input: classes.Input,
-                      },
-                    }}
-                    value={passwordValue}
-                    onChange={(e) => setPasswordValue(e.target.value)}
-                    margin='normal'
-                    placeholder='Password'
-                    type='password'
-                    fullWidth
-                  />
-                  <div className={classes.creatingButtonContainer}>
-                    {isLoading ? (
-                      <CircularProgress size={26} />
-                    ) : (
-                      <Button
-                        onClick={() =>
-                          registerUser(
-                            userDispatch,
-                            loginValue,
-                            passwordValue,
-                            props.history,
-                            setIsLoading,
-                            setError,
-                          )()
-                        }
-                        disabled={
-                          loginValue.length === 0 ||
-                          passwordValue.length === 0 ||
-                          nameValue.length === 0
-                        }
-                        size='large'
-                        variant='contained'
-                        color='primary'
-                        fullWidth
-                        className={classes.createAccountButton}
-                      >
-                        Create your account
-                      </Button>
-                    )}
-                  </div>
-                  <div className={classes.formDividerContainer}>
-                    <div className={classes.formDivider} />
-                    <Typography className={classes.formDividerWord}>
-                      or
-                    </Typography>
-                    <div className={classes.formDivider} />
-                  </div>
+              <Input
+                id="email"
+                value={loginValue}
+                onChange={(e) => setLoginValue(e.target.value)}
+                margin="normal"
+                placeholder="Email"
+                type="email"
+                fullWidth
+                onKeyDown={loginOnEnterKey}
+                InputProps={{
+                  classes: { underline: classes.InputUnderline, input: classes.Input },
+                }}
+              />
+
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                value={passwordValue}
+                onChange={(e) => setPasswordValue(e.target.value)}
+                margin="normal"
+                placeholder="Contraseña"
+                fullWidth
+                onKeyDown={loginOnEnterKey}
+                InputProps={{
+                  classes: { underline: classes.InputUnderline, input: classes.Input },
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+
+              <div className={classes.formButtons}>
+                {isLoading ? (
+                  <CircularProgress size={26} className={classes.loginLoader} />
+                ) : (
                   <Button
-                    size='large'
-                    className={classnames(
-                      classes.googleButton,
-                      classes.googleButtonCreating,
-                    )}
-                    onClick={() =>
-                      loginUser(
-                        userDispatch,
-                        loginValue,
-                        passwordValue,
-                        props.history,
-                        setIsLoading,
-                        setError,
-                        'google',
-                      )
-                    }
+                    disabled={!isLoginFormValid()}
+                    onClick={handleLogin}
+                    variant="contained"
+                    color="secondary"
+                    size="large"
                   >
-                    <img
-                      src={google}
-                      alt='google'
-                      className={classes.googleIcon}
-                    />
-                    &nbsp;Sign in with Google
+                    Acceder
                   </Button>
-                </React.Fragment>
-              )} */}
+                )}
+                <Button
+                  color="secondary"
+                  size="large"
+                  onClick={() => setIsForgot(true)}
+                  className={classes.forgetButton}
+                >
+                  Has olvidado tu contraseña?
+                </Button>
+              </div>
             </>
           )}
         </div>
-        <Typography color='secondary' className={classes.copyright}>
-          2014-{new Date().getFullYear()}{' '}
+
+        <Typography color="secondary" className={classes.copyright}>
+          2014-{new Date().getFullYear()}{" "}
           <a
-            style={{ textDecoration: 'none', color: 'inherit' }}
-            href='https://flatlogic.com'
-            rel='noopener noreferrer'
-            target='_blank'
+            style={{ textDecoration: "none", color: "inherit" }}
+            href="https://flatlogic.com"
+            rel="noopener noreferrer"
+            target="_blank"
           >
             Flatlogic
           </a>
           , LLC. All rights reserved.
         </Typography>
-      </div>  
+      </div>
     </Grid>
   );
 }

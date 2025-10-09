@@ -69,6 +69,9 @@ import Calendar from '../../pages/calendar'
 
 import BreadCrumbs from '../../components/BreadCrumbs';
 
+import System from '../../pages/systems/System';
+import AddSystem from '../../pages/systems/AddSystem';
+
 // context
 import { useLayoutState } from '../../context/LayoutContext';
 import { ProductsProvider } from '../../context/ProductContext'
@@ -117,6 +120,19 @@ function Layout(props) {
           <Route path="/app/core/typography" component={TypographyPage} />
           <Route path="/app/core/colors" component={ColorsPage} />
           <Route path="/app/core/grid" component={GridPage} />
+
+          <Route
+            exact
+            path="/app/system"
+            render={() => <Redirect to="/app/system/list" />}
+          />
+
+          {/* Página de lista de sistemas */}
+          <Route path="/app/system/list" component={System} />
+
+          {/* Página para agregar un sistema */}
+          <Route path="/app/system/addsystem" component={AddSystem} />
+          <Route path="/app/system/editsystem/:id" component={AddSystem} />
 
           <Route exact path="/app/tables" render={() => <Redirect to={'/app/tables/static'} />} />
           <Route path="/app/tables/static" component={StaticTablesPage} />

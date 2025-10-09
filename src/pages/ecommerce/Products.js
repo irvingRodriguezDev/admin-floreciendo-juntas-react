@@ -326,7 +326,7 @@ const Product = props => {
                       </Select>
                     </FormControl>
                   </Box>
-                  <Box display="flex" alignItems="center">
+                  {/* <Box display="flex" alignItems="center">
                     <Button
                       color="primary"
                       variant="contained"
@@ -364,7 +364,7 @@ const Product = props => {
                   </Box>
                   <Typography color="text" colorBrightness={"secondary"}>
                     FREE Delivery & Returns
-                  </Typography>
+                  </Typography> */}
                 </Box>
               </Grid>
             </Grid>
@@ -486,7 +486,7 @@ const Product = props => {
           </Widget>
         </Grid>
       </Grid>
-      <PageTitle title="You may also like" />
+      {/* <PageTitle title="You may also like" />
       <Grid item xs={12}>
         <Box display="flex" flexWrap="wrap">
           <Box flexGrow={1} mr={3} mb={3}>
@@ -610,7 +610,7 @@ const Product = props => {
             </Card>
           </Box>
         </Box>
-      </Grid>
+      </Grid> */}
     </>
   );
 };

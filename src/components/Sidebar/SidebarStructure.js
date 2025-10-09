@@ -16,7 +16,8 @@ import {
   FolderOpen as FolderIcon,
   Description as DocumentationIcon,
   Person as PersonIcon,
-  AccountCircle as ProfileIcon
+  AccountCircle as ProfileIcon,
+  Category as CategoryIcon
 } from '@mui/icons-material';
 import ChatIcon from '@mui/icons-material/Chat';
 import ViewCompactRoundedIcon from '@mui/icons-material/ViewCompactRounded';
@@ -26,6 +27,15 @@ import Dot from './components/Dot';
 
 const structure = [
   { id: 100, label: 'Perfil', link: '/app/profile', icon: <ProfileIcon /> },
+ {
+  id: 101,
+  label: 'Sistemas',
+  icon: <CategoryIcon />,
+  children: [
+    { label: 'Lista de sistemas', link: '/app/system/list' },
+    { label: 'Agregar sistema', link: '/app/system/addsystem' }
+  ]
+},
   { id: 0, label: 'Dashboard', link: '/app/dashboard', icon: <HomeIcon /> },
   {
     id: 1,
