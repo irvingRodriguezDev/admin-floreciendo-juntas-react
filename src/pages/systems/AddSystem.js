@@ -32,7 +32,7 @@ const AddSystem = ({ onCancel }) => {
   const handleSubmit = async (values, { resetForm }) => {
     if (id) {
       await updateSystem(id, values);
-      history.push("/app/system"); // Redirige al listado
+      history.push("/app/system/list"); // Redirige al listado
     } else {
       await addSystem(values);
       resetForm();
@@ -93,7 +93,7 @@ const AddSystem = ({ onCancel }) => {
                   <Button
                     color="primary"
                     variant="outlined"
-                    onClick={() => (onCancel ? onCancel() : history.push("/app/system"))}
+                    onClick={() => (onCancel ? onCancel() : history.push("/app/system/list"))}
                   >
                     Cancelar
                   </Button>

@@ -109,14 +109,14 @@ const System = () => {
               />
 
               {/* Botón Crear Sistema */}
-              <Button
+              {/* <Button
                 style={{ marginTop: -10 }}
                 variant="contained"
                 color="success"
                 onClick={() => history.push("/app/system/addsystem")}
               >
                 Crear Sistema
-              </Button>
+              </Button> */}
             </Box>
           </Box>
         </Paper>

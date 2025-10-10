@@ -4,15 +4,18 @@ import AuthState from "./context/AuthContext/AuthState";
 import AppRouter from "./Routes/AppRouter";
 import ResetPasswordState from "./context/ResetPasswordContext/ResetPasswordState";
 import SystemState from "./context/SystemContext/SystemState";
+import CoursesState from "./context/CoursesContext/CoursesState";
 
 const App = () => {
   return (
     <AuthState>
      <ResetPasswordState>
       <SystemState>
-        <Router>
-          <AppRouter />
-        </Router>
+        <CoursesState>
+         <Router>
+           <AppRouter />
+         </Router>
+        </CoursesState>
        </SystemState>
       </ResetPasswordState>
     </AuthState>

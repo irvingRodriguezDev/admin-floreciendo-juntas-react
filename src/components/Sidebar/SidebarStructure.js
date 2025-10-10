@@ -54,6 +54,10 @@ const structure = [
         link: '/app/ecommerce/gridproducts',
       },
       {
+        label: 'Agregar Curso',
+        link: '/app/ecommerce/courseadd',
+      },
+      {
         label: 'Product Page',
         link: '/app/ecommerce/product',
       },

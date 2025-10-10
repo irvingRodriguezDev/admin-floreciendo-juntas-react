@@ -29,3 +29,11 @@ export const ADD_SYSTEM = "ADD_SYSTEM";
 export const UPDATE_SYSTEM = "UPDATE_SYSTEM";
 export const DELETE_SYSTEM = "DELETE_SYSTEM";
 export const SYSTEM_ERROR = "SYSTEM_ERROR";
+
+// COURSES
+// ====================
+export const OBTENER_COURSES = "OBTENER_COURSES";
+export const OBTENER_COURSE = "OBTENER_COURSE";
+export const AGREGAR_COURSE = "AGREGAR_COURSE";
+export const ACTUALIZAR_COURSE = "ACTUALIZAR_COURSE";
+export const ELIMINAR_COURSE = "ELIMINAR_COURSE";

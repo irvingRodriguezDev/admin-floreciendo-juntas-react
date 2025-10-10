@@ -81,6 +81,7 @@ import UsersTablePage from 'pages/CRUD/Users/table/UsersTablePage';
 
 //Sidebar structure
 import structure from '../Sidebar/SidebarStructure'
+import CourseAdd from '../../pages/ecommerce/CourseAdd';
 
 const Redirect = (props) => {
   useEffect(() => window.location.replace(props.url));
@@ -192,6 +193,8 @@ function Layout(props) {
           <Route path="/app/ecommerce/product/:id" component={Product}/>
           <Route path="/app/ecommerce/product" component={Product} />
           <Route path="/app/ecommerce/gridproducts" component={ProductsGrid}/>
+          <Route path="/app/ecommerce/courseadd" component={CourseAdd} />
+          <Route exact path="/app/ecommerce/edit/:id" component={CourseAdd} />
 
           />
 
