@@ -81,6 +81,10 @@ const CoursesState = (props) => {
     let url = `/courses/${id}`;
     MethodPut(url, formData) // ❌ sin imageHeaders
       .then((res) => {
+        dispatch({
+          type: ACTUALIZAR_COURSE,
+          payload: id,
+        });
         console.log(res, 'respuesta del servidor');
       })
       .catch((error) => {

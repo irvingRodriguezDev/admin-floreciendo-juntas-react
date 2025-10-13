@@ -193,7 +193,7 @@ const System = () => {
                           component="img"
                           height="190"
                           image={
-                            system.image ||
+                            system.icon ||
                             "https://via.placeholder.com/300x190?text=Sistema"
                           }
                           alt={system.name}
@@ -219,7 +219,10 @@ const System = () => {
                       {/* Contenido */}
                       <CardContent>
                         <Typography variant="h6" fontWeight={600} gutterBottom>
-                          {system.name}
+                          <b>{system.name}</b>
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {system.description}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
                           ID: {system.id}
@@ -227,7 +230,7 @@ const System = () => {
                       </CardContent>
                     </CardActionArea>
 
-                    <CardActions sx={{ px: 2, pb: 2 }}>
+                    {/* <CardActions sx={{ px: 2, pb: 2 }}>
                       <Box
                         display="flex"
                         justifyContent="space-between"
@@ -240,7 +243,7 @@ const System = () => {
                           <StarIcon sx={{ ml: 0.3, fontSize: 18 }} />
                         </Box>
                       </Box>
-                    </CardActions>
+                    </CardActions> */}
                   </Card>
                 </Fade>
               </Grid>

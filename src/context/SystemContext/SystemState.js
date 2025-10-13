@@ -10,6 +10,7 @@ import {
   DELETE_SYSTEM,
   SYSTEM_ERROR,
 } from "../../types";
+import imageHeaders from "../../config/imageHeader";
 
 const SystemState = (props) => {
   const initialState = {
@@ -67,7 +68,7 @@ const SystemState = (props) => {
   // ✏️ Actualizar sistema
   const updateSystem = async (id, data) => {
     try {
-      const res = await MethodPut(`/systems/${id}`, data);
+      const res = await MethodPut(`/systems/${id}`, data, imageHeaders);
       dispatch({
         type: UPDATE_SYSTEM,
         payload: res.data,
@@ -91,6 +92,7 @@ const SystemState = (props) => {
       });
     }
   };
+
 
   // 🗑️ Eliminar sistema
   const deleteSystem = async (id) => {
