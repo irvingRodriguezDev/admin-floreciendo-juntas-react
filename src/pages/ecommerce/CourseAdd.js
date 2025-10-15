@@ -11,12 +11,19 @@ import {
   Button,
   FormControlLabel,
   Checkbox,
+  Paper,
 } from '@mui/material';
 import CoursesContext from '../../context/CoursesContext/CoursesContext';
 import MethodGet from '../../config/Service';
 
+import { Editor } from 'react-draft-wysiwyg';
+import { EditorState, convertToRaw, ContentState } from 'draft-js';
+import draftToHtml from 'draftjs-to-html';
+import htmlToDraft from 'html-to-draftjs';
+import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css';
+
 const CourseAdd = ({ onCancel }) => {
-  const { id } = useParams(); // Si existe, estamos en modo edición
+  const { id } = useParams();
   const history = useHistory();
   const { courses, crearCurso, actualizarCurso } = useContext(CoursesContext);
 
@@ -29,11 +36,11 @@ const CourseAdd = ({ onCancel }) => {
     system_id: '',
   });
 
+  const [editorState, setEditorState] = useState(EditorState.createEmpty());
   const [preview, setPreview] = useState(null);
   const [systems, setSystems] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // Cargar sistemas disponibles
   useEffect(() => {
     const fetchSystems = async () => {
       try {
@@ -46,17 +53,13 @@ const CourseAdd = ({ onCancel }) => {
     fetchSystems();
   }, []);
 
-  // Cargar curso si estamos en edición
   useEffect(() => {
     if (!id) return;
 
     const fetchCurso = async () => {
       setLoading(true);
       try {
-        // Primero intentamos obtenerlo de memoria
         let curso = courses.find((c) => c.id === parseInt(id));
-
-        // Si no está en memoria, lo pedimos al backend
         if (!curso) {
           const res = await MethodGet(`/courses/${id}`);
           curso = res.data;
@@ -67,11 +70,18 @@ const CourseAdd = ({ onCancel }) => {
           description: curso.description || '',
           level: curso.level || '',
           hasCertificate: curso.hasCertificate || false,
-          cover_image_url: null, // La imagen nueva
+          coverImage: null,
           system_id: curso.system_id || '',
         });
 
-        // Vista previa con la imagen existente
+        if (curso.description) {
+          const contentBlock = htmlToDraft(curso.description);
+          if (contentBlock) {
+            const contentState = ContentState.createFromBlockArray(contentBlock.contentBlocks);
+            setEditorState(EditorState.createWithContent(contentState));
+          }
+        }
+
         setPreview(curso.cover_image_url || null);
       } catch (error) {
         console.error('Error al obtener curso:', error);
@@ -86,6 +96,12 @@ const CourseAdd = ({ onCancel }) => {
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setForm({ ...form, [name]: type === 'checkbox' ? checked : value });
+  };
+
+  const handleEditorChange = (state) => {
+    setEditorState(state);
+    const html = draftToHtml(convertToRaw(state.getCurrentContent()));
+    setForm({ ...form, description: html });
   };
 
   const handleImageChange = (e) => {
@@ -112,7 +128,7 @@ const CourseAdd = ({ onCancel }) => {
 
     try {
       if (id) {
-        await actualizarCurso(id, form);
+        await actualizarCurso(id, formData);
       } else {
         await crearCurso(formData);
         setForm({
@@ -123,6 +139,7 @@ const CourseAdd = ({ onCancel }) => {
           coverImage: null,
           system_id: '',
         });
+        setEditorState(EditorState.createEmpty());
         setPreview(null);
       }
 
@@ -137,14 +154,14 @@ const CourseAdd = ({ onCancel }) => {
 
   return (
     <Box sx={{ p: 3 }}>
-      <Card>
+      <Card sx={{ borderRadius: 3, boxShadow: 3 }}>
         <CardContent>
-          <Typography variant='h5' sx={{ mb: 3 }}>
+          <Typography variant='h5' sx={{ mb: 3, fontWeight: 600 }}>
             {id ? 'Editar curso' : 'Agregar nuevo curso'}
           </Typography>
 
           <form onSubmit={handleSubmit} encType='multipart/form-data'>
-            <Grid container spacing={2}>
+            <Grid container spacing={3}>
               <Grid item xs={12} sm={6}>
                 <TextField
                   label='Título'
@@ -173,15 +190,28 @@ const CourseAdd = ({ onCancel }) => {
               </Grid>
 
               <Grid item xs={12}>
-                <TextField
-                  label='Descripción'
-                  name='description'
-                  fullWidth
-                  multiline
-                  rows={4}
-                  value={form.description}
-                  onChange={handleChange}
-                />
+                <Typography sx={{ mb: 1, fontWeight: 500 }}>Descripción</Typography>
+                <Paper
+                  variant='outlined'
+                  sx={{
+                    p: 2,
+                    borderRadius: 2,
+                    minHeight: 200,
+                    maxHeight: 300,
+                    overflowY: 'auto',
+                    backgroundColor: '#fffefc',
+                  }}
+                >
+                  <Editor
+                    editorState={editorState}
+                    wrapperClassName="demo-wrapper"
+                    editorClassName="demo-editor"
+                    onEditorStateChange={handleEditorChange}
+                    toolbar={{
+                      options: ['inline', 'blockType', 'list', 'textAlign', 'link', 'history'],
+                    }}
+                  />
+                </Paper>
               </Grid>
 
               <Grid item xs={12} sm={6}>
@@ -231,17 +261,29 @@ const CourseAdd = ({ onCancel }) => {
               {preview && (
                 <Grid item xs={12} sm={6}>
                   <Box
-                    component='img'
-                    src={preview}
-                    alt='Vista previa'
                     sx={{
                       width: '100%',
+                      height: 220,
                       borderRadius: 2,
                       mt: 1,
-                      objectFit: 'cover',
-                      maxHeight: 200,
+                      overflow: 'hidden',
+                      backgroundColor: '#f7f7f7',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
                     }}
-                  />
+                  >
+                    <Box
+                      component='img'
+                      src={preview}
+                      alt='Vista previa'
+                      sx={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'contain', // 👈 Aquí se ajusta completa sin recortar
+                      }}
+                    />
+                  </Box>
                 </Grid>
               )}
 

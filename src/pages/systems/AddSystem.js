@@ -1,219 +1,225 @@
 import React, { useContext, useEffect, useState } from "react";
 import { useParams, useHistory } from "react-router-dom";
-import { Formik } from "formik";
-import * as Yup from "yup";
 import {
+  Box,
+  Card,
+  CardContent,
   Grid,
-  Button,
   TextField,
   Typography,
+  Button,
 } from "@mui/material";
-import Widget from "components/Widget";
+import Swal from "sweetalert2";
 import SystemContext from "../../context/SystemContext/SystemContext";
+import MethodGet from "../../config/Service";
 
 const AddSystem = ({ onCancel }) => {
-  const { id } = useParams(); // Si existe, estamos en modo edición
+  const { id } = useParams(); // Si existe, estamos editando
   const history = useHistory();
   const { systems, addSystem, updateSystem } = useContext(SystemContext);
 
-  const [initialValues, setInitialValues] = useState({
+  const [form, setForm] = useState({
     name: "",
     description: "",
     icon: null,
   });
 
   const [preview, setPreview] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  // 🧠 Si estamos editando, carga los datos del sistema seleccionado
+  // 🧠 Cargar datos si estamos en modo edición
   useEffect(() => {
-    if (id) {
-      const systemToEdit = systems.find((s) => s.id === parseInt(id));
-      if (systemToEdit) {
-        setInitialValues({
-          name: systemToEdit.name || "",
-          description: systemToEdit.description || "",
-          icon: null, // si el usuario no cambia el ícono, no se vuelve a subir
+    if (!id) return;
+
+    const fetchSystem = async () => {
+      setLoading(true);
+      try {
+        // Buscar en el contexto primero
+        let system = systems.find((s) => s.id === parseInt(id));
+
+        // Si no está en memoria, pedirlo al backend
+        if (!system) {
+          const res = await MethodGet(`/systems/${id}`);
+          system = res.data;
+        }
+
+        setForm({
+          name: system.name || "",
+          description: system.description || "",
+          icon: null, // No se vuelve a subir si no cambia
         });
-        if (systemToEdit.icon) setPreview(systemToEdit.icon);
+
+        if (system.icon) setPreview(system.icon);
+      } catch (error) {
+        console.error("Error al cargar sistema:", error);
+      } finally {
+        setLoading(false);
       }
-    }
+    };
+
+    fetchSystem();
   }, [id, systems]);
 
-  // ✅ Validación
-  const validationSchema = Yup.object({
-    name: Yup.string().required("El nombre es obligatorio"),
-    description: Yup.string().required("La descripción es obligatoria"),
-  });
+  // 📤 Cambios en inputs
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: value });
+  };
 
-  // 📤 Manejar subida de imagen
-  const handleImageChange = (e, setFieldValue) => {
-    const file = e.currentTarget.files[0];
-    if (file) {
-      if (file.type === "image/svg+xml" || file.type.startsWith("image/")) {
-        setFieldValue("icon", file);
-        const reader = new FileReader();
-        reader.onloadend = () => setPreview(reader.result);
-        reader.readAsDataURL(file);
-      } else {
-        alert("Solo se permiten imágenes o archivos SVG");
-      }
+  // 🖼️ Manejar ícono (solo SVG)
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.type === "image/svg+xml") {
+      setForm({ ...form, icon: file });
+
+      const reader = new FileReader();
+      reader.onloadend = () => setPreview(reader.result);
+      reader.readAsDataURL(file);
+    } else {
+      Swal.fire({
+        title: "Archivo no permitido",
+        text: "Solo se aceptan archivos SVG.",
+        icon: "warning",
+      });
+      e.target.value = "";
+      setForm({ ...form, icon: null });
+      setPreview(null);
     }
   };
 
-  // 💾 Crear o actualizar
-  const handleSubmit = async (values, { resetForm }) => {
-    console.log("📦 Valores del formulario:", values);
-
-    const formData = new FormData();
-    formData.append("name", values.name || "");
-    formData.append("description", values.description || "");
-
-    if (values.icon instanceof File) {
-      formData.append("icon", values.icon);
-    }
+  // 💾 Enviar formulario
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
     try {
       if (id) {
-        // enviar 'formData', no 'initialValues'
-        await updateSystem(id, formData);
-        history.push("/app/system/list");
+        await updateSystem(id, form);
       } else {
+        const formData = new FormData();
+        formData.append("name", form.name);
+        formData.append("description", form.description);
+        if (form.icon instanceof File) formData.append("icon", form.icon);
+
         await addSystem(formData);
-        resetForm();
-        setPreview(null);
       }
+
+      if (onCancel) onCancel();
+      else history.push("/app/system/list");
+
     } catch (error) {
-      console.error("Error al guardar:", error);
+      console.error("Error al guardar sistema:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error al guardar",
+        text: "Ocurrió un problema al guardar el sistema.",
+      });
     }
   };
 
 
 
+  if (loading) return <Typography>Cargando sistema...</Typography>;
+
   return (
-    <Widget title={id ? "Editar Sistema" : "Agregar Sistema"} collapse close>
-      <Formik
-        enableReinitialize
-        initialValues={initialValues}
-        validationSchema={validationSchema}
-        onSubmit={handleSubmit}
-      >
-        {(form) => (
-          <form onSubmit={form.handleSubmit}>
-            <Grid container spacing={3} direction="column">
-              {/* Campo Nombre */}
-              <Grid item>
+    <Box sx={{ p: 3 }}>
+      <Card>
+        <CardContent>
+          <Typography variant="h5" sx={{ mb: 3 }}>
+            {id ? "Editar Sistema" : "Agregar Nuevo Sistema"}
+          </Typography>
+
+          <form onSubmit={handleSubmit} encType="multipart/form-data">
+            <Grid container spacing={2}>
+              {/* Nombre */}
+              <Grid item xs={12}>
                 <TextField
-                  fullWidth
-                  label="Nombre del Sistema"
+                  label="Nombre del sistema"
                   name="name"
-                  value={form.values.name}
-                  onChange={form.handleChange}
-                  onBlur={form.handleBlur}
-                  error={!!(form.touched.name && form.errors.name)}
-                  helperText={form.touched.name && form.errors.name}
-                  autoFocus
+                  fullWidth
+                  required
+                  value={form.name}
+                  onChange={handleChange}
                 />
               </Grid>
 
-              {/* Campo Descripción */}
-              <Grid item>
+              {/* Descripción */}
+              <Grid item xs={12}>
                 <TextField
+                  label="Descripción"
+                  name="description"
                   fullWidth
                   multiline
                   rows={3}
-                  label="Descripción"
-                  name="description"
-                  value={form.values.description}
-                  onChange={form.handleChange}
-                  onBlur={form.handleBlur}
-                  error={!!(form.touched.description && form.errors.description)}
-                  helperText={form.touched.description && form.errors.description}
+                  required
+                  value={form.description}
+                  onChange={handleChange}
                 />
               </Grid>
 
-              {/* Campo Ícono (subida de archivo) */}
-              <Grid item>
-                <Typography variant="subtitle1" sx={{ mb: 1 }}>
-                  Ícono del sistema (SVG o imagen)
-                </Typography>
-                <Button variant="contained" component="label">
-                  Seleccionar archivo
+              {/* Ícono (solo SVG) */}
+              <Grid item xs={12} sm={6}>
+                <Button variant="contained" component="label" fullWidth>
+                  Subir ícono (solo SVG)
                   <input
                     type="file"
                     hidden
-                    accept="image/*,.svg"
-                    onChange={(e) => handleImageChange(e, form.setFieldValue)}
+                    accept="image/svg+xml"
+                    onChange={handleImageChange}
                   />
                 </Button>
-
-                {preview && (
-                  <div
-                    style={{
-                      marginTop: 10,
-                      display: "flex",
-                      justifyContent: "start",
-                      alignItems: "center",
-                      flexDirection: "column",
-                    }}
-                  >
-                    <Typography variant="caption" color="text.secondary">
-                      Vista previa:
-                    </Typography>
-                    <img
-                      src={preview}
-                      alt="icon preview"
-                      style={{
-                        width: 120,
-                        height: 120,
-                        borderRadius: 10,
-                        marginTop: 5,
-                        objectFit: "contain",
-                        border: "1px solid #ddd",
-                        backgroundColor: "#f8f8f8",
-                        padding: 5,
-                      }}
-                    />
-                  </div>
-                )}
               </Grid>
 
+              {preview && (
+                <Grid item xs={12} sm={6}>
+                  <Box
+                    component="img"
+                    src={preview}
+                    alt="Vista previa ícono"
+                    sx={{
+                      width: 120,
+                      height: 120,
+                      borderRadius: 2,
+                      mt: 1,
+                      objectFit: "contain",
+                      border: "1px solid #ddd",
+                      backgroundColor: "#f8f8f8",
+                      p: 1,
+                    }}
+                  />
+                </Grid>
+              )}
+
               {/* Botones */}
-              <Grid item container spacing={2} mt={2}>
-                <Grid item>
-                  <Button color="primary" variant="contained" type="submit">
-                    {id ? "Actualizar" : "Guardar"}
-                  </Button>
-                </Grid>
+              <Grid item xs={12}>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  color="primary"
+                  fullWidth
+                  sx={{ mt: 2 }}
+                >
+                  {id ? "Actualizar Sistema" : "Guardar Sistema"}
+                </Button>
 
-                {!id && (
-                  <Grid item>
-                    <Button
-                      color="primary"
-                      variant="outlined"
-                      onClick={form.handleReset}
-                    >
-                      Reset
-                    </Button>
-                  </Grid>
-                )}
-
-                <Grid item>
-                  <Button
-                    color="primary"
-                    variant="outlined"
-                    onClick={() =>
-                      onCancel ? onCancel() : history.push("/app/system/list")
-                    }
-                  >
-                    Cancelar
-                  </Button>
-                </Grid>
+                <Button
+                  variant="outlined"
+                  color="secondary"
+                  fullWidth
+                  sx={{ mt: 1 }}
+                  onClick={() =>
+                    onCancel ? onCancel() : history.push("/app/system/list")
+                  }
+                >
+                  Cancelar
+                </Button>
               </Grid>
             </Grid>
           </form>
-        )}
-      </Formik>
-    </Widget>
+        </CardContent>
+      </Card>
+    </Box>
   );
 };
 

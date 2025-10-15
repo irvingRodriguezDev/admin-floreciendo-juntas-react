@@ -67,30 +67,40 @@ const CoursesState = (props) => {
   };
 
   const actualizarCurso = async (id, datos) => {
-    const formData = new FormData();
-    formData.append('title', datos.title);
-    formData.append('description', datos.description);
-    formData.append('level', datos.level);
-    formData.append('system_id', datos.system_id);
-    formData.append('hasCertificate', datos.hasCertificate);
+    try {
+      const formData = new FormData();
+      formData.append('title', datos.title);
+      formData.append('description', datos.description);
+      formData.append('level', datos.level);
+      formData.append('system_id', datos.system_id);
+      formData.append('hasCertificate', datos.hasCertificate);
 
-    if (datos.coverImage instanceof File) {
-      formData.append('coverImage', datos.coverImage);
-    }
+      if (datos.coverImage instanceof File) {
+        formData.append('coverImage', datos.coverImage);
+      }
 
-    let url = `/courses/${id}`;
-    MethodPut(url, formData) // ❌ sin imageHeaders
-      .then((res) => {
-        dispatch({
-          type: ACTUALIZAR_COURSE,
-          payload: id,
-        });
-        console.log(res, 'respuesta del servidor');
-      })
-      .catch((error) => {
-        console.log(error);
+      await MethodPut(`/courses/${id}`, formData);
+
+      Swal.fire({
+        title: "Éxito",
+        text: "Curso actualizado correctamente",
+        icon: "success",
+        timer: 1500,
+        showConfirmButton: false,
       });
+
+      // Aquí refrescas la lista completa
+      // obtenerCursos();
+
+    } catch (error) {
+      Swal.fire({
+        title: "Error",
+        text: error.response?.data?.message || "No se pudo actualizar el curso",
+        icon: "error",
+      });
+    }
   };
+
 
   // Eliminar curso
   const eliminarCurso = async (id) => {

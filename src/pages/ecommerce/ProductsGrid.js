@@ -18,7 +18,7 @@ import {
   IconButton,
 } from "@mui/material";
 import { useHistory } from "react-router-dom";
-import { Search as SearchIcon, Edit as EditIcon, Delete as DeleteIcon } from "@mui/icons-material";
+import { Search as SearchIcon, Edit as EditIcon, Delete as DeleteIcon, VideoLibrary } from "@mui/icons-material";
 import { Typography, Chip } from "../../components/Wrappers";
 import CoursesContext from "../../context/CoursesContext/CoursesContext";
 import Swal from "sweetalert2";
@@ -188,6 +188,21 @@ const Product = () => {
                           height: 40,
                           mr: 1,
                         }}
+                        onClick={() => history.push(`/app/ecommerce/coursevideoadd/${c.id}`)}
+                      >
+                        <VideoLibrary fontSize="medium" />
+                      </IconButton>
+                      <IconButton
+                        size="large"
+                        color="primary"
+                        sx={{
+                          backgroundColor: "white",
+                          "&:hover": { backgroundColor: "rgba(0,0,0,0.08)" },
+                          borderRadius: "50%",
+                          width: 40,
+                          height: 40,
+                          mr: 1,
+                        }}
                         onClick={() => history.push(`/app/ecommerce/edit/${c.id}`)}
                       >
                         <EditIcon fontSize="medium" />
@@ -209,28 +224,48 @@ const Product = () => {
                     </Box>
 
                     <CardActionArea onClick={() => history.push(`/app/courses/${c.id}`)}>
-                      <Box sx={{ position: "relative" }}>
+                      <Box sx={{ position: "relative", height: 200, backgroundColor: "#f7f7f7" }}>
                         <CardMedia
                           component="img"
-                          height="190"
-                          image={c.cover_image_url || "/no-image.jpg"}
+                          image={
+                            c.cover_image_url && c.cover_image_url !== ""
+                              ? c.cover_image_url
+                              : "/no-image.jpg"
+                          }
                           alt={c.title}
-                          sx={{ borderTopLeftRadius: 4, borderTopRightRadius: 4 }}
+                          sx={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "contain", // 🔥 Hace que se vea completa
+                            objectPosition: "center",
+                            borderTopLeftRadius: 4,
+                            borderTopRightRadius: 4,
+                            transition: "transform 0.3s ease",
+                            backgroundColor: "#fff", // mejora contraste si sobra espacio
+                          }}
                         />
-                        <Chip
+                        {/* <Chip
                           label={c.category || "General"}
                           color="success"
                           size="small"
-                          sx={{ position: "absolute", top: 10, left: 10, borderRadius: "8px", fontWeight: 600 }}
-                        />
+                          sx={{
+                            position: "absolute",
+                            top: 10,
+                            left: 10,
+                            borderRadius: "8px",
+                            fontWeight: 600,
+                          }}
+                        /> */}
                       </Box>
+
                       <CardContent>
                         <Typography variant="h6" fontWeight={600} gutterBottom>
-                          {c.title}
+                          <b>{c.title}</b>
                         </Typography>
-                        <Typography variant="body2" color="text.secondary">
+                        {/* <Typography variant="body2" color="text.secondary">
                           {c.description || "Sin descripción"}
-                        </Typography>
+                        </Typography> */}
+                        {/* <div dangerouslySetInnerHTML={{__html: c.description}}/> */}
                       </CardContent>
                     </CardActionArea>
 

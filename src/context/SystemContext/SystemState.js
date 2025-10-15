@@ -66,16 +66,28 @@ const SystemState = (props) => {
   };
 
   // ✏️ Actualizar sistema
-  const updateSystem = async (id, data) => {
+  const updateSystem = async (id, datos) => {
     try {
-      const res = await MethodPut(`/systems/${id}`, data, imageHeaders);
+      const formData = new FormData();
+      formData.append("name", datos.name);
+      formData.append("description", datos.description);
+
+      if (datos.icon instanceof File) {
+        formData.append("icon", datos.icon);
+      }
+
+      // 🟢 Hacemos la petición y obtenemos los datos actualizados
+      const { data } = await MethodPut(`/systems/${id}`, formData);
+
+      // 🟢 Actualizamos el contexto con el sistema modificado
       dispatch({
         type: UPDATE_SYSTEM,
-        payload: res.data,
+        payload: data.system, // ⚠️ aquí va el objeto completo, no solo el id
       });
+
       Swal.fire({
-        title: "Actualizado",
-        text: "Sistema actualizado correctamente.",
+        title: "Éxito",
+        text: "Sistema actualizado correctamente",
         icon: "success",
         timer: 1500,
         showConfirmButton: false,
@@ -83,15 +95,12 @@ const SystemState = (props) => {
     } catch (error) {
       Swal.fire({
         title: "Error",
-        text: error.response?.data?.message || "Error al actualizar el sistema",
+        text: error.response?.data?.message || "No se pudo actualizar el sistema",
         icon: "error",
-      });
-      dispatch({
-        type: SYSTEM_ERROR,
-        payload: error.response?.data?.message,
       });
     }
   };
+
 
 
   // 🗑️ Eliminar sistema

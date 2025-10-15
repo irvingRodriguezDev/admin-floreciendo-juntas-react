@@ -3,25 +3,19 @@ import {
   Grid,
   Box,
   Card,
-  CardActions,
-  CardContent,
   CardActionArea,
-  CardMedia,
   TextField,
   InputAdornment,
-  Button,
   Paper,
   Fade,
   IconButton,
 } from "@mui/material";
 import { useHistory } from "react-router-dom";
 import {
-  Star as StarIcon,
   Search as SearchIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
 } from "@mui/icons-material";
-import { yellow } from "@mui/material/colors";
 import { Typography, Chip } from "../../components/Wrappers";
 import SystemContext from "../../context/SystemContext/SystemContext";
 import Swal from "sweetalert2";
@@ -30,23 +24,19 @@ const System = () => {
   const history = useHistory();
   const { systems, getSystems, loading, deleteSystem } = useContext(SystemContext);
 
-  // 🔍 Estado local para búsqueda
   const [state, dispatch] = useReducer(
     (s, a) => ({ ...s, ...a }),
     { searchTerm: "" }
   );
 
-  // 📦 Cargar los sistemas al montar el componente
   useEffect(() => {
     getSystems();
   }, []);
 
-  // 🔎 Filtrar sistemas por nombre
   const filteredSystems = systems.filter((s) =>
     s.name?.toLowerCase().includes(state.searchTerm.toLowerCase())
   );
 
-  // 🗑️ Función para confirmar y eliminar
   const handleDelete = (id) => {
     Swal.fire({
       title: "¿Estás seguro?",
@@ -66,7 +56,7 @@ const System = () => {
 
   return (
     <Grid container spacing={3}>
-      {/* 🎛️ Filtros */}
+      {/* Filtros */}
       <Grid item xs={12}>
         <Paper
           elevation={0}
@@ -86,7 +76,6 @@ const System = () => {
             justifyContent="space-between"
             gap={2}
           >
-            {/* Buscador */}
             <Box display="flex" alignItems="center" gap={1}>
               <TextField
                 variant="outlined"
@@ -107,22 +96,12 @@ const System = () => {
                   ),
                 }}
               />
-
-              {/* Botón Crear Sistema */}
-              {/* <Button
-                style={{ marginTop: -10 }}
-                variant="contained"
-                color="success"
-                onClick={() => history.push("/app/system/addsystem")}
-              >
-                Crear Sistema
-              </Button> */}
             </Box>
           </Box>
         </Paper>
       </Grid>
 
-      {/* 🧱 Cards de Sistemas */}
+      {/* Cards de Sistemas */}
       <Grid item xs={12}>
         {loading ? (
           <Typography align="center">Cargando sistemas...</Typography>
@@ -147,7 +126,7 @@ const System = () => {
                       },
                     }}
                   >
-                    {/* ⚡ ICONOS DE EDITAR Y ELIMINAR */}
+                    {/* Iconos Editar / Eliminar */}
                     <Box sx={{ position: "absolute", top: 10, right: 10, zIndex: 2 }}>
                       <IconButton
                         size="large"
@@ -182,24 +161,38 @@ const System = () => {
                       </IconButton>
                     </Box>
 
-                    <CardActionArea
-                      onClick={() =>
-                        history.push(`/app/system/detail/${system.id}`)
-                      }
+                    <Card
+                      // onClick={() => history.push(`/app/system/detail/${system.id}`)}
                     >
-                      {/* Imagen o placeholder */}
-                      <Box sx={{ position: "relative" }}>
-                        <CardMedia
+                      {/* Imagen ajustada */}
+                      <Box
+                        sx={{
+                          position: "relative",
+                          height: 190,
+                          backgroundColor: "#f7f7f7",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          borderTopLeftRadius: 4,
+                          borderTopRightRadius: 4,
+                          overflow: "hidden",
+                        }}
+                      >
+                        <Box
                           component="img"
-                          height="190"
-                          image={
+                          src={
                             system.icon ||
                             "https://via.placeholder.com/300x190?text=Sistema"
                           }
                           alt={system.name}
                           sx={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "contain",
+                            objectPosition: "center",
                             borderTopLeftRadius: 4,
                             borderTopRightRadius: 4,
+                            transition: "transform 0.3s ease",
                           }}
                         />
                         <Chip
@@ -217,33 +210,28 @@ const System = () => {
                       </Box>
 
                       {/* Contenido */}
-                      <CardContent>
+                      <Box sx={{ p: 2 }}>
                         <Typography variant="h6" fontWeight={600} gutterBottom>
-                          <b>{system.name}</b>
+                          {system.name}
                         </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          {system.description}
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{
+                            mb: 1,
+                            display: "-webkit-box",
+                            overflow: "hidden",
+                            WebkitBoxOrient: "vertical",
+                            WebkitLineClamp: 2,
+                          }}
+                        >
+                          {system.description || "Sin descripción"}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
                           ID: {system.id}
                         </Typography>
-                      </CardContent>
-                    </CardActionArea>
-
-                    {/* <CardActions sx={{ px: 2, pb: 2 }}>
-                      <Box
-                        display="flex"
-                        justifyContent="space-between"
-                        alignItems="center"
-                        width="100%"
-                      >
-                        <Typography fontWeight="bold">Sistema</Typography>
-                        <Box display="flex" alignItems="center" color={yellow[700]}>
-                          <Typography>5.0</Typography>
-                          <StarIcon sx={{ ml: 0.3, fontSize: 18 }} />
-                        </Box>
                       </Box>
-                    </CardActions> */}
+                    </Card>
                   </Card>
                 </Fade>
               </Grid>
