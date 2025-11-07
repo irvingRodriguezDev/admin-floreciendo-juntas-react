@@ -1,5 +1,5 @@
   import React, { useContext } from "react";
-  import { Grid, Typography } from "@mui/material";
+  import { Avatar, Grid, Typography } from "@mui/material";
   import { useTheme } from "@mui/styles";
 
   import { Badge, Chip, Button } from '../../components/Wrappers';
@@ -20,6 +20,7 @@
   import { useHistory } from "react-router-dom"; // <- v5
   import EditIcon from '@mui/icons-material/Edit';
   import AuthContext from "../../context/AuthContext/AuthContext";
+  import { deepOrange } from '@mui/material/colors';
 
 
   // styles
@@ -35,6 +36,8 @@
 
     // Obtenemos el usuario del contexto
     const { usuario } = useContext(AuthContext);
+    console.log(usuario);
+    
 
     return (
       <Grid container spacing={4}>
@@ -44,7 +47,23 @@
               <Grid item xs={12} sm={5} md={5} lg={5}>
                 <div className={classes.visualProfile}>
                   <div className={classes.profileImage}>
-                    <img width="100%" src={ProfileIcon} alt="profile" />
+                    <Avatar
+                      alt={usuario?.user?.name || "Usuario"}
+                      src={usuario?.user?.profileImage || ""}
+                      sx={{
+                        width: 120, // ancho del avatar
+                        height: 120, // alto del avatar
+                        bgcolor: !usuario?.user?.profileImage ? deepOrange[500] : 'transparent',
+                        fontSize: 48, // tamaño de la letra
+                        fontWeight: 'bold',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      {!usuario?.user?.profileImage && usuario?.user?.name?.[0]}
+                    </Avatar>
+
                   </div>
                   <Chip
                     className={classes.chipMargin}
@@ -63,10 +82,10 @@
                 </span>
                   <a className={classes.profileExternalRes} href="https://flatlogic.com">Flatlogic.com</a>
 
-                  <EditIcon 
+                  {/* <EditIcon 
                   onClick={() => history.push('/app/user/edit')}
                   style={{ cursor: 'pointer', marginLeft: 8, fontSize: 22 }} 
-                />
+                /> */}
                   {/* <div>
                     <Badge type="tag" badgeContent={"UI/UX"} color="primary"/>
                     <Badge type="tag" badgeContent={"Art"} color="warning"/>

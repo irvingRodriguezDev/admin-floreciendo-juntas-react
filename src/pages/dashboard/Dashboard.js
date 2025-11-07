@@ -1,1067 +1,355 @@
-import React, { useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import {
   Grid,
-  LinearProgress,
-  Select,
-  OutlinedInput,
-  MenuItem,
+  Typography,
   Box,
+  CircularProgress,
+  Paper,
   Table,
-  TableBody,
+  TableHead,
   TableRow,
   TableCell,
-  Checkbox,
-  TablePagination,
-  TableHead,
-  TableSortLabel,
-  Toolbar,
-  IconButton, Menu
+  TableBody,
+  TableContainer,
 } from "@mui/material";
-import { useTheme, makeStyles } from '@mui/styles';
+import EventContext from "../../context/EventContext/EventContext";
 import {
-  ResponsiveContainer,
-  ComposedChart,
-  AreaChart,
-  Line,
-  Area,
-  PieChart,
-  Pie,
-  Cell,
-  YAxis,
+  BarChart,
+  Bar,
   XAxis,
-  Tooltip
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+  Cell,
 } from "recharts";
+import top1Image from "../../images/top1.png";
 
-// styles
-import useStyles from "./styles";
+const medalColors = ["#FF85C0", "#FF69B4", "#FFB6D9"]; // Top 2,1,3 colores rosas
 
-// components
-import mock from "./mock";
-import Widget from "../../components/Widget";
-import { Chip, Typography, Avatar } from "../../components/Wrappers";
-import Dot from "../../components/Sidebar/components/Dot";
-import BigStat from "./components/BigStat/BigStat";
-import {
-  Delete as DeleteIcon,
-  FilterList as FilterListIcon, MoreVert as MoreIcon,
-} from "@mui/icons-material";
-import PropTypes from "prop-types";
+export default function Dashboard() {
+  const { eventos, obtenerEventos, cargando } = useContext(EventContext);
+  const [showChart, setShowChart] = useState(true);
 
-import { lighten } from '@mui/material/styles';
-import cn from "classnames";
+  useEffect(() => {
+    obtenerEventos();
+  }, []);
 
-const PieChartData = [
-  { name: "Group A", value: 400, color: "primary" },
-  { name: "Group B", value: 300, color: "secondary" },
-  { name: "Group C", value: 300, color: "warning" },
-  { name: "Group D", value: 200, color: "success" }
-];
+  const sortedEvents = useMemo(() => {
+    if (!Array.isArray(eventos)) return [];
+    return [...eventos].sort(
+      (a, b) => (b.availableTickets ?? 0) - (a.availableTickets ?? 0)
+    );
+  }, [eventos]);
 
-const TicketChartData = [
-  { name: "Client 1", value: 2, color: "primary" },
-  { name: "Client 2", value: 2, color: "primary" },
-  { name: "Client 3", value: 2, color: "primary" },
-  { name: "Client 4", value: 2, color: "primary" },
-  { name: "Client 5", value: 2, color: "primary" },
-  { name: "Client 6", value: 2, color: "primary" },
-  { name: "Client 7", value: 2, color: "primary" },
-  { name: "Client 8", value: 2, color: "primary" },
-  { name: "Client 9", value: 2, color: "primary" },
-  { name: "Client 10", value: 2, color: "primary" },
-  { name: "Client 11", value: 2, color: "primary" },
-  { name: "Client 12", value: 2, color: "primary" },
-  { name: "Client 13", value: 2, color: "primary" },
-  { name: "Client 14", value: 2, color: "primary" },
-  { name: "Client 15", value: 2, color: "primary" },
-  { name: "Client 16", value: 2, color: "primary" },
-  { name: "Client 17", value: 2, color: "primary" },
-  { name: "Client 18", value: 2, color: "primary" },
-  { name: "Client 19", value: 2, color: "primary" },
-  { name: "Client 20", value: 2, color: "primary" }
-];
-
-// Recent Orders
-
-const rows = [
-  {
-    id: 1,
-    orderId: Math.floor(Math.random(0) * 3000000),
-    customer: "Victoria Cantrel",
-    office: "Croatia",
-    weight: "1.4 kg",
-    price: 23.87,
-    purDate: "12 Jan 2019",
-    delDate: "-",
-    status: "Pending",
-    color: "primary"
-  },
-  {
-    id: 2,
-    orderId: Math.floor(Math.random(0) * 3000000),
-    customer: "Cherokee Ware",
-    office: "Belgium",
-    weight: "0.8 kg",
-    price: 987,
-    purDate: "11 Jan 2019",
-    delDate: "14 Jan 2019",
-    status: "Delivered",
-    color: "success"
-  },
-  {
-    id: 3,
-    orderId: Math.floor(Math.random(0) * 3000000),
-    customer: "Constance Clayton",
-    office: "Peru",
-    weight: "105 kg",
-    price: 1.876,
-    purDate: "09 Jan 2019",
-    delDate: "-",
-    status: "Canceled",
-    color: "secondary"
-  },
-  {
-    id: 4,
-    orderId: Math.floor(Math.random(0) * 3000000),
-    customer: "Cherokee Ware",
-    office: "Belgium",
-    weight: "0.8 kg",
-    price: 987,
-    purDate: "11 Jan 2019",
-    delDate: "14 Jan 2019",
-    status: "Delivered",
-    color: "success"
-  },
-  {
-    id: 5,
-    orderId: Math.floor(Math.random(0) * 3000000),
-    customer: "Constance Clayton",
-    office: "Peru",
-    weight: "105 kg",
-    price: 1.876,
-    purDate: "06 Jan 2019",
-    delDate: "19 Jan 2019",
-    status: "In a process",
-    color: "warning"
-  },
-  {
-    id: 6,
-    orderId: Math.floor(Math.random() * 3000000),
-    customer: "Constance Clayton",
-    office: "Peru",
-    weight: "105 kg",
-    price: 1.876,
-    purDate: "06 Jan 2019",
-    delDate: "19 Jan 2019",
-    status: "In a process",
-    color: "warning"
+  if (cargando) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" mt={6}>
+        <CircularProgress color="primary" />
+      </Box>
+    );
   }
-];
 
-function desc(a, b, orderBy) {
-  if (b[orderBy] < a[orderBy]) {
-    return -1;
-  }
-  if (b[orderBy] > a[orderBy]) {
-    return 1;
-  }
-  return 0;
-}
-
-function stableSort(array, cmp) {
-  const stabilizedThis = array.map((el, index) => [el, index]);
-  stabilizedThis.sort((a, b) => {
-    const order = cmp(a[0], b[0]);
-    if (order !== 0) return order;
-    return a[1] - b[1];
-  });
-  return stabilizedThis.map(el => el[0]);
-}
-
-function getSorting(order, orderBy) {
-  return order === "desc"
-      ? (a, b) => desc(a, b, orderBy)
-      : (a, b) => -desc(a, b, orderBy);
-}
-
-const headCells = [
-  {
-    id: "id",
-    numeric: true,
-    disablePadding: true,
-    label: "Order ID"
-  },
-  { id: "customer", numeric: true, disablePadding: false, label: "Customer" },
-  { id: "office", numeric: true, disablePadding: false, label: "Office" },
-  { id: "weight", numeric: true, disablePadding: false, label: "Netto Weight" },
-  { id: "price", numeric: true, disablePadding: false, label: "Price" },
-  {
-    id: "purchase-date",
-    numeric: true,
-    disablePadding: false,
-    label: "Date of purchase"
-  },
-  {
-    id: "delivery-date",
-    numeric: true,
-    disablePadding: false,
-    label: "Date of Delivery"
-  },
-  { id: "status", numeric: true, disablePadding: false, label: "Status" },
-  { id: "actions", numeric: true, disablePadding: false, label: "Actions" }
-];
-
-function EnhancedTableHead(props) {
-  const {
-    classes,
-    onSelectAllClick,
-    order,
-    orderBy,
-    numSelected,
-    rowCount,
-    onRequestSort
-  } = props;
-  const createSortHandler = property => event => {
-    onRequestSort(event, property);
-  };
+  const topThree = sortedEvents.slice(0, 3);
 
   return (
-      <TableHead>
-        <TableRow>
-          <TableCell padding="checkbox">
-            <Checkbox
-                indeterminate={numSelected > 0 && numSelected < rowCount}
-                checked={numSelected === rowCount}
-                onChange={onSelectAllClick}
-                inputProps={{ "aria-label": "select all rows" }}
-            />
-          </TableCell>
-          {headCells.map(headCell => (
-              <TableCell
-                  key={headCell.id}
-                  align={headCell.numeric ? "left" : "right"}
-                  padding={headCell.disablePadding ? "none" : null}
-                  sortDirection={orderBy === headCell.id ? order : false}
-              >
-                <TableSortLabel
-                    active={orderBy === headCell.id}
-                    direction={order}
-                    onClick={createSortHandler(headCell.id)}
-                    style={{
-                      whiteSpace: "nowrap",
-                      textTransform: "uppercase",
-                      fontSize: "0.85rem",
-                    }}
-                >
-                  <Typography uppercase color="text" variant={"body2"} colorBrightness="hint">{headCell.label}</Typography>
-                  {orderBy === headCell.id ? (
-                      <span className={classes.visuallyHidden}>
-                  {order === "desc" ? "sorted descending" : "sorted ascending"}
-                </span>
-                  ) : null}
-                </TableSortLabel>
-              </TableCell>
-          ))}
-        </TableRow>
-      </TableHead>
-  );
-}
-
-EnhancedTableHead.propTypes = {
-  classes: PropTypes.object.isRequired,
-  numSelected: PropTypes.number.isRequired,
-  onRequestSort: PropTypes.func.isRequired,
-  onSelectAllClick: PropTypes.func.isRequired,
-  order: PropTypes.oneOf(["asc", "desc"]).isRequired,
-  orderBy: PropTypes.string.isRequired,
-  rowCount: PropTypes.number.isRequired
-};
-
-const useToolbarStyles = makeStyles(theme => ({
-  highlight:
-      theme.palette.type === "light"
-          ? {
-            color: theme.palette.secondary.main,
-            backgroundColor: lighten(theme.palette.secondary.light, 0.85)
-          }
-          : {
-            color: theme.palette.text.primary,
-            backgroundColor: theme.palette.secondary.dark
-          },
-  title: {
-    flex: "1 1 100%"
-  }
-}));
-
-const EnhancedTableToolbar = props => {
-  const classes = useToolbarStyles();
-  const { numSelected } = props;
-
-  return (
-      <Toolbar
-        className={cn(classes.root, {
-          [classes.highlight]: numSelected > 0
-        })}
+    <Box mt={4}>
+      {/* Top 3 estilo podio */}
+      <Typography
+        variant="h5"
+        fontWeight="bold"
+        color="primary"
+        mb={2}
+        textAlign="center"
       >
-        {numSelected > 0 ? (
-          <Typography
-            className={classes.title}
-            color="inherit"
-            variant="subtitle1"
-          >
-            {numSelected} selected
-          </Typography>
-        ) : (
-            <Box display={"flex"} className={classes.title}>
+        🌸 Podio de Eventos con Más boletos Vendidos
+      </Typography>
+
+      <Grid container spacing={2} justifyContent="center" alignItems="flex-end" mb={4}>
+        {/* Top 2 */}
+        {topThree[1] && (
+          <Grid item xs={12} sm={3}>
+            <Paper
+              elevation={8}
+              sx={{
+                borderRadius: 3,
+                p: 2,
+                textAlign: "center",
+                background: `linear-gradient(135deg, ${medalColors[0]} 0%, #fff 100%)`,
+                color: "#333",
+                height: 200,
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "flex-end",
+                transition: "transform 0.3s",
+                "&:hover": { transform: "scale(1.05)" },
+              }}
+            >
+              <Box
+                sx={{
+                  width: 50,
+                  height: 50,
+                  borderRadius: "50%",
+                  backgroundColor: "#fff",
+                  margin: "0 auto 5px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontWeight: "bold",
+                  fontSize: "1.3rem",
+                  color: medalColors[0],
+                  boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
+                }}
+              >
+                2
+              </Box>
+              <Typography variant="subtitle1" fontWeight="bold">
+                {topThree[1].title}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {topThree[1].location || "Sin ubicación"}
+              </Typography>
               <Typography
                 variant="h6"
-                color="text"
-                colorBrightness={"secondary"}
-                id="tableTitle"
-                style={{ display: "flex" }}
-                block
+                fontWeight="bold"
+                color={medalColors[0]}
               >
-                Recent Orders
-                <Box display="flex" alignSelf={"flex-end"} ml={1}>
-                  <Typography
-                    color="text"
-                    colorBrightness={"hint"}
-                    variant={"caption"}
-                  >
-                    1.340 total
-                  </Typography>
-                </Box>
+                {topThree[1].availableTickets} boletos
               </Typography>
-            </Box>
+            </Paper>
+          </Grid>
         )}
 
-        {numSelected > 0 ? (
-            <Tooltip title="Delete">
-              <IconButton aria-label="delete">
-                <DeleteIcon />
-              </IconButton>
-            </Tooltip>
-        ) : (
-            <Tooltip title="Filter list">
-              <IconButton aria-label="filter list">
-                <FilterListIcon />
-              </IconButton>
-            </Tooltip>
-        )}
-      </Toolbar>
-  );
-};
-
-EnhancedTableToolbar.propTypes = {
-  numSelected: PropTypes.number.isRequired
-};
-
-function Dashboard() {
-  let classes = useStyles();
-  let theme = useTheme();
-
-  // local
-  let [mainChartState, setMainChartState] = useState("monthly");
-
-  // Recent Orders table
-
-  const [order, setOrder] = React.useState("asc");
-  const [orderBy, setOrderBy] = React.useState("price");
-  const [selected, setSelected] = React.useState([]);
-  const [page, setPage] = React.useState(0);
-  const [rowsPerPage, setRowsPerPage] = React.useState(5);
-  const [actionsButtonRefID, setActionsButtonRefID] =  React.useState(null);
-  const [isActionsMenu, setActionsMenu] = React.useState(false)
-
-
-  const handleRequestSort = (event, property) => {
-    const isDesc = orderBy === property && order === "desc";
-    setOrder(isDesc ? "asc" : "desc");
-    setOrderBy(property);
-  };
-
-  const handleSelectAllClick = event => {
-    if (event.target.checked) {
-      const newSelecteds = rows.map(n => n.id);
-      setSelected(newSelecteds);
-      return;
-    }
-    setSelected([]);
-  };
-
-  const handleClick = (event, name) => {
-    const selectedIndex = selected.indexOf(name);
-    let newSelected = [];
-
-    if (selectedIndex === -1) {
-      newSelected = newSelected.concat(selected, name);
-    } else if (selectedIndex === 0) {
-      newSelected = newSelected.concat(selected.slice(1));
-    } else if (selectedIndex === selected.length - 1) {
-      newSelected = newSelected.concat(selected.slice(0, -1));
-    } else if (selectedIndex > 0) {
-      newSelected = newSelected.concat(
-          selected.slice(0, selectedIndex),
-          selected.slice(selectedIndex + 1)
-      );
-    }
-
-    setSelected(newSelected);
-  };
-
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = event => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
-
-  const isSelected = name => selected.indexOf(name) !== -1;
-
-  const emptyRows =
-      rowsPerPage - Math.min(rowsPerPage, rows.length - page * rowsPerPage);
-
-  const randomData = React.useMemo(() => getRandomData(10), []);
-
-  const mainChartData = React.useMemo(() => {
-    let resultArray = [];
-    let tablet = getRandomData(31, 3500, 6500, 7500, 1000);
-    let desktop = getRandomData(31, 1500, 7500, 7500, 1500);
-    let mobile = getRandomData(31, 1500, 7500, 7500, 1500);
-
-    for (let i = 0; i < tablet.length; i++) {
-      resultArray.push({
-        tablet: tablet[i].value,
-        desktop: desktop[i].value,
-        mobile: mobile[i].value
-      });
-    }
-
-    return resultArray;
-  }, [mainChartState]); // eslint-disable-line
-
-  return (
-    <Grid container spacing={3}>
-      {/* <Grid item lg={3} sm={6} xs={12}>
-        <Widget
-            title="Support Tracker"
-            bodyClass={classes.fullHeightBody}
-            className={classes.card}
-        >
-          <Grid container spacing={3} alignItems="center">
-            <Grid item xs={6}>
-              <Box display="flex">
-                <Typography variant="h2" weight="medium">
-                  543
-                </Typography>
-
-                <Typography
-                    color="text"
-                    variant={"caption"}
-                    noWrap
-                    style={{ alignSelf: "flex-end", marginLeft: 8 }}
-                >
-                  Tickets
-                </Typography>
-              </Box>
-            </Grid>
-            <Grid
-                item
-                xs={6}
-                style={{
-                  justifyContent: "center",
-                  alignItems: "center",
-                  display: "flex"
-                }}
+        {/* Top 1 */}
+        {topThree[0] && (
+          <Grid item xs={12} sm={3}>
+            <Paper
+              elevation={10}
+              sx={{
+                borderRadius: 3,
+                p: 2,
+                textAlign: "center",
+                background: `linear-gradient(135deg, ${medalColors[1]} 0%, #fff 100%)`,
+                color: "#333",
+                height: 250,
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "flex-end",
+                alignItems: "center",
+                position: "relative",
+                transition: "transform 0.3s",
+                "&:hover": { transform: "scale(1.1)" },
+              }}
             >
-              <Typography
-                  variant="caption"
-                  weight={"medium"}
-                  style={{ position: "absolute" }}
-              >
-                64%
-              </Typography>
-              <ResponsiveContainer width="100%" height={80}>
-                <PieChart>
-                  <Pie
-                      data={TicketChartData}
-                      startAngle={270}
-                      endAngle={0}
-                      paddingAngle={5}
-                      innerRadius={30}
-                      outerRadius={35}
-                      dataKey="value"
-                      style={{ border: 0 }}
-                  >
-                    {TicketChartData.map((entry, index) => (
-                        <Cell
-                            key={`cell-${index}`}
-                            fill={theme.palette[entry.color].main}
-                            stroke={""}
-                        />
-                    ))}
-                  </Pie>
-                </PieChart>
-              </ResponsiveContainer>
-            </Grid>
-          </Grid>
-          <Grid
-              container
-              direction="row"
-              justify="space-between"
-              alignItems="center"
-              wrap={"nowrap"}
-          >
-            <Grid item>
-              <Typography
-                  color="text"
-                  colorBrightness={"hint"}
-                  variant={"caption"}
-                  style={{ marginRight: 5 }}
-                  noWrap
-              >
-                New Tickets
-              </Typography>
-              <Box display="flex" alignItems="center" justifyContent={"center"}>
-                <Typography
-                    size="md"
-                    weight={"medium"}
-                    style={{ marginRight: 8 }}
-                >
-                  45
-                </Typography>
-                <Dot color="success" />
-              </Box>
-            </Grid>
-            <Grid item>
-              <Typography
-                  color="text"
-                  colorBrightness={"hint"}
-                  variant={"caption"}
-                  style={{ marginRight: 5 }}
-              >
-                Open
-              </Typography>
-              <Box display="flex" alignItems="center" justifyContent={"center"}>
-                <Typography
-                    size="md"
-                    weight={"medium"}
-                    style={{ marginRight: 8 }}
-                >
-                  147
-                </Typography>
-                <Dot color="warning" />
-              </Box>
-            </Grid>
-            <Grid item>
-              <Typography
-                  color="text"
-                  colorBrightness={"hint"}
-                  variant={"caption"}
-              >
-                Completed
-              </Typography>
-              <Box display="flex" alignItems="center" justifyContent={"center"}>
-                <Typography
-                    size="md"
-                    weight={"medium"}
-                    style={{ marginRight: 8 }}
-                >
-                  351
-                </Typography>
-                <Dot color="primary" />
-              </Box>
-            </Grid>
-          </Grid>
-        </Widget>
-      </Grid>
-      <Grid item lg={3} sm={6} xs={12}>
-        <Widget
-            title="Revenue Breakdown"
-            className={classes.card}
-            bodyClass={classes.alignStandaloneElement}
-        >
-          <Grid container spacing={3}>
-            <Grid
-                item
-                xs={6}
-                style={{
+              {/* Imagen decorativa top1.png detrás del número */}
+              <Box
+                component="img"
+                src={top1Image}
+                alt="Corona Top 1"
+                sx={{
+                  width: 155,
+                  height: 155,
+                  position: "absolute",
+                  top: 0,
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  zIndex: 1, // detrás del número
+                }}
+              />
+
+              {/* Círculo con número 1 de frente */}
+              <Box
+                sx={{
+                  width: 80,
+                  height: 80,
+                  borderRadius: "50%",
+                  backgroundColor: "#fff",
+                  margin: "0 auto 5px",
                   display: "flex",
-                  justifyContent: "center",
                   alignItems: "center",
-                  padding: 6
+                  justifyContent: "center",
+                  fontWeight: "bold",
+                  top: -28,
+                  fontSize: "1.5rem",
+                  color: medalColors[1],
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+                  position: "relative",
+                  zIndex: 0, // por encima de la imagen
                 }}
-            >
-              <Typography
-                  variant={"caption"}
-                  weight={"medium"}
-                  style={{ position: "absolute" }}
               >
-                1700
+                1
+              </Box>
+
+              <Typography variant="h6" fontWeight="bold">
+                {topThree[0].title}
               </Typography>
-              <ResponsiveContainer width="100%" height={144}>
-                <PieChart>
-                  <Pie
-                      data={PieChartData}
-                      innerRadius={30}
-                      outerRadius={40}
-                      dataKey="value"
+              <Typography variant="body2" color="text.secondary">
+                {topThree[0].location || "Sin ubicación"}
+              </Typography>
+              <Typography
+                variant="h6"
+                fontWeight="bold"
+                color={medalColors[1]}
+              >
+                {topThree[0].availableTickets} boletos
+              </Typography>
+            </Paper>
+          </Grid>
+        )}
+
+
+        {/* Top 3 */}
+        {topThree[2] && (
+          <Grid item xs={12} sm={3}>
+            <Paper
+              elevation={8}
+              sx={{
+                borderRadius: 3,
+                p: 2,
+                textAlign: "center",
+                background: `linear-gradient(135deg, ${medalColors[2]} 0%, #fff 100%)`,
+                color: "#333",
+                height: 180,
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "flex-end",
+                transition: "transform 0.3s",
+                "&:hover": { transform: "scale(1.05)" },
+              }}
+            >
+              <Box
+                sx={{
+                  width: 50,
+                  height: 50,
+                  borderRadius: "50%",
+                  backgroundColor: "#fff",
+                  margin: "0 auto 5px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontWeight: "bold",
+                  fontSize: "1.3rem",
+                  color: medalColors[2],
+                  boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
+                }}
+              >
+                3
+              </Box>
+              <Typography variant="subtitle1" fontWeight="bold">
+                {topThree[2].title}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {topThree[2].location || "Sin ubicación"}
+              </Typography>
+              <Typography
+                variant="h6"
+                fontWeight="bold"
+                color={medalColors[2]}
+              >
+                {topThree[2].availableTickets} boletos
+              </Typography>
+            </Paper>
+          </Grid>
+        )}
+      </Grid>
+
+      {/* Gráfica con todos los eventos */}
+      <Paper elevation={4} sx={{ borderRadius: 3, p: 3, mb: 4 }}>
+        <Typography variant="h6" fontWeight="bold" mb={2} color="primary">
+          🌸 Todos los Eventos
+        </Typography>
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart
+            data={sortedEvents}
+            margin={{ top: 20, right: 30, left: 25, bottom: 80 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" stroke="#f5c0e6" />
+            <XAxis
+              dataKey="title"
+              tick={{ fontSize: 12, fill: "#555" }}
+              angle={-30}
+              textAnchor="end"
+              interval={0}
+            />
+            <YAxis tick={{ fontSize: 12, fill: "#555" }} />
+            <Tooltip
+              contentStyle={{
+                backgroundColor: "#fff",
+                borderRadius: 8,
+                border: "1px solid #FF69B4",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+              }}
+            />
+            <Bar dataKey="availableTickets">
+              {sortedEvents.map((entry, index) => (
+                <Cell
+                  key={`cell-${index}`}
+                  fill={medalColors[index] || "#FF69B4"}
+                />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </Paper>
+
+      {/* Tabla con ranking */}
+      {sortedEvents.length > 0 && (
+        <TableContainer component={Paper} sx={{ borderRadius: 3 }}>
+          <Table>
+            <TableHead sx={{ backgroundColor: "#ffe6f0" }}>
+              <TableRow>
+                <TableCell>#</TableCell>
+                <TableCell>Evento</TableCell>
+                <TableCell>Ubicación</TableCell>
+                <TableCell align="right">Boletos vendidos</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {sortedEvents.map((event, index) => (
+                <TableRow
+                  key={event.id}
+                  sx={{
+                    "&:hover": { backgroundColor: "rgba(255,105,180,0.05)" },
+                  }}
+                >
+                  <TableCell>
+                    {index < 3 ? (
+                      <Box
+                        sx={{
+                          display: "inline-block",
+                          width: 24,
+                          height: 24,
+                          borderRadius: "50%",
+                          bgcolor: medalColors[index],
+                          color: "#fff",
+                          textAlign: "center",
+                          lineHeight: "24px",
+                          fontWeight: "bold",
+                        }}
+                      >
+                        {index + 1}
+                      </Box>
+                    ) : (
+                      index + 1
+                    )}
+                  </TableCell>
+                  <TableCell>{event.title}</TableCell>
+                  <TableCell>{event.location || "Sin ubicación"}</TableCell>
+                  <TableCell
+                    align="right"
+                    sx={{
+                      fontWeight: index < 3 ? "bold" : "500",
+                      color: index < 3 ? medalColors[index] : "#FF69B4",
+                    }}
                   >
-                    {PieChartData.map((entry, index) => (
-                        <Cell
-                            key={`cell-${index}`}
-                            fill={theme.palette[entry.color].main}
-                            stroke={""}
-                        />
-                    ))}
-                  </Pie>
-                </PieChart>
-              </ResponsiveContainer>
-            </Grid>
-            <Grid item xs={6}>
-              <div className={classes.pieChartLegendWrapper}>
-                {PieChartData.map(({ name, value, color }, index) => (
-                    <div key={color} className={classes.legendItemContainer}>
-                      <Dot color={color} style={{ marginRight: 5 }} />
-                      <Typography
-                          color="text"
-                          colorBrightness={"hint"}
-                          variant={"caption"}
-                          noWrap
-                      >
-                        &nbsp;{name}&nbsp;
-                      </Typography>
-                      <Typography color="text" weight={"medium"}>
-                        &nbsp;{value}
-                      </Typography>
-                    </div>
-                ))}
-              </div>
-            </Grid>
-          </Grid>
-        </Widget>
-      </Grid>
-      <Grid item lg={3} sm={6} xs={12}>
-        <Widget
-            title="App Performance"
-            className={classes.card}
-            bodyClass={classes.fullHeightBody}
-        >
-          <div className={classes.performanceLegendWrapper}>
-            <div className={classes.legendElement}>
-              <Dot color="warning" />
-              <Typography
-                  color="text"
-                  colorBrightness="hint"
-                  variant={"body2"}
-                  className={classes.legendElementText}
-              >
-                Integration
-              </Typography>
-            </div>
-            <div className={classes.legendElement}>
-              <Dot color="primary" />
-              <Typography
-                  color="text"
-                  colorBrightness="hint"
-                  variant={"body2"}
-                  className={classes.legendElementText}
-              >
-                SDK
-              </Typography>
-            </div>
-          </div>
-          <div className={classes.progressSection}>
-            <Typography
-                color="text"
-                variant={"body2"}
-                className={classes.progressSectionTitle}
-            >
-              Integration
-            </Typography>
-            <LinearProgress
-              variant="determinate"
-              value={77}
-              classes={{ barColorPrimary: classes.progressBarPrimary }}
-              className={classes.progress}
-            />
-          </div>
-          <div>
-            <Typography
-              color="text"
-              variant={"body2"}
-              className={classes.progressSectionTitle}
-            >
-              SDK
-            </Typography>
-            <LinearProgress
-              variant="determinate"
-              value={73}
-              classes={{ barColorPrimary: classes.progressBarWarning }}
-              className={classes.progress}
-            />
-          </div>
-        </Widget>
-      </Grid>
-      <Grid item lg={3} sm={6} xs={12}>
-        <Widget
-            title="Server Overview"
-            className={classes.card}
-            bodyClass={classes.fullHeightBody}
-        >
-          <div className={classes.serverOverviewElement}>
-            <Typography
-                color="text"
-                noWrap
-                variant={"body2"}
-                weight={"medium"}
-                className={classes.serverOverviewElementText}
-            >
-              60% / 37°С / 3.3 Ghz
-            </Typography>
-            <div className={classes.serverOverviewElementChartWrapper}>
-              <ResponsiveContainer height={50} width="99%">
-                <AreaChart data={randomData}>
-                  <Area
-                      type="natural"
-                      dataKey="value"
-                      stroke={theme.palette.secondary.main}
-                      fill={theme.palette.secondary.light}
-                      strokeWidth={2}
-                      fillOpacity="0.25"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-          <div className={classes.serverOverviewElement}>
-            <Typography
-                color="text"
-                noWrap
-                weight={"medium"}
-                variant={"body2"}
-                className={classes.serverOverviewElementText}
-            >
-              54% / 31°С / 3.3 Ghz
-            </Typography>
-            <div className={classes.serverOverviewElementChartWrapper}>
-              <ResponsiveContainer height={50} width="99%">
-                <AreaChart data={randomData}>
-                  <Area
-                      type="natural"
-                      dataKey="value"
-                      stroke={theme.palette.primary.main}
-                      fill={theme.palette.primary.light}
-                      strokeWidth={2}
-                      fillOpacity="0.25"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-          <div className={classes.serverOverviewElement}>
-            <Typography
-                color="text"
-                noWrap
-                weight={"medium"}
-                variant={"body2"}
-                className={classes.serverOverviewElementText}
-            >
-              57% / 21°С / 3.3 Ghz
-            </Typography>
-            <div className={classes.serverOverviewElementChartWrapper}>
-              <ResponsiveContainer height={50} width="99%">
-                <AreaChart data={randomData}>
-                  <Area
-                      type="natural"
-                      dataKey="value"
-                      stroke={theme.palette.warning.main}
-                      fill={theme.palette.warning.light}
-                      strokeWidth={2}
-                      fillOpacity="0.25"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        </Widget>
-      </Grid> */}
-      <Grid item xs={12}>
-        <Widget
-            bodyClass={classes.mainChartBody}
-            header={
-              <div className={classes.mainChartHeader}>
-                <Typography
-                  variant="h6"
-                  color="text"
-                  weight={"medium"}
-                  colorBrightness="secondary"
-                >
-                  Daily Line Chart
-                </Typography>
-                <div className={classes.mainChartHeaderLabels}>
-                  <div className={classes.mainChartHeaderLabel}>
-                    <Dot color="warning" />
-                    <Typography className={classes.mainChartLegendElement}>
-                      Tablet
-                    </Typography>
-                  </div>
-                  <div className={classes.mainChartHeaderLabel}>
-                    <Dot color="primary" />
-                    <Typography className={classes.mainChartLegendElement}>
-                      Mobile
-                    </Typography>
-                  </div>
-                  <div className={classes.mainChartHeaderLabel}>
-                    <Dot color="secondary" />
-                    <Typography className={classes.mainChartLegendElement}>
-                      Desktop
-                    </Typography>
-                  </div>
-                </div>
-                <Select
-                    value={mainChartState}
-                    onChange={e => setMainChartState(e.target.value)}
-                    input={
-                      <OutlinedInput
-                          classes={{
-                            notchedOutline: classes.mainChartSelectRoot,
-                            input: classes.mainChartSelect
-                          }}
-                      />
-                    }
-                    autoWidth
-                    className={classes.fixIconRight}
-                >
-                  <MenuItem value="daily">Daily</MenuItem>
-                  <MenuItem value="weekly">Weekly</MenuItem>
-                  <MenuItem value="monthly">Monthly</MenuItem>
-                </Select>
-              </div>
-            }
-        >
-          <ResponsiveContainer width="100%" minWidth={500} height={350}>
-            <ComposedChart
-                margin={{ top: 0, right: -15, left: -15, bottom: 0 }}
-                data={mainChartData}
-            >
-              <YAxis
-                  ticks={[0, 2500, 5000, 7500]}
-                  tick={{
-                    fill: theme.palette.text.hint + "80",
-                    fontSize: 14
-                  }}
-                  stroke={theme.palette.text.hint + "80"}
-                  tickLine={false}
-              />
-              <XAxis
-                  tickFormatter={i => i + 1}
-                  tick={{
-                    fill: theme.palette.text.hint + "80",
-                    fontSize: 14
-                  }}
-                  stroke={theme.palette.text.hint + "80"}
-                  tickLine={false}
-              />
-              <Tooltip />
-              <Area
-                  type="natural"
-                  dataKey="desktop"
-                  fill={theme.palette.background.light}
-                  strokeWidth={0}
-                  activeDot={false}
-              />
-              <Line
-                  type="natural"
-                  dataKey="mobile"
-                  stroke={theme.palette.primary.main}
-                  strokeWidth={2}
-                  dot={false}
-                  activeDot={false}
-              />
-              <Line
-                  type="linear"
-                  dataKey="tablet"
-                  stroke={theme.palette.warning.main}
-                  strokeWidth={2}
-                  dot={{
-                    stroke: theme.palette.warning.dark,
-                    strokeWidth: 2,
-                    fill: theme.palette.warning.main
-                  }}
-                  activeDot={{
-                    r: 8
-                  }}
-              />
-            </ComposedChart>
-          </ResponsiveContainer>
-        </Widget>
-      </Grid>
-      {/* {mock.bigStat.map(stat => (
-          <Grid item md={4} sm={6} xs={12} key={stat.product}>
-            <BigStat {...stat} />
-          </Grid>
-      ))} */}
-      <Grid item xs={12}>
-        <Widget noBodyPadding bodyClass={classes.tableWidget}>
-          <EnhancedTableToolbar numSelected={selected.length} />
-          <div className={classes.tableWrapper}>
-            <Table
-                className={classes.table}
-                aria-labelledby="tableTitle"
-                aria-label="recent orders"
-            >
-              <EnhancedTableHead
-                  classes={classes}
-                  numSelected={selected.length}
-                  order={order}
-                  orderBy={orderBy}
-                  onSelectAllClick={handleSelectAllClick}
-                  onRequestSort={handleRequestSort}
-                  rowCount={rows.length}
-              />
-              <TableBody>
-                {stableSort(rows, getSorting(order, orderBy))
-                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((row, index) => {
-                    const isItemSelected = isSelected(row.id);
-                    const labelId = `orders-table-checkbox-${index}`;
-
-                    return (
-                      <TableRow
-                        hover
-                        onClick={event => handleClick(event, row.id)}
-                        role="checkbox"
-                        aria-checked={isItemSelected}
-                        tabIndex={-1}
-                        key={row.id}
-                        selected={isItemSelected}
-                      >
-                        <TableCell padding="checkbox">
-                          <Checkbox
-                              checked={isItemSelected}
-                              inputProps={{ "aria-labelledby": labelId }}
-                          />
-                        </TableCell>
-                        <TableCell
-                            component="th"
-                            id={labelId}
-                            scope="row"
-                            padding="none"
-                        >
-                          {row.orderId}
-                        </TableCell>
-                        <TableCell>
-                          <Box
-                              display={"flex"}
-                              flexWrap={"nowrap"}
-                              alignItems={"center"}
-                          >
-                            <Avatar
-                                alt={row.customer}
-                                color={row.color}
-                                style={{ marginRight: 8 }}
-                            >
-                              {row.customer[0]}
-                            </Avatar>
-                            <Typography style={{ whiteSpace: "nowrap" }}>
-                              {row.customer}
-                            </Typography>
-                          </Box>
-                        </TableCell>
-                        <TableCell>{row.office}</TableCell>
-                        <TableCell>{row.weight}</TableCell>
-                        <TableCell>${row.price}</TableCell>
-                        <TableCell>{row.purDate}</TableCell>
-                        <TableCell>{row.delDate}</TableCell>
-                        <TableCell>
-                          <Chip label={row.status} color={row.color} />
-                        </TableCell>
-                        <TableCell align={"center"}>
-                          <IconButton
-                              className={classes.actionsIcon}
-                              aria-owns="actions-menu"
-                              aria-haspopup="true"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setActionsMenu(true);
-                                setActionsButtonRefID(e.currentTarget)
-                              }}
-                              ref={setActionsButtonRefID}
-                          >
-                            <MoreIcon />
-                          </IconButton>
-
-                          <Menu
-                            id="actions-menu"
-                            open={isActionsMenu}
-                            anchorEl={actionsButtonRefID}
-                            onClose={() => setActionsMenu(false)}
-                            disableAutoFocusItem
-                          >
-                            <MenuItem>
-                              <Typography>Edit</Typography>
-                            </MenuItem>
-                            <MenuItem>
-                              <Typography>Delete</Typography>
-                            </MenuItem>
-                          </Menu>
-
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                {emptyRows > 0 && (
-                  <TableRow style={{ height: 53 * emptyRows }}>
-                      <TableCell colSpan={6} />
-                    </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-          <TablePagination
-            rowsPerPageOptions={[5, 10, 25]}
-            component="div"
-            count={rows.length}
-            rowsPerPage={rowsPerPage}
-            page={page}
-            backIconButtonProps={{
-              "aria-label": "previous page"
-            }}
-            nextIconButtonProps={{
-              "aria-label": "next page"
-            }}
-            onPageChange={handleChangePage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-          />
-        </Widget>
-      </Grid>
-    </Grid>
+                    {event.availableTickets}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
+    </Box>
   );
 }
-
-// #######################################################################
-
-function getRandomData(length, min, max, multiplier = 10, maxDiff = 10) {
-  let array = new Array(length).fill();
-  let lastValue;
-
-  return array.map((item, index) => {
-    let randomValue = Math.floor(Math.random() * multiplier + 1);
-
-    while (
-        randomValue <= min ||
-        randomValue >= max ||
-        (lastValue && randomValue - lastValue > maxDiff)
-        ) {
-      randomValue = Math.floor(Math.random() * multiplier + 1);
-    }
-
-    lastValue = randomValue;
-
-    return { value: randomValue };
-  });
-}
-
-export default Dashboard;

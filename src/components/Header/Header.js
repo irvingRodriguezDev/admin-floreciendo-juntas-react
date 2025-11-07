@@ -1,13 +1,16 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
-import { AppBar, Toolbar, IconButton, Menu, MenuItem } from '@mui/material';
+import { AppBar, Toolbar, IconButton, Menu, MenuItem, Box, Divider } from '@mui/material';
 import { useTheme } from '@mui/material';
 import {
   Menu as MenuIcon,
   Person as AccountIcon,
   ArrowBack as ArrowBackIcon,
+  Logout as LogoutIcon,
 } from '@mui/icons-material';
 import classNames from 'classnames';
+import { deepOrange } from '@mui/material/colors';
+
 
 //images
 import profile from '../../images/main-profile.png';
@@ -124,22 +127,29 @@ export default function Header(props) {
         </Typography>
         <div className={classes.grow} />
         <IconButton
-          aria-haspopup='true'
-          color='inherit'
-          className={classes.headerMenuButton}
-          aria-controls='profile-menu'
           onClick={(e) => setProfileMenu(e.currentTarget)}
+          sx={{
+            p: 0.3,
+            borderRadius: "50%",
+            border: "2px solid rgba(255, 255, 255, 0.6)",
+            transition: "0.2s",
+            "&:hover": {
+              borderColor: "#fff",
+              transform: "scale(1.05)",
+            },
+          }}
         >
           <Avatar
-            alt={currentUser?.firstName}
-            // eslint-disable-next-line no-mixed-operators
-            src={
-              (currentUser?.avatar?.length >= 1 &&
-              currentUser?.avatar[currentUser.avatar.length - 1].publicUrl) || profile
-            }
+            alt={usuario?.user?.name || "Usuario"}
+            src={usuario?.user?.profileImage || ""}
             classes={{ root: classes.headerIcon }}
+            sx={{
+              bgcolor: !usuario?.user?.profileImage ? deepOrange[500] : "transparent",
+              color: "#ffffffff",
+            }}
           >
-            {currentUser?.firstName?.[0]}
+            {/* Si no hay imagen, muestra la primera letra del nombre */}
+            {!usuario?.user?.profileImage && usuario?.user?.name?.[0]}
           </Avatar>
         </IconButton>
         <Typography
@@ -147,54 +157,76 @@ export default function Header(props) {
           style={{ display: 'flex', alignItems: 'center', marginLeft: 8 }}
         >
           <div className={classes.profileLabel}>
-            Hola {usuario?.user?.name || "Admin"},&nbsp;
+            <b>Hola {usuario?.user?.name || "Admin"},&nbsp;</b>
           </div>
           <Typography weight={'bold'} className={classes.profileLabel}>
             {currentUser?.firstName}
           </Typography>
         </Typography>
         <Menu
-          id='profile-menu'
+          id="profile-menu"
           open={Boolean(profileMenu)}
           anchorEl={profileMenu}
           onClose={() => setProfileMenu(null)}
-          className={classes.headerMenu}
-          classes={{ paper: classes.profileMenu }}
-          disableAutoFocusItem
+          PaperProps={{
+            elevation: 4,
+            sx: {
+              mt: 1.5,
+              borderRadius: 2,
+              minWidth: 220,
+              backgroundColor: theme.palette.background.paper,
+            },
+          }}
         >
-          <div className={classes.profileMenuUser}>
-            <Typography variant='h4' weight='medium'>
-              {currentUser?.firstName}
+          {/* <Box sx={{ px: 2, py: 1.5 }}>
+            <Typography
+              variant="subtitle1"
+              sx={{ fontWeight: 600, color: theme.palette.text.primary }}
+            >
+              {usuario?.user?.name || "Usuario"}
             </Typography>
             <Typography
-              className={classes.profileMenuLink}
-              component='a'
-              color='primary'
-              href='https://flatlogic.com'
+              variant="body2"
+              sx={{ color: theme.palette.text.secondary }}
             >
-              Flatlogic.com
+              {usuario?.user?.email || "Sin correo"}
             </Typography>
-          </div>
+          </Box>
+
+          <Divider /> */}
+
           <MenuItem
-            className={classNames(
-              classes.profileMenuItem,
-              classes.headerMenuItem,
-            )}
+            onClick={() => setProfileMenu(null)}
+            sx={{
+              py: 1.2,
+              "&:hover": { backgroundColor: "rgba(0,0,0,0.04)" },
+            }}
           >
-            <AccountIcon className={classes.profileMenuIcon} />
-            <Link to='/app/profile' style={{ textDecoration: 'none' }}>
+            <AccountIcon sx={{ fontSize: 20, mr: 1, color: "primary.main" }} />
+            <Link
+              to="/app/profile"
+              style={{
+                textDecoration: "none",
+                color: theme.palette.text.primary,
+                width: "100%",
+              }}
+            >
               Perfil
             </Link>
           </MenuItem>
-          <div className={classes.profileMenuUser}>
-            <Typography
-              className={classes.profileMenuLink}
-              color='primary'
-              onClick={handleLogout}
-            >
-              Cerrar Sesión
-            </Typography>
-          </div>
+
+          <Divider />
+
+          <MenuItem
+            onClick={handleLogout}
+            sx={{
+              py: 1.2,
+              "&:hover": { backgroundColor: "rgba(255,0,0,0.05)" },
+            }}
+          >
+            <LogoutIcon sx={{ fontSize: 20, mr: 1, color: "error.main" }} />
+            <Typography color="error.main">Cerrar sesión</Typography>
+          </MenuItem>
         </Menu>
       </Toolbar>
     </AppBar>

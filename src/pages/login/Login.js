@@ -3,299 +3,236 @@ import {
   Grid,
   CircularProgress,
   Grow,
-  TextField as Input,
+  TextField,
   Typography,
   InputAdornment,
   IconButton,
+  Card,
+  CardContent,
+  CardActions,
+  Box,
 } from "@mui/material";
-import { withRouter } from "react-router-dom";
-import { Visibility, VisibilityOff } from "@mui/icons-material";
+import { Visibility, VisibilityOff } from "@mui/icons-material"; 
 import Swal from "sweetalert2";
-
-// styles
-import useStyles from "./styles";
-
-// logo
-import logo from "./logo.svg";
-
-// components
+import { withRouter } from "react-router-dom";
 import { Button } from "../../components/Wrappers";
-
-// context
 import AuthContext from "../../context/AuthContext/AuthContext";
 import ResetPasswordContext from "../../context/ResetPasswordContext/ResetPasswordContext";
+import logo from "../../logo_carolina_tavera.png";
 
 const getGreeting = () => {
   const d = new Date();
   if (d.getHours() >= 4 && d.getHours() <= 12) return "Buen día";
-  if (d.getHours() >= 13 && d.getHours() <= 16) return "Buen día";
+  if (d.getHours() >= 13 && d.getHours() <= 16) return "Buenas tardes";
   return "Buenas noches";
 };
 
 function Login(props) {
-  const classes = useStyles();
-
-  // context
   const { iniciarSesion, autenticado, enviarEmailRecuperacion } = useContext(AuthContext);
+  const { resetPassword } = useContext(ResetPasswordContext);
 
-  // estados locales
   const [loginValue, setLoginValue] = useState("");
   const [passwordValue, setPasswordValue] = useState("");
   const [forgotEmail, setForgotEmail] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isForgot, setIsForgot] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
-  // validar formulario
-  const isLoginFormValid = () => loginValue.length !== 0 && passwordValue.length !== 0;
+  const isLoginFormValid = () => loginValue.length && passwordValue.length;
 
-  // redirigir después de login
   useEffect(() => {
-    if (autenticado) {
-      props.history.push("/app/profile"); // cambia a la ruta que necesites
-    }
+    if (autenticado) props.history.push("/app/profile");
   }, [autenticado, props.history]);
 
-  // login
   const handleLogin = async () => {
     if (!isLoginFormValid()) return;
-
     setIsLoading(true);
     await iniciarSesion({ email: loginValue, password: passwordValue });
     setIsLoading(false);
   };
 
-  // recuperación de contraseña
-  const handleForgotPassword = async () => {
-    if (!forgotEmail) return;
+  const handleResetPassword = async () => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!forgotEmail || !newPassword || !confirmPassword) {
+      Swal.fire("Error", "Completa todos los campos", "error");
+      return;
+    }
+    if (!emailRegex.test(forgotEmail)) {
+      Swal.fire("Error", "Por favor ingresa un email válido", "error");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      Swal.fire("Error", "Las contraseñas no coinciden", "error");
+      return;
+    }
+
     setIsLoading(true);
-    await enviarEmailRecuperacion(forgotEmail);
+    await resetPassword({ email: forgotEmail, password: newPassword, passwordConfirmation: confirmPassword });
     setIsLoading(false);
+    setIsForgot(false);
+    setForgotEmail("");
+    setNewPassword("");
+    setConfirmPassword("");
   };
 
   const loginOnEnterKey = (event) => {
     if (event.key === "Enter") handleLogin();
   };
 
- const { resetPassword } = useContext(ResetPasswordContext);
-
-
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-
-  const handleResetPassword = async () => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-  if (!forgotEmail || !newPassword || !confirmPassword) {
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text: "Completa todos los campos",
-    });
-    return;
-  }
-
-  if (!emailRegex.test(forgotEmail)) {
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text: "Por favor ingresa un email válido",
-    });
-    return;
-  }
-
-  if (newPassword !== confirmPassword) {
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text: "Las contraseñas no coinciden",
-    });
-    return;
-  }
-
-  setIsLoading(true);
-
-  await resetPassword({
-    email: forgotEmail,
-    password: newPassword,
-    passwordConfirmation: confirmPassword,
-  });
-
-  setIsLoading(false);
-  setIsForgot(false);
-  setForgotEmail("");
-  setNewPassword("");
-  setConfirmPassword("");
- };
-
-
-
   return (
-    <Grid container className={classes.container}>
-      <div className={classes.logotypeContainer}>
-        <img src={logo} alt="logo" className={classes.logotypeImage} />
-        <Typography className={classes.logotypeText}>React Material Admin</Typography>
-      </div>
-
-      <div className={classes.formContainer}>
-        <div className={classes.form}>
-          {isForgot ? (
-  <div>
-    <Input
-      id="forgotEmail"
-      InputProps={{
-        classes: {
-          underline: classes.InputUnderline,
-          input: classes.Input,
-        },
+    <Grid
+      container
+      justifyContent="center"
+      alignItems="center"
+      sx={{
+        minHeight: "100vh",
+        background: "linear-gradient(135deg, #ff5c93 0%, #f9cada 100%)",
       }}
-      value={forgotEmail}
-      onChange={(e) => setForgotEmail(e.target.value)}
-      margin="normal"
-      placeholder="Email"
-      type="email"
-      fullWidth
-    />
-
-    <Input
-      id="newPassword"
-      InputProps={{
-        classes: {
-          underline: classes.InputUnderline,
-          input: classes.Input,
-        },
-      }}
-      value={newPassword}
-      onChange={(e) => setNewPassword(e.target.value)}
-      margin="normal"
-      placeholder="Nueva contraseña"
-      type="password"
-      fullWidth
-    />
-
-    <Input
-      id="confirmPassword"
-      InputProps={{
-        classes: {
-          underline: classes.InputUnderline,
-          input: classes.Input,
-        },
-      }}
-      value={confirmPassword}
-      onChange={(e) => setConfirmPassword(e.target.value)}
-      margin="normal"
-      placeholder="Confirmar contraseña"
-      type="password"
-      fullWidth
-    />
-
-    <div className={classes.formButtons}>
-      {isLoading ? (
-        <CircularProgress size={26} className={classes.loginLoader} />
-      ) : (
-        <Button
-          disabled={
-            !forgotEmail || !newPassword || !confirmPassword || newPassword !== confirmPassword
-          }
-          onClick={handleResetPassword}
-          variant="contained"
-          color="secondary"
-          size="large"
+    >
+      <Grow in timeout={600}>
+        <Card
+          sx={{
+            width: { xs: "90%", sm: 400 },
+            p: 3,
+            borderRadius: 3,
+            boxShadow: 6,
+            backgroundColor: "white",
+          }}
         >
-          Restablecer contraseña
-        </Button>
-      )}
-      <Button
-        color="secondary"
-        size="large"
-        onClick={() => setIsForgot(false)}
-        className={classes.forgetButton}
-      >
-        Volver al inicio de sesión
-      </Button>
-    </div>
-  </div>
-          ) : (
-            <>
-              <Typography variant="h1" className={classes.greeting}>
+          <CardContent>
+            <Box display="flex" flexDirection="column" alignItems="center" mb={2}>
+              <img src={logo} alt="logo" style={{ width: 290, marginBottom: 10 }} />
+              <Typography variant="h5" fontWeight="600" gutterBottom>
+                {isForgot ? "Recuperar contraseña" : "Iniciar sesión"}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
                 {getGreeting()}
               </Typography>
+            </Box>
 
-              <Input
-                id="email"
-                value={loginValue}
-                onChange={(e) => setLoginValue(e.target.value)}
-                margin="normal"
-                placeholder="Email"
-                type="email"
-                fullWidth
-                onKeyDown={loginOnEnterKey}
-                InputProps={{
-                  classes: { underline: classes.InputUnderline, input: classes.Input },
-                }}
-              />
+            {isForgot ? (
+              <>
+                <TextField
+                  fullWidth
+                  margin="normal"
+                  label="Correo electrónico"
+                  variant="outlined"
+                  type="email"
+                  value={forgotEmail}
+                  onChange={(e) => setForgotEmail(e.target.value)}
+                />
+                <TextField
+                  fullWidth
+                  margin="normal"
+                  label="Nueva contraseña"
+                  variant="outlined"
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                />
+                <TextField
+                  fullWidth
+                  margin="normal"
+                  label="Confirmar contraseña"
+                  variant="outlined"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                />
 
-              <Input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                value={passwordValue}
-                onChange={(e) => setPasswordValue(e.target.value)}
-                margin="normal"
-                placeholder="Contraseña"
-                fullWidth
-                onKeyDown={loginOnEnterKey}
-                InputProps={{
-                  classes: { underline: classes.InputUnderline, input: classes.Input },
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
-                        {showPassword ? <VisibilityOff /> : <Visibility />}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
-              />
-
-              <div className={classes.formButtons}>
-                {isLoading ? (
-                  <CircularProgress size={26} className={classes.loginLoader} />
-                ) : (
+                <CardActions sx={{ mt: 2, flexDirection: "column", gap: 1 }}>
+                  {isLoading ? (
+                    <CircularProgress size={26} />
+                  ) : (
+                    <Button
+                      fullWidth
+                      variant="contained"
+                      color="secondary"
+                      onClick={handleResetPassword}
+                      disabled={
+                        !forgotEmail || !newPassword || !confirmPassword || newPassword !== confirmPassword
+                      }
+                    >
+                      Restablecer contraseña
+                    </Button>
+                  )}
                   <Button
-                    disabled={!isLoginFormValid()}
-                    onClick={handleLogin}
-                    variant="contained"
+                    fullWidth
                     color="secondary"
-                    size="large"
+                    variant="text"
+                    onClick={() => setIsForgot(false)}
                   >
-                    Acceder
+                    Volver al inicio de sesión
                   </Button>
-                )}
-                <Button
-                  color="secondary"
-                  size="large"
-                  onClick={() => setIsForgot(true)}
-                  className={classes.forgetButton}
-                >
-                  Has olvidado tu contraseña?
-                </Button>
-              </div>
-            </>
-          )}
-        </div>
+                </CardActions>
+              </>
+            ) : (
+              <>
+                <TextField
+                  fullWidth
+                  margin="normal"
+                  label="Correo electrónico"
+                  variant="outlined"
+                  type="email"
+                  value={loginValue}
+                  onChange={(e) => setLoginValue(e.target.value)}
+                  onKeyDown={loginOnEnterKey}
+                />
+                <TextField
+                  fullWidth
+                  margin="normal"
+                  label="Contraseña"
+                  variant="outlined"
+                  type={showPassword ? "text" : "password"}
+                  value={passwordValue}
+                  onChange={(e) => setPasswordValue(e.target.value)}
+                  onKeyDown={loginOnEnterKey}
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
+                          {showPassword ? <VisibilityOff /> : <Visibility />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
+                />
 
-        <Typography color="secondary" className={classes.copyright}>
-          2014-{new Date().getFullYear()}{" "}
-          <a
-            style={{ textDecoration: "none", color: "inherit" }}
-            href="https://flatlogic.com"
-            rel="noopener noreferrer"
-            target="_blank"
-          >
-            Flatlogic
-          </a>
-          , LLC. All rights reserved.
-        </Typography>
-      </div>
+                <CardActions sx={{ mt: 2, flexDirection: "column", gap: 1 }}>
+                  {isLoading ? (
+                    <CircularProgress size={26} />
+                  ) : (
+                    <Button
+                      fullWidth
+                      variant="contained"
+                      color="secondary"
+                      size="large"
+                      onClick={handleLogin}
+                      disabled={!isLoginFormValid()}
+                    >
+                      Acceder
+                    </Button>
+                  )}
+                  <Button
+                    fullWidth
+                    variant="text"
+                    color="secondary"
+                    onClick={() => setIsForgot(true)}
+                  >
+                    ¿Olvidaste tu contraseña?
+                  </Button>
+                </CardActions>
+              </>
+            )}
+          </CardContent>
+
+          <Typography variant="caption" align="center" display="block" sx={{ mt: 2, color: "text.secondary" }}>
+            © 2014–{new Date().getFullYear()} Flatlogic, LLC. Todos los derechos reservados.
+          </Typography>
+        </Card>
+      </Grow>
     </Grid>
   );
 }
