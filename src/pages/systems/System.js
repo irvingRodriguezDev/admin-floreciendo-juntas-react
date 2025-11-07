@@ -3,7 +3,6 @@ import {
   Grid,
   Box,
   Card,
-  CardActionArea,
   TextField,
   InputAdornment,
   Paper,
@@ -16,7 +15,7 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
 } from "@mui/icons-material";
-import { Typography, Chip } from "../../components/Wrappers";
+import { Typography} from "../../components/Wrappers";
 import SystemContext from "../../context/SystemContext/SystemContext";
 import Swal from "sweetalert2";
 
@@ -195,7 +194,7 @@ const System = () => {
                             transition: "transform 0.3s ease",
                           }}
                         />
-                        <Chip
+                        {/* <Chip
                           label="Activo"
                           color="success"
                           size="small"
@@ -206,7 +205,7 @@ const System = () => {
                             borderRadius: "8px",
                             fontWeight: 600,
                           }}
-                        />
+                        /> */}
                       </Box>
 
                       {/* Contenido */}

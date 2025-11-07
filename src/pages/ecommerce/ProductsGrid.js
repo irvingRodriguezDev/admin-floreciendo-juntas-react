@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useReducer } from "react";
+import React, { useContext, useEffect, useReducer, useState } from "react";
 import {
   Grid,
   Box,
@@ -16,38 +16,83 @@ import {
   Paper,
   Fade,
   IconButton,
+  Pagination,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import { useHistory } from "react-router-dom";
-import { Search as SearchIcon, Edit as EditIcon, Delete as DeleteIcon, VideoLibrary } from "@mui/icons-material";
+import {
+  Search as SearchIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+  VideoLibrary,
+} from "@mui/icons-material";
 import { Typography, Chip } from "../../components/Wrappers";
 import CoursesContext from "../../context/CoursesContext/CoursesContext";
+import SystemContext from "../../context/SystemContext/SystemContext";
 import Swal from "sweetalert2";
+import { getImageUrl } from "../../utils/image";
 
 const Product = () => {
   const history = useHistory();
+  const theme = useTheme();
   const { courses = [], obtenerCursos, cargando, eliminarCurso } = useContext(CoursesContext);
+  const { systems, getSystems } = useContext(SystemContext);
 
-  // Estado de filtros y búsqueda
   const [state, dispatch] = useReducer(
     (s, a) => ({ ...s, ...a }),
     {
-      valueType: "Todos",
-      valueBrands: "Todos",
-      valueSize: "Todos",
+      valueSystem: "Todos",
+      valueLevel: "Todos",
       searchTerm: "",
     }
   );
 
+  // 💡 Nuevo: Hook para detectar el tamaño de la pantalla
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const isTablet = useMediaQuery(theme.breakpoints.down("md"));
+
+  // Función para determinar el ancho óptimo de la imagen basado en el viewport
+  const getOptimalWidth = () => {
+    if (isMobile) return 300; // Móviles (300px)
+    if (isTablet) return 400; // Tablets (400px)
+    return 350; // Desktop (350px)
+  };
+
+  // 📌 El ancho de la imagen que se solicitará a CloudFront
+  const optimalWidth = getOptimalWidth();
+  // 📌 Calidad de la imagen (ajustable)
+  const imageQuality = 85;
+
+  const [page, setPage] = useState(1);
+  const itemsPerPage = 10;
+
   useEffect(() => {
     obtenerCursos();
+    getSystems();
   }, []);
 
-  // Filtrado seguro
+  useEffect(() => {
+    setPage(1);
+  }, [state.valueSystem, state.valueLevel, state.searchTerm]);
+
   const filteredCourses = (courses || [])
-    .filter((c) => c?.title?.toLowerCase().includes(state.searchTerm.toLowerCase()))
-    .filter((c) => state.valueType === "Todos" || c?.category === state.valueType)
-    .filter((c) => state.valueBrands === "Todos" || c?.system === state.valueBrands)
-    .filter((c) => state.valueSize === "Todos" || c?.level?.toLowerCase() === state.valueSize.toLowerCase());
+    .filter((c) =>
+      c.title?.toLowerCase().includes(state.searchTerm.toLowerCase())
+    )
+    .filter((c) =>
+      state.valueSystem === "Todos" ||
+      c.system_id === parseInt(state.valueSystem)
+    )
+    .filter((c) =>
+      state.valueLevel === "Todos" ||
+      c.level?.toLowerCase() === state.valueLevel.toLowerCase()
+    );
+
+  const paginatedCourses = filteredCourses.slice(
+    (page - 1) * itemsPerPage,
+    page * itemsPerPage
+  );
 
   const handleDelete = (id) => {
     Swal.fire({
@@ -60,10 +105,15 @@ const Product = () => {
       confirmButtonText: "Sí, eliminar",
       cancelButtonText: "Cancelar",
     }).then((result) => {
-      if (result.isConfirmed) {
-        eliminarCurso(id);
-      }
+      if (result.isConfirmed) eliminarCurso(id);
     });
+  };
+
+  // Función para obtener la URL correcta de la imagen
+  const getImage = (c) => {
+    if (c.coverImage && c.coverImage !== "") return c.coverImage;
+    if (c.cover_image_url && c.cover_image_url !== "") return c.cover_image_url;
+    return "/no-image.jpg";
   };
 
   return (
@@ -82,31 +132,20 @@ const Product = () => {
         >
           <Box display="flex" flexWrap="wrap" alignItems="center" justifyContent="space-between" gap={2}>
             <Box display="flex" flexWrap="wrap" alignItems="center" gap={2}>
-              {/* Categoría */}
-              <FormControl variant="outlined" size="small" sx={{ minWidth: 160 }}>
-                <InputLabel>Categoría</InputLabel>
-                <Select
-                  value={state.valueType}
-                  onChange={(e) => dispatch({ valueType: e.target.value })}
-                  label="Categoría"
-                >
-                  <MenuItem value="Todos">Todos</MenuItem>
-                  <MenuItem value="Programación">Programación</MenuItem>
-                  <MenuItem value="Diseño">Diseño</MenuItem>
-                </Select>
-              </FormControl>
-
               {/* Sistema */}
               <FormControl variant="outlined" size="small" sx={{ minWidth: 160 }}>
                 <InputLabel>Sistema</InputLabel>
                 <Select
-                  value={state.valueBrands}
-                  onChange={(e) => dispatch({ valueBrands: e.target.value })}
+                  value={state.valueSystem}
+                  onChange={(e) => dispatch({ valueSystem: e.target.value })}
                   label="Sistema"
                 >
                   <MenuItem value="Todos">Todos</MenuItem>
-                  <MenuItem value="Web">Web</MenuItem>
-                  <MenuItem value="Móvil">Móvil</MenuItem>
+                  {systems.map((sys) => (
+                    <MenuItem key={sys.id} value={sys.id}>
+                      {sys.name}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
 
@@ -114,14 +153,14 @@ const Product = () => {
               <FormControl variant="outlined" size="small" sx={{ minWidth: 160 }}>
                 <InputLabel>Nivel</InputLabel>
                 <Select
-                  value={state.valueSize}
-                  onChange={(e) => dispatch({ valueSize: e.target.value })}
+                  value={state.valueLevel}
+                  onChange={(e) => dispatch({ valueLevel: e.target.value })}
                   label="Nivel"
                 >
                   <MenuItem value="Todos">Todos</MenuItem>
-                  <MenuItem value="Básico">Básico</MenuItem>
-                  <MenuItem value="Intermedio">Intermedio</MenuItem>
-                  <MenuItem value="Avanzado">Avanzado</MenuItem>
+                  <MenuItem value="Básico">principiante</MenuItem>
+                  <MenuItem value="Intermedio">intermedio</MenuItem>
+                  <MenuItem value="Avanzado">avanzado</MenuItem>
                 </Select>
               </FormControl>
             </Box>
@@ -150,7 +189,7 @@ const Product = () => {
 
       {/* Cards */}
       <Grid item xs={12}>
-        <Grid container spacing={3}>
+        <Grid container spacing={{ xs: 1, sm: 1.5, md: 2 }} justifyContent="center">
           {cargando ? (
             <Typography variant="body1" sx={{ p: 3 }}>
               Cargando cursos...
@@ -160,29 +199,31 @@ const Product = () => {
               No se encontraron cursos.
             </Typography>
           ) : (
-            filteredCourses.map((c, index) => (
-              <Grid item xs={12} sm={6} md={3} key={c.id || index}>
+            paginatedCourses.map((c, index) => (
+              <Grid item key={c.id || index}>
                 <Fade in timeout={400 + index * 80}>
                   <Card
                     sx={{
                       position: "relative",
-                      borderRadius: 4,
-                      boxShadow: "0px 4px 15px rgba(0,0,0,0.08), 0px 1px 3px rgba(0,0,0,0.1)",
+                      borderRadius: 3,
+                      width: 260,
+                      height: 470,
+                      boxShadow: "0px 2px 8px rgba(15, 14, 14, 0.1), 0px 1px 2px rgba(0,0,0,0.1)",
                       transition: "transform 0.25s ease, box-shadow 0.25s ease",
                       "&:hover": {
-                        transform: "translateY(-6px)",
-                        boxShadow: "0px 6px 18px rgba(0,0,0,0.12), 0px 3px 6px rgba(0,0,0,0.1)",
+                        transform: "translateY(-4px)",
+                        boxShadow: "0px 4px 12px rgba(27, 25, 25, 0.31), 0px 2px 4px rgba(0,0,0,0.1)",
                       },
                     }}
                   >
-                    {/* ICONOS EDITAR / ELIMINAR */}
+                    {/* ICONOS */}
                     <Box sx={{ position: "absolute", top: 10, right: 10, zIndex: 2 }}>
                       <IconButton
                         size="large"
                         color="primary"
                         sx={{
                           backgroundColor: "white",
-                          "&:hover": { backgroundColor: "rgba(0,0,0,0.08)" },
+                          "&:hover": { backgroundColor: "rgba(125, 11, 72, 0.69)" },
                           borderRadius: "50%",
                           width: 40,
                           height: 40,
@@ -223,49 +264,32 @@ const Product = () => {
                       </IconButton>
                     </Box>
 
-                    <CardActionArea onClick={() => history.push(`/app/courses/${c.id}`)}>
-                      <Box sx={{ position: "relative", height: 200, backgroundColor: "#f7f7f7" }}>
-                        <CardMedia
-                          component="img"
-                          image={
-                            c.cover_image_url && c.cover_image_url !== ""
-                              ? c.cover_image_url
-                              : "/no-image.jpg"
-                          }
-                          alt={c.title}
-                          sx={{
-                            width: "100%",
-                            height: "100%",
-                            objectFit: "contain", // 🔥 Hace que se vea completa
-                            objectPosition: "center",
-                            borderTopLeftRadius: 4,
-                            borderTopRightRadius: 4,
-                            transition: "transform 0.3s ease",
-                            backgroundColor: "#fff", // mejora contraste si sobra espacio
-                          }}
-                        />
-                        {/* <Chip
-                          label={c.category || "General"}
-                          color="success"
-                          size="small"
-                          sx={{
-                            position: "absolute",
-                            top: 10,
-                            left: 10,
-                            borderRadius: "8px",
-                            fontWeight: 600,
-                          }}
-                        /> */}
-                      </Box>
-
-                      <CardContent>
-                        <Typography variant="h6" fontWeight={600} gutterBottom>
+                    <CardActionArea>
+                      <CardMedia
+                        component="img"
+                        image={getImageUrl(
+                          c.cover_image_url,
+                          optimalWidth,
+                          imageQuality
+                        )}
+                        alt={c.title}
+                        sx={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "contain",
+                          objectPosition: "center",
+                          borderTopLeftRadius: 3,
+                          borderTopRightRadius: 3,
+                          backgroundColor: "#fff",
+                        }}
+                      />
+                      <CardContent sx={{ py: 1.5, px: 2 }}>
+                        <Typography variant="subtitle1" fontWeight={600}>
                           <b>{c.title}</b>
                         </Typography>
-                        {/* <Typography variant="body2" color="text.secondary">
-                          {c.description || "Sin descripción"}
-                        </Typography> */}
-                        {/* <div dangerouslySetInnerHTML={{__html: c.description}}/> */}
+                        <Typography variant="body2" color="text.secondary">
+                          {systems.find(s => s.id === c.system_id)?.name || "Sin sistema"}
+                        </Typography>
                       </CardContent>
                     </CardActionArea>
 
@@ -281,6 +305,19 @@ const Product = () => {
             ))
           )}
         </Grid>
+
+        {/* Paginación */}
+        {filteredCourses.length > itemsPerPage && (
+          <Box display="flex" justifyContent="center" sx={{ mt: 4 }}>
+            <Pagination
+              count={Math.ceil(filteredCourses.length / itemsPerPage)}
+              page={page}
+              onChange={(e, value) => setPage(value)}
+              color="primary"
+              shape="rounded"
+            />
+          </Box>
+        )}
       </Grid>
     </Grid>
   );

@@ -80,9 +80,13 @@ import UsersFormPage from 'pages/CRUD/Users/form/UsersFormPage';
 import UsersTablePage from 'pages/CRUD/Users/table/UsersTablePage';
 
 //Sidebar structure
-import structure from '../Sidebar/SidebarStructure'
+import { useSidebarStructure } from '../Sidebar/SidebarStructure';
 import CourseAdd from '../../pages/ecommerce/CourseAdd';
 import CourseVideoAdd from '../../pages/ecommerce/CourseVideoAdd';
+import EventAdd from '../../pages/events/EventAdd';
+import Event from '../../pages/events/Event';
+import UserAdd from '../../pages/CRUD/Users/table/UserAdd';
+import ScannerComponent from '../../pages/scanner/scanner';
 
 const Redirect = (props) => {
   useEffect(() => window.location.replace(props.url));
@@ -92,6 +96,7 @@ const Redirect = (props) => {
 function Layout(props) {
   const classes = useStyles();
   const [anchorEl, setAnchorEl] = React.useState(null);
+  const structure = useSidebarStructure();
 
   const open = Boolean(anchorEl);
   const id = open ? 'add-section-popover' : undefined;
@@ -118,6 +123,8 @@ function Layout(props) {
           <Route path="/app/profile" component={Profile} />
           <Route path='/app/user/edit' component={EditUser} />
 
+          <Route path="/app/scanner" component={ScannerComponent} />
+
           <Route exact path="/app/core" render={() => <Redirect to="/app/core/typography" />} />
           <Route path="/app/core/typography" component={TypographyPage} />
           <Route path="/app/core/colors" component={ColorsPage} />
@@ -135,6 +142,19 @@ function Layout(props) {
           {/* Página para agregar un sistema */}
           <Route path="/app/system/addsystem" component={AddSystem} />
           <Route path="/app/system/editsystem/:id" component={AddSystem} />
+
+          <Route
+            exact
+            path="/app/event"
+            render={() => <Redirect to="/app/events/list" />}
+          />
+
+          {/* Página de lista de sistemas */}
+          <Route path="/app/events/list" component={Event} />
+
+          {/* Página para agregar un sistema */}
+          <Route path="/app/events/addevent" component={EventAdd} />
+          <Route path="/app/events/editevent/:id" component={EventAdd} />
 
           <Route exact path="/app/tables" render={() => <Redirect to={'/app/tables/static'} />} />
           <Route path="/app/tables/static" component={StaticTablesPage} />
@@ -200,7 +220,8 @@ function Layout(props) {
 
           />
 
-          <Route path={'/app/users'} exact component={UsersTablePage} />
+          <Route path={'/app/users/list'} exact component={UsersTablePage} />
+          <Route path={'/app/users/useradd'} exact component={UserAdd} />
           <Route path={'/app/user/new'} exact component={UsersFormPage} />
           <Route
             path={'/app/users/:id/edit'}

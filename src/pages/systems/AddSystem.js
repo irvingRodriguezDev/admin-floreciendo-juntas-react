@@ -27,17 +27,25 @@ const AddSystem = ({ onCancel }) => {
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // 🧠 Cargar datos si estamos en modo edición
+  // 🧠 Efecto para cargar datos o limpiar formulario según el ID
   useEffect(() => {
-    if (!id) return;
+    if (!id) {
+      // 🔹 Si no hay ID => modo "agregar nuevo"
+      setForm({
+        name: "",
+        description: "",
+        icon: null,
+      });
+      setPreview(null);
+      return;
+    }
 
+    // 🔹 Si hay ID => modo "editar"
     const fetchSystem = async () => {
       setLoading(true);
       try {
-        // Buscar en el contexto primero
         let system = systems.find((s) => s.id === parseInt(id));
 
-        // Si no está en memoria, pedirlo al backend
         if (!system) {
           const res = await MethodGet(`/systems/${id}`);
           system = res.data;
@@ -46,7 +54,7 @@ const AddSystem = ({ onCancel }) => {
         setForm({
           name: system.name || "",
           description: system.description || "",
-          icon: null, // No se vuelve a subir si no cambia
+          icon: null,
         });
 
         if (system.icon) setPreview(system.icon);
@@ -103,11 +111,18 @@ const AddSystem = ({ onCancel }) => {
         if (form.icon instanceof File) formData.append("icon", form.icon);
 
         await addSystem(formData);
+
+        // 🔹 Limpiar formulario después de agregar
+        setForm({
+          name: "",
+          description: "",
+          icon: null,
+        });
+        setPreview(null);
       }
 
       if (onCancel) onCancel();
       else history.push("/app/system/list");
-
     } catch (error) {
       console.error("Error al guardar sistema:", error);
       Swal.fire({
@@ -117,8 +132,6 @@ const AddSystem = ({ onCancel }) => {
       });
     }
   };
-
-
 
   if (loading) return <Typography>Cargando sistema...</Typography>;
 

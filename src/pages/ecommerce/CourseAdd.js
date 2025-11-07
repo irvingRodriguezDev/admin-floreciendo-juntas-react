@@ -15,32 +15,50 @@ import {
 } from '@mui/material';
 import CoursesContext from '../../context/CoursesContext/CoursesContext';
 import MethodGet from '../../config/Service';
-
-import { Editor } from 'react-draft-wysiwyg';
-import { EditorState, convertToRaw, ContentState } from 'draft-js';
-import draftToHtml from 'draftjs-to-html';
-import htmlToDraft from 'html-to-draftjs';
-import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css';
+import ReactQuill from 'react-quill-new';
+import 'react-quill-new/dist/quill.snow.css';
+import Swal from 'sweetalert2';
+import { PDFDocument } from 'pdf-lib';
 
 const CourseAdd = ({ onCancel }) => {
   const { id } = useParams();
   const history = useHistory();
-  const { courses, crearCurso, actualizarCurso } = useContext(CoursesContext);
+  const { crearCurso, actualizarCurso, obtenerCursoPorId } = useContext(CoursesContext);
 
   const [form, setForm] = useState({
     title: '',
     description: '',
     level: '',
-    hasCertificate: false,
+    hasCertificate: true,
     coverImage: null,
+    certificate: null,
     system_id: '',
   });
 
-  const [editorState, setEditorState] = useState(EditorState.createEmpty());
   const [preview, setPreview] = useState(null);
+  const [certificatePreview, setCertificatePreview] = useState(null);
   const [systems, setSystems] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  // 🔹 Configuración del toolbar de Quill
+  const quillModules = {
+    toolbar: [
+      [{ header: [1, 2, 3, false] }],
+      ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+      [{ color: [] }, { background: [] }],
+      [{ list: 'ordered' }, { list: 'bullet' }],
+      [{ align: [] }],
+      ['link', 'clean'],
+    ],
+  };
+
+  // 🔹 Estilos opcionales
+  const quillFormats = [
+    'header', 'bold', 'italic', 'underline', 'strike', 'blockquote',
+    'color', 'background', 'list', 'bullet', 'align', 'link'
+  ];
+
+  // 🔹 Cargar sistemas
   useEffect(() => {
     const fetchSystems = async () => {
       try {
@@ -53,36 +71,45 @@ const CourseAdd = ({ onCancel }) => {
     fetchSystems();
   }, []);
 
+  // 🔹 Si hay ID, cargar curso
   useEffect(() => {
-    if (!id) return;
-
     const fetchCurso = async () => {
+      if (!id) {
+        setForm({
+          title: '',
+          description: '',
+          level: '',
+          hasCertificate: true,
+          coverImage: null,
+          certificate: null,
+          system_id: '',
+        });
+        setPreview(null);
+        setCertificatePreview(null);
+        return;
+      }
+
       setLoading(true);
       try {
-        let curso = courses.find((c) => c.id === parseInt(id));
+        const curso = await obtenerCursoPorId(id);
         if (!curso) {
-          const res = await MethodGet(`/courses/${id}`);
-          curso = res.data;
+          Swal.fire({ icon: 'error', title: 'Curso no encontrado' });
+          history.push('/app/ecommerce/gridproducts');
+          return;
         }
 
         setForm({
           title: curso.title || '',
           description: curso.description || '',
           level: curso.level || '',
-          hasCertificate: curso.hasCertificate || false,
+          hasCertificate: true,
           coverImage: null,
+          certificate: null,
           system_id: curso.system_id || '',
         });
 
-        if (curso.description) {
-          const contentBlock = htmlToDraft(curso.description);
-          if (contentBlock) {
-            const contentState = ContentState.createFromBlockArray(contentBlock.contentBlocks);
-            setEditorState(EditorState.createWithContent(contentState));
-          }
-        }
-
         setPreview(curso.cover_image_url || null);
+        if (curso.certificate_url) setCertificatePreview(curso.certificate_url);
       } catch (error) {
         console.error('Error al obtener curso:', error);
       } finally {
@@ -91,22 +118,23 @@ const CourseAdd = ({ onCancel }) => {
     };
 
     fetchCurso();
-  }, [id, courses]);
+  }, [id, history]);
 
+  // 🔹 Cambios en inputs
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setForm({ ...form, [name]: type === 'checkbox' ? checked : value });
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleEditorChange = (state) => {
-    setEditorState(state);
-    const html = draftToHtml(convertToRaw(state.getCurrentContent()));
-    setForm({ ...form, description: html });
+  // 🔹 Cambios en el editor
+  const handleDescriptionChange = (content) => {
+    setForm((prev) => ({ ...prev, description: content }));
   };
 
+  // 🔹 Imagen de portada
   const handleImageChange = (e) => {
     const file = e.target.files[0];
-    setForm({ ...form, coverImage: file });
+    setForm((prev) => ({ ...prev, coverImage: file }));
 
     if (file) {
       const reader = new FileReader();
@@ -115,34 +143,75 @@ const CourseAdd = ({ onCancel }) => {
     }
   };
 
+  // 🔹 Validar PDF
+  const handleCertificateChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.type !== 'application/pdf') {
+      Swal.fire({ icon: 'error', title: 'Archivo inválido', text: 'Solo se permiten archivos PDF.' });
+      return;
+    }
+
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const pdfDoc = await PDFDocument.load(arrayBuffer);
+      const page = pdfDoc.getPage(0);
+      const { width, height } = page.getSize();
+
+      if (!(Math.abs(width - 792) < 5 && Math.abs(height - 612) < 5)) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Tamaño incorrecto',
+          text: 'El PDF debe ser tamaño carta horizontal.',
+        });
+        return;
+      }
+
+      setForm((prev) => ({ ...prev, certificate: file }));
+      setCertificatePreview(URL.createObjectURL(file));
+    } catch {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error al leer el PDF',
+        text: 'No se pudo analizar el archivo. Intenta con otro PDF.',
+      });
+    }
+  };
+
+  // 🔹 Guardar curso
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!form.certificate && !certificatePreview) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Falta certificado',
+        text: 'Debes subir un archivo PDF válido.',
+      });
+      return;
+    }
 
     const formData = new FormData();
     formData.append('title', form.title);
     formData.append('description', form.description);
     formData.append('level', form.level);
-    formData.append('hasCertificate', form.hasCertificate ? 1 : 0);
+    formData.append('hasCertificate', 1);
     formData.append('system_id', form.system_id);
     if (form.coverImage) formData.append('coverImage', form.coverImage);
+    if (form.certificate) formData.append('certificate', form.certificate);
 
     try {
       if (id) {
-        await actualizarCurso(id, formData);
+        await actualizarCurso(id, form);
       } else {
         await crearCurso(formData);
-        setForm({
-          title: '',
-          description: '',
-          level: '',
-          hasCertificate: false,
-          coverImage: null,
-          system_id: '',
-        });
-        setEditorState(EditorState.createEmpty());
+        setForm({ title: '', description: '', level: '', hasCertificate: true, coverImage: null, certificate: null, system_id: '' });
         setPreview(null);
+        setCertificatePreview(null);
       }
 
+      Swal.fire({ icon: 'success', title: 'Guardado correctamente', timer: 1500, showConfirmButton: false });
       if (onCancel) onCancel();
       else history.push('/app/ecommerce/gridproducts');
     } catch (error) {
@@ -156,16 +225,17 @@ const CourseAdd = ({ onCancel }) => {
     <Box sx={{ p: 3 }}>
       <Card sx={{ borderRadius: 3, boxShadow: 3 }}>
         <CardContent>
-          <Typography variant='h5' sx={{ mb: 3, fontWeight: 600 }}>
+          <Typography variant="h5" sx={{ mb: 3, fontWeight: 600 }}>
             {id ? 'Editar curso' : 'Agregar nuevo curso'}
           </Typography>
 
-          <form onSubmit={handleSubmit} encType='multipart/form-data'>
+          <form onSubmit={handleSubmit} encType="multipart/form-data">
             <Grid container spacing={3}>
+              {/* Título */}
               <Grid item xs={12} sm={6}>
                 <TextField
-                  label='Título'
-                  name='title'
+                  label="Título"
+                  name="title"
                   fullWidth
                   required
                   value={form.title}
@@ -173,58 +243,50 @@ const CourseAdd = ({ onCancel }) => {
                 />
               </Grid>
 
+              {/* Nivel */}
               <Grid item xs={12} sm={6}>
                 <TextField
                   select
-                  label='Nivel'
-                  name='level'
+                  label="Nivel"
+                  name="level"
                   fullWidth
                   required
                   value={form.level}
                   onChange={handleChange}
                 >
-                  <MenuItem value='principiante'>Principiante</MenuItem>
-                  <MenuItem value='intermedio'>Intermedio</MenuItem>
-                  <MenuItem value='avanzado'>Avanzado</MenuItem>
+                  <MenuItem value="principiante">Principiante</MenuItem>
+                  <MenuItem value="intermedio">Intermedio</MenuItem>
+                  <MenuItem value="avanzado">Avanzado</MenuItem>
                 </TextField>
               </Grid>
 
+              {/* Descripción con ReactQuill */}
               <Grid item xs={12}>
                 <Typography sx={{ mb: 1, fontWeight: 500 }}>Descripción</Typography>
-                <Paper
-                  variant='outlined'
-                  sx={{
-                    p: 2,
-                    borderRadius: 2,
-                    minHeight: 200,
-                    maxHeight: 300,
-                    overflowY: 'auto',
-                    backgroundColor: '#fffefc',
-                  }}
-                >
-                  <Editor
-                    editorState={editorState}
-                    wrapperClassName="demo-wrapper"
-                    editorClassName="demo-editor"
-                    onEditorStateChange={handleEditorChange}
-                    toolbar={{
-                      options: ['inline', 'blockType', 'list', 'textAlign', 'link', 'history'],
-                    }}
+                <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, backgroundColor: '#fffefc' }}>
+                  <ReactQuill
+                    theme="snow"
+                    value={form.description}
+                    onChange={handleDescriptionChange}
+                    modules={quillModules}
+                    formats={quillFormats}
+                    style={{ minHeight: 250 }}
                   />
                 </Paper>
               </Grid>
 
+              {/* Sistema y certificado */}
               <Grid item xs={12} sm={6}>
                 <TextField
                   select
-                  label='Sistema'
-                  name='system_id'
+                  label="Sistema"
+                  name="system_id"
                   fullWidth
                   required
                   value={form.system_id}
                   onChange={handleChange}
                 >
-                  <MenuItem value=''>Seleccionar sistema</MenuItem>
+                  <MenuItem value="">Seleccionar sistema</MenuItem>
                   {systems.map((system) => (
                     <MenuItem key={system.id} value={system.id}>
                       {system.name}
@@ -234,68 +296,47 @@ const CourseAdd = ({ onCancel }) => {
               </Grid>
 
               <Grid item xs={12} sm={6}>
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={form.hasCertificate}
-                      onChange={handleChange}
-                      name='hasCertificate'
-                    />
-                  }
-                  label='Incluye certificado'
-                />
+                <FormControlLabel control={<Checkbox checked disabled />} label="Incluye certificado" />
               </Grid>
 
-              <Grid item xs={12} sm={6}>
-                <Button variant='contained' component='label' fullWidth>
-                  Subir imagen de portada
-                  <input
-                    type='file'
-                    hidden
-                    accept='image/*'
-                    onChange={handleImageChange}
-                  />
-                </Button>
-              </Grid>
-
-              {preview && (
+              {/* Portada y certificado */}
+              <Grid container item xs={12} spacing={2}>
                 <Grid item xs={12} sm={6}>
-                  <Box
-                    sx={{
-                      width: '100%',
-                      height: 220,
-                      borderRadius: 2,
-                      mt: 1,
-                      overflow: 'hidden',
-                      backgroundColor: '#f7f7f7',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <Box
-                      component='img'
-                      src={preview}
-                      alt='Vista previa'
-                      sx={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'contain', // 👈 Aquí se ajusta completa sin recortar
-                      }}
-                    />
-                  </Box>
+                  <Button variant="contained" component="label" fullWidth>
+                    Subir imagen de portada
+                    <input type="file" hidden accept="image/*" onChange={handleImageChange} />
+                  </Button>
+                  {preview && (
+                    <Box sx={{ width: '100%', height: 400, mt: 1, borderRadius: 2, overflow: 'hidden' }}>
+                      <Box component="img" src={preview} alt="Vista previa" sx={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                    </Box>
+                  )}
                 </Grid>
-              )}
+
+                <Grid item xs={12} sm={6}>
+                  <Button variant="contained" component="label" fullWidth>
+                    Subir certificado (PDF)
+                    <input type="file" hidden accept="application/pdf" onChange={handleCertificateChange} />
+                  </Button>
+
+                  {(certificatePreview || form.certificate) && (
+                    <Box sx={{ mt: 1, width: '100%', height: 400, border: '1px solid #ccc', borderRadius: 2, overflow: 'hidden' }}>
+                      <object data={`${certificatePreview}#zoom=44`} type="application/pdf" width="100%" height="100%">
+                        <Typography variant="body2" sx={{ p: 1 }}>Tu navegador no soporta previsualizar PDFs.</Typography>
+                      </object>
+                    </Box>
+                  )}
+                </Grid>
+              </Grid>
 
               <Grid item xs={12}>
-                <Button
-                  type='submit'
-                  variant='contained'
-                  color='primary'
-                  fullWidth
-                  sx={{ mt: 2 }}
-                >
+                <Button type="submit" variant="contained" color="primary" fullWidth sx={{ mt: 2 }}>
                   {id ? 'Actualizar curso' : 'Guardar curso'}
+                </Button>
+                <Button variant="outlined" color="secondary" fullWidth sx={{ mt: 2 }} onClick={() =>
+                  onCancel ? onCancel() : history.push("/app/ecommerce/gridproducts")
+                }>
+                  Cancelar
                 </Button>
               </Grid>
             </Grid>
