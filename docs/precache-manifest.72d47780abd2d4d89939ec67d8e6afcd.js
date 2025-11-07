@@ -315,10 +315,10 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([
     "revision": "84f014f09e2520f76be61769a1bb6440",
     "url": "./static/media/profile.84f014f0.jpg"
   },
-  {
-    "revision": "cd6044d9cc085cf42b614bbabac72bb0",
-    "url": "./static/media/profilePhoto.cd6044d9.svg"
-  },
+  // {
+  //   "revision": "cd6044d9cc085cf42b614bbabac72bb0",
+  //   "url": "./static/media/profilePhoto.cd6044d9.svg"
+  // },
   {
     "revision": "95da06754076f5a3a69c50ea87ed0af4",
     "url": "./static/media/rns.95da0675.png"

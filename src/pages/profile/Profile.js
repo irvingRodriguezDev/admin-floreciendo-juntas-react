@@ -10,7 +10,6 @@
   import Calendar from './Components/Calendar/Calendar';
   import MediaBlock from './Components/MediaBlock';
   import ViewsWidget from './Components/ViewsWidget';
-  import ProfileIcon from '../../images/profile/profilePhoto.svg';
   import BehanceIcon from '../../images/profile/BehanceIcon.svg';
   import MediumIcon from '../../images/profile/MediumIcon.svg';
   import FacebookIcon from '../../images/profile/FacebookIcon.svg';
