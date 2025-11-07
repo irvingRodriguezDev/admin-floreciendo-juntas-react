@@ -69,14 +69,22 @@ const CoursesState = (props) => {
   const actualizarCurso = async (id, datos) => {
     try {
       const formData = new FormData();
+
+      // Campos principales
       formData.append('title', datos.title);
       formData.append('description', datos.description);
       formData.append('level', datos.level);
       formData.append('system_id', datos.system_id);
-      formData.append('hasCertificate', datos.hasCertificate);
+      formData.append('hasCertificate', datos.hasCertificate ? 1 : 0);
 
+      // Imagen de portada (si es nueva)
       if (datos.coverImage instanceof File) {
         formData.append('coverImage', datos.coverImage);
+      }
+
+      // Certificado PDF (si se seleccionó uno nuevo)
+      if (datos.certificate instanceof File) {
+        formData.append('certificate', datos.certificate);
       }
 
       await MethodPut(`/courses/${id}`, formData);
@@ -89,9 +97,6 @@ const CoursesState = (props) => {
         showConfirmButton: false,
       });
 
-      // Aquí refrescas la lista completa
-      // obtenerCursos();
-
     } catch (error) {
       Swal.fire({
         title: "Error",
@@ -100,6 +105,7 @@ const CoursesState = (props) => {
       });
     }
   };
+
 
 
   // Eliminar curso

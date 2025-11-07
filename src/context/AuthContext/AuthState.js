@@ -37,43 +37,52 @@ const AuthState = (props) => {
           type: types.OBTENER_USUARIO,
           payload: data,
         });
+
+        // Guardar roleId y usuario en localStorage
+        if (data.user) {
+          localStorage.setItem("roleId", data.user.roleId); // Actualiza roleId
+          localStorage.setItem("usuario", JSON.stringify(data.user));
+        }
       })
       .catch((error) => {
         dispatch({
           type: types.LOGIN_ERROR,
         });
+        localStorage.removeItem("roleId");
+        localStorage.removeItem("usuario");
       });
   };
 
+
+
   //cuando el usuario inicia sesion
   const iniciarSesion = async (datos) => {
-  try {
-    const res = await MethodPost("/auth/login", datos);
+    try {
+      const res = await MethodPost("/auth/login", datos);
 
-    // Guardamos token en el state y localStorage
-    dispatch({
-      type: types.LOGIN_EXITOSO,
-      payload: res.data,
-    });
+      dispatch({
+        type: types.LOGIN_EXITOSO,
+        payload: res.data,
+      });
 
-    // Configuramos el header de axios con el token recién guardado
-    tokenAuth(res.data.token);
+      tokenAuth(res.data.token);
 
-    // Ahora sí obtenemos el usuario autenticado
-    await usuarioAutenticado();
-  } catch (error) {
-    Swal.fire({
-      title: "Error",
-      icon: "error",
-      text: "Email o contraseña incorrectos", // mensaje personalizado
-      timer: 2500,              // 2.5 segundos
-      showConfirmButton: false, // se cierra automáticamente
-    });
-    dispatch({
-      type: SHOW_ERRORS_API,
-    });
-  }
-};
+      // Obtener usuario autenticado y guardar roleId en localStorage
+      await usuarioAutenticado();
+    } catch (error) {
+      Swal.fire({
+        title: "Error",
+        icon: "error",
+        text: "Email o contraseña incorrectos",
+        timer: 2500,
+        showConfirmButton: false,
+      });
+      dispatch({
+        type: SHOW_ERRORS_API,
+      });
+    }
+  };
+
 
 
   //cuando el usuario Ccambia de contraseña
@@ -109,7 +118,13 @@ const AuthState = (props) => {
     dispatch({
       type: types.CERRAR_SESION,
     });
+
+    // 🔹 Limpiar localStorage
+    localStorage.removeItem("roleId");
+    localStorage.removeItem("usuario");
+    localStorage.removeItem("token");
   };
+
   return (
     <AuthContext.Provider
       value={{

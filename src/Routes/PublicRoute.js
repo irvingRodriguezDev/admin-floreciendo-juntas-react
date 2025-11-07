@@ -7,14 +7,26 @@ export const PublicRouter = ({
   component: Component,
   ...rest
 }) => {
+  const roleId = localStorage.getItem("roleId"); // string o null
+
+  const getRedirectPath = () => {
+    if (roleId === "1") return "/app/dashboard";
+    if (roleId === "5") return "/app/scanner";
+    return null; // todavía no tenemos roleId
+  };
+
   return (
     <Route
       {...rest}
-      render={(props) =>
-        !isAuthenticated
-          ? <Component {...props} />
-          : <Redirect to="/app/dashboard" />
-      }
+      render={(props) => {
+        if (!isAuthenticated) return <Component {...props} />;
+
+        const redirectPath = getRedirectPath();
+        if (redirectPath) return <Redirect to={redirectPath} />;
+
+        // ⚠️ Esperamos a que roleId exista
+        return null;
+      }}
     />
   );
 };
