@@ -5,6 +5,8 @@ import AppRouter from "./Routes/AppRouter";
 import ResetPasswordState from "./context/ResetPasswordContext/ResetPasswordState";
 import SystemState from "./context/SystemContext/SystemState";
 import CoursesState from "./context/CoursesContext/CoursesState";
+import UserState from "./context/UserContext/UserState";
+import EventState from "./context/EventContext/EventState";
 
 const App = () => {
   return (
@@ -12,9 +14,13 @@ const App = () => {
      <ResetPasswordState>
       <SystemState>
         <CoursesState>
-         <Router>
-           <AppRouter />
-         </Router>
+         <UserState>
+          <EventState>
+           <Router>
+             <AppRouter />
+           </Router>
+          </EventState>
+         </UserState>
         </CoursesState>
        </SystemState>
       </ResetPasswordState>
