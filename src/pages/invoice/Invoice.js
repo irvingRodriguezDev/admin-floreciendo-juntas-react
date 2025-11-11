@@ -15,7 +15,7 @@ import {
 import useStyles from "./styles";
 
 //images
-import logo from "../../images/invoice/flatlogic.jpeg";
+import logo from "../../assets/images/invoice/flatlogic.jpeg";
 
 //components
 import { Typography, Link, Button } from "../../components/Wrappers";

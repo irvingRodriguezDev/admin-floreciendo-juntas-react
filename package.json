@@ -10,7 +10,7 @@
     "dev": "cross-env react-app-rewired --openssl-legacy-provider start",
     "test": "react-app-rewired --openssl-legacy-provider test",
     "format": "prettier --write src/",
-    "deploy": "s3-sync ./build s3://admin.floreciendojuntas.com"
+    "deploy": "aws s3 sync ./build s3://admin.floreciendojuntas.com"
   },
   "dependencies": {
     "@emotion/react": "^11.11.5",
@@ -70,7 +70,6 @@
     "react-color": "^2.19.3",
     "react-dom": "^19.0.0",
     "react-draft-wysiwyg": "^1.15.0",
-    "react-google-maps": "^9.4.5",
     "react-leaflet": "^5.0.0",
     "react-quill-new": "^3.6.0",
     "react-redux": "^7.2.9",

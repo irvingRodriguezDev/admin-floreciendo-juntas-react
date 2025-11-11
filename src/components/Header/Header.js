@@ -13,7 +13,7 @@ import { deepOrange } from '@mui/material/colors';
 
 
 //images
-import profile from '../../images/main-profile.png';
+import profile from '../../assets/images/main-profile.png';
 import config from '../../config';
 
 // styles
@@ -55,13 +55,13 @@ export default function Header(props) {
   const managementValue = useManagementState();
 
   // Obtenemos el usuario del contexto
-      const { usuario, cerrarSesion  } = useContext(AuthContext);
+  const { usuario, cerrarSesion } = useContext(AuthContext);
 
-      const handleLogout = () => {
-  cerrarSesion(); // actualiza el state global
-  localStorage.removeItem("token"); // limpia token
-  props.history.push("/login"); // redirige a login
-};
+  const handleLogout = () => {
+    cerrarSesion(); // actualiza el state global
+    localStorage.removeItem("token"); // limpia token
+    props.history.push("/login"); // redirige a login
+  };
 
 
   useEffect(() => {
@@ -102,7 +102,7 @@ export default function Header(props) {
           )}
         >
           {(!layoutState.isSidebarOpened && isSmall) ||
-          (layoutState.isSidebarOpened && !isSmall) ? (
+            (layoutState.isSidebarOpened && !isSmall) ? (
             <ArrowBackIcon
               classes={{
                 root: classNames(

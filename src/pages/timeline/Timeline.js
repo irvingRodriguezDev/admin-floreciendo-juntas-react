@@ -9,12 +9,12 @@ import {
   TextField as Input
 } from "@mui/material";
 import { Navigation as NavigationIcon } from "@mui/icons-material";
-import {
-  withGoogleMap,
-  withScriptjs,
-  GoogleMap,
-  Marker
-} from "react-google-maps";
+// import {
+//   withGoogleMap,
+//   withScriptjs,
+//   GoogleMap,
+//   Marker
+// } from "react-google-maps";
 import {
   Favorite as LikeIcon,
   Chat as CommentsIcon,
@@ -24,12 +24,12 @@ import {
 import useStyles from "./styles";
 
 //images
-import img1 from "../../images/timeline/a2.jpg";
-import img2 from "../../images/timeline/a3.jpg";
-import img3 from "../../images/timeline/profile.jpg";
-import img4 from "../../images/timeline/a4.jpg";
-import img5 from "../../images/timeline/a1.jpg";
-import mountains from "../../images/timeline/mountains.jpeg";
+import img1 from "../../assets/images/timeline/a2.jpg";
+import img2 from "../../assets/images/timeline/a3.jpg";
+import img3 from "../../assets/images/timeline/profile.jpg";
+import img4 from "../../assets/images/timeline/a4.jpg";
+import img5 from "../../assets/images/timeline/a1.jpg";
+import mountains from "../../assets/images/timeline/mountains.jpeg";
 
 //components
 import { Typography, Avatar, Link, Button } from "../../components/Wrappers";

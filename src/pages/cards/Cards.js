@@ -20,10 +20,10 @@ import {
 import useStyles from "./styles";
 
 //images
-import backImg from "../../images/cards/lifestyle.jpg";
-import isometricImg from "../../images/cards/isometric.jpg";
-import mountainsImg from "../../images/cards/mountains.jpeg";
-import rnsImg from "../../images/cards/rns.png";
+import backImg from "../../assets/images/cards/lifestyle.jpg";
+import isometricImg from "../../assets/images/cards/isometric.jpg";
+import mountainsImg from "../../assets/images/cards/mountains.jpeg";
+import rnsImg from "../../assets/images/cards/rns.png";
 
 // components
 import { Typography, Button, Link, Avatar } from "../../components/Wrappers";

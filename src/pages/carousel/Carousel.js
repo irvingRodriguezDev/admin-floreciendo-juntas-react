@@ -7,9 +7,9 @@ import SwipeableViews from "react-swipeable-views";
 import { autoPlay } from "react-swipeable-views-utils";
 
 //images
-import img1 from "../../images/carousel/1.jpg";
-import img2 from "../../images/carousel/2.jpg";
-import img3 from "../../images/carousel/3.jpg";
+import img1 from "../../assets/images/carousel/1.jpg";
+import img2 from "../../assets/images/carousel/2.jpg";
+import img3 from "../../assets/images/carousel/3.jpg";
 
 //components
 import { Button, Typography } from "../../components/Wrappers";

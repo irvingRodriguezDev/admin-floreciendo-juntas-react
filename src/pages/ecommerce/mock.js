@@ -1,10 +1,10 @@
 //images
-import img1 from "../../images/product/img1.jpg";
-import img2 from "../../images/product/img2.jpg";
-import img3 from "../../images/product/img3.jpg";
-import img4 from "../../images/product/img4.jpg";
-import img5 from "../../images/product/img5.jpeg";
-import img6 from "../../images/product/img6.jpg";
+import img1 from "../../assets/images/product/img1.jpg";
+import img2 from "../../assets/images/product/img2.jpg";
+import img3 from "../../assets/images/product/img3.jpg";
+import img4 from "../../assets/images/product/img4.jpg";
+import img5 from "../../assets/images/product/img5.jpeg";
+import img6 from "../../assets/images/product/img6.jpg";
 
 export const rows = [
   {

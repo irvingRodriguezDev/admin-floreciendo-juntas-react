@@ -23,7 +23,7 @@ import {
   CartesianGrid,
   Cell,
 } from "recharts";
-import top1Image from "../../images/top1.png";
+import top1Image from "../../assets/images/top1.png";
 
 const medalColors = ["#FF85C0", "#FF69B4", "#FFB6D9"]; // Top 2,1,3 colores rosas
 

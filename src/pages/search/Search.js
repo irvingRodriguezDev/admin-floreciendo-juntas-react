@@ -20,10 +20,10 @@ import {
 import useStyles from "./styles";
 
 //images
-import img1 from "../../images/search/img1.jpg";
-import img2 from "../../images/search/img2.jpg";
-import img3 from "../../images/search/img3.jpg";
-import img4 from "../../images/search/img4.jpg";
+import img1 from "../../assets/images/search/img1.jpg";
+import img2 from "../../assets/images/search/img2.jpg";
+import img3 from "../../assets/images/search/img3.jpg";
+import img4 from "../../assets/images/search/img4.jpg";
 
 //components
 import { Typography, Button, Link, Chip } from "../../components/Wrappers";
@@ -367,9 +367,9 @@ export default function SearchComp() {
                 alignItems="center"
                 justifyContent={"center"}
               >
-                <Pagination 
-                  count={10} 
-                  color="primary" 
+                <Pagination
+                  count={10}
+                  color="primary"
                   size="large"
                 />
               </Box>

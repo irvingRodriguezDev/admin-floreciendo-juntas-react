@@ -229,7 +229,7 @@ function Login(props) {
           </CardContent>
 
           <Typography variant="caption" align="center" display="block" sx={{ mt: 2, color: "text.secondary" }}>
-            © 2014–{new Date().getFullYear()} Flatlogic, LLC. Todos los derechos reservados.
+            © {new Date().getFullYear()} Floreciendo Juntas. Todos los derechos reservados.
           </Typography>
         </Card>
       </Grow>

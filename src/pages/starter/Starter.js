@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 
 // styles
 import useStyles from './styles';
-import reactLogo from '../../images/react-logo.svg';
+import reactLogo from '../../assets/images/react-logo.svg';
 
 import { Button } from '../../components/Wrappers';
 

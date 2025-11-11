@@ -33,16 +33,16 @@ import PageTitle from "../../components/PageTitle";
 import { Typography, Link, Button } from "../../components/Wrappers";
 
 //images
-import img1 from "../../images/product/img1.jpg";
-import img2 from "../../images/product/img2.jpg";
-import img3 from "../../images/product/img3.jpg";
-import img4 from "../../images/product/img4.jpg";
-import img5 from "../../images/product/img5.jpeg";
-import img6 from "../../images/product/img6.jpg";
-import payment1 from "../../images/product/mastercard.svg";
-import payment2 from "../../images/product/paypal.svg";
-import payment3 from "../../images/product/visa.svg";
-import payment4 from "../../images/product/aexpress.svg";
+import img1 from "../../assets/images/product/img1.jpg";
+import img2 from "../../assets/images/product/img2.jpg";
+import img3 from "../../assets/images/product/img3.jpg";
+import img4 from "../../assets/images/product/img4.jpg";
+import img5 from "../../assets/images/product/img5.jpeg";
+import img6 from "../../assets/images/product/img6.jpg";
+import payment1 from "../../assets/images/product/mastercard.svg";
+import payment2 from "../../assets/images/product/paypal.svg";
+import payment3 from "../../assets/images/product/visa.svg";
+import payment4 from "../../assets/images/product/aexpress.svg";
 
 export const rows = [
   {

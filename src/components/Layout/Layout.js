@@ -58,8 +58,8 @@ import PieCharts from '../../pages/charts/PieCharts'
 
 import DraggableGrid from '../../pages/draggablegrid'
 
-import MapsGoogle from '../../pages/maps'
-import VectorMaps from '../../pages/maps/VectorMap'
+// import MapsGoogle from '../../pages/maps'
+// import VectorMaps from '../../pages/maps/VectorMap'
 
 import Timeline from '../../pages/timeline'
 import Search from '../../pages/search'
@@ -76,8 +76,9 @@ import AddSystem from '../../pages/systems/AddSystem';
 import { useLayoutState } from '../../context/LayoutContext';
 import { ProductsProvider } from '../../context/ProductContext'
 
-import UsersFormPage from 'pages/CRUD/Users/form/UsersFormPage';
-import UsersTablePage from 'pages/CRUD/Users/table/UsersTablePage';
+// import UsersFormPage from 'pages/CRUD/Users/form/UsersFormPage';
+// import UsersTablePage from 'pages/CRUD/Users/table/UsersTablePage';
+import UsersTable from '../../pages/CRUD/Users/table/UsersTable';
 
 //Sidebar structure
 import { useSidebarStructure } from '../Sidebar/SidebarStructure';
@@ -87,6 +88,7 @@ import EventAdd from '../../pages/events/EventAdd';
 import Event from '../../pages/events/Event';
 import UserAdd from '../../pages/CRUD/Users/table/UserAdd';
 import ScannerComponent from '../../pages/scanner/scanner';
+import UsersTablePage from '../../pages/CRUD/Users/table/UsersTablePage';
 
 const Redirect = (props) => {
   useEffect(() => window.location.replace(props.url));
@@ -186,8 +188,8 @@ function Layout(props) {
           <Route path="/app/grid" component={DraggableGrid} />
 
           <Route exact path="/app/maps" render={() => <Redirect to="/app/maps/google" />} />
-          <Route path="/app/maps/google" component={MapsGoogle} />
-          <Route path="/app/maps/vector" component={VectorMaps} />
+          {/* <Route path="/app/maps/google" component={MapsGoogle} />
+          <Route path="/app/maps/vector" component={VectorMaps} /> */}
 
           <Route exact path="/app/extra" render={() => <Redirect to="/app/extra/timeline" />}/>
           <Route path="/app/extra/timeline" component={Timeline} />
@@ -222,12 +224,12 @@ function Layout(props) {
 
           <Route path={'/app/users/list'} exact component={UsersTablePage} />
           <Route path={'/app/users/useradd'} exact component={UserAdd} />
-          <Route path={'/app/user/new'} exact component={UsersFormPage} />
+          {/* <Route path={'/app/user/new'} exact component={UsersFormPage} />
           <Route
             path={'/app/users/:id/edit'}
             exact
             component={UsersFormPage}
-          />
+          /> */}
         </Switch>
         {/* <Fab
           color='primary'

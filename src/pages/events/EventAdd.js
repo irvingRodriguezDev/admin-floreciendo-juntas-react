@@ -10,7 +10,8 @@ import {
     Paper,
     Typography,
     useMediaQuery,
-    useTheme
+    useTheme,
+    CircularProgress
 } from '@mui/material';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
@@ -51,7 +52,7 @@ const EventAdd = ({ onCancel }) => {
     const [localErrors, setLocalErrors] = useState({});
     const [localLoading, setLocalLoading] = useState(false);
 
-    const isLoading = cargando !== undefined ? cargando : localLoading;
+    const isLoading = cargando || localLoading;
     const isEditing = !!eventoEditar;
 
     // 🔹 Configuración de React Quill
@@ -398,13 +399,34 @@ const EventAdd = ({ onCancel }) => {
                                 >
                                     Cancelar
                                 </Button>
+
                                 <Button
                                     variant="contained"
                                     color="primary"
                                     type="submit"
                                     disabled={isLoading}
+                                    sx={{
+                                        position: "relative",
+                                        minWidth: 180, // mantiene el tamaño estable
+                                    }}
                                 >
-                                    {isLoading ? 'Guardando...' : isEditing ? 'Actualizar Evento' : 'Crear Evento'}
+                                    {isLoading ? (
+                                        <Box
+                                            sx={{
+                                                display: "flex",
+                                                alignItems: "center",
+                                                justifyContent: "center",
+                                                gap: 1,
+                                            }}
+                                        >
+                                            <CircularProgress size={20} color="inherit" />
+                                            Guardando...
+                                        </Box>
+                                    ) : isEditing ? (
+                                        "Actualizar Evento"
+                                    ) : (
+                                        "Crear Evento"
+                                    )}
                                 </Button>
                             </Grid>
                         </Grid>

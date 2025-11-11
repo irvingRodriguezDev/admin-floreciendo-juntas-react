@@ -10,18 +10,18 @@ import {
 import { Favorite as LikeIcon, Chat as CommentsIcon } from "@mui/icons-material";
 
 //images
-import img1 from "../../images/gallery/gallery1.jpg";
-import img2 from "../../images/gallery/gallery2.jpg";
-import img3 from "../../images/gallery/gallery3.jpg";
-import img4 from "../../images/gallery/gallery4.jpg";
-import img5 from "../../images/gallery/gallery5.jpg";
-import img6 from "../../images/gallery/gallery6.jpg";
-import img7 from "../../images/gallery/gallery7.jpg";
-import img8 from "../../images/gallery/gallery8.jpg";
-import img9 from "../../images/gallery/gallery9.jpg";
-import img10 from "../../images/gallery/gallery10.jpg";
-import img11 from "../../images/gallery/gallery11.jpg";
-import img12 from "../../images/gallery/gallery12.jpg";
+import img1 from "../../assets/images/gallery/gallery1.jpg";
+import img2 from "../../assets/images/gallery/gallery2.jpg";
+import img3 from "../../assets/images/gallery/gallery3.jpg";
+import img4 from "../../assets/images/gallery/gallery4.jpg";
+import img5 from "../../assets/images/gallery/gallery5.jpg";
+import img6 from "../../assets/images/gallery/gallery6.jpg";
+import img7 from "../../assets/images/gallery/gallery7.jpg";
+import img8 from "../../assets/images/gallery/gallery8.jpg";
+import img9 from "../../assets/images/gallery/gallery9.jpg";
+import img10 from "../../assets/images/gallery/gallery10.jpg";
+import img11 from "../../assets/images/gallery/gallery11.jpg";
+import img12 from "../../assets/images/gallery/gallery12.jpg";
 
 
 const gallery = [

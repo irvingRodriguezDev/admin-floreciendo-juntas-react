@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Grid } from "@mui/material";
 import { useTheme } from "@mui/styles";
 import ReactApexChart from "react-apexcharts";
-import img from "../../images/carousel/2.jpg";
+import img from "../../assets/images/carousel/2.jpg";
 
 // components
 import Widget from "../../components/Widget/Widget";
@@ -94,7 +94,7 @@ const themeOptions = theme => {
       xaxis: {
         categories: [2013, 2014, 2015, 2016, 2017, 2018, 2019],
         labels: {
-          formatter: function(val) {
+          formatter: function (val) {
             return val + "K";
           }
         }
@@ -106,7 +106,7 @@ const themeOptions = theme => {
       },
       tooltip: {
         y: {
-          formatter: function(val) {
+          formatter: function (val) {
             return val + "K";
           }
         }
@@ -149,7 +149,7 @@ const themeOptions = theme => {
         colors: ["#fff"],
         width: 0.2
       },
-      labels: Array.apply(null, { length: 39 }).map(function(el, index) {
+      labels: Array.apply(null, { length: 39 }).map(function (el, index) {
         return index + 1;
       }),
       yaxis: {
