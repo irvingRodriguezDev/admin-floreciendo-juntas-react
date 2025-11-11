@@ -10,8 +10,8 @@ export const PublicRouter = ({
   const roleId = localStorage.getItem("roleId"); // string o null
 
   const getRedirectPath = () => {
-    if (roleId === "1") return "/app/dashboard";
-    if (roleId === "5") return "/app/scanner";
+    if (roleId === "1") return "/dashboard";
+    if (roleId === "5") return "/scanner";
     return null; // todavía no tenemos roleId
   };
 

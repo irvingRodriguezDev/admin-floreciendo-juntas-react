@@ -94,7 +94,7 @@ const CourseAdd = ({ onCancel }) => {
         const curso = await obtenerCursoPorId(id);
         if (!curso) {
           Swal.fire({ icon: 'error', title: 'Curso no encontrado' });
-          history.push('/app/ecommerce/gridproducts');
+          history.push('/ecommerce/gridproducts');
           return;
         }
 
@@ -213,7 +213,7 @@ const CourseAdd = ({ onCancel }) => {
 
       Swal.fire({ icon: 'success', title: 'Guardado correctamente', timer: 1500, showConfirmButton: false });
       if (onCancel) onCancel();
-      else history.push('/app/ecommerce/gridproducts');
+      else history.push('/ecommerce/gridproducts');
     } catch (error) {
       console.error('Error al guardar curso:', error);
     }
@@ -334,7 +334,7 @@ const CourseAdd = ({ onCancel }) => {
                   {id ? 'Actualizar curso' : 'Guardar curso'}
                 </Button>
                 <Button variant="outlined" color="secondary" fullWidth sx={{ mt: 2 }} onClick={() =>
-                  onCancel ? onCancel() : history.push("/app/ecommerce/gridproducts")
+                  onCancel ? onCancel() : history.push("/ecommerce/gridproducts")
                 }>
                   Cancelar
                 </Button>

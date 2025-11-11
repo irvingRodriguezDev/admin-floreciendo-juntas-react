@@ -313,7 +313,7 @@ const UserList = () => {
                         alignItems={'flex-start'}
                     >
                         <Box>
-                            <Link href="#/app/user/add" underline="none" color="#fff">
+                            <Link href="/user/add" underline="none" color="#fff">
                                 <Button variant={'contained'} color={'success'}>
                                     <Box mr={1} display={'flex'}>
                                         <AddIcon />

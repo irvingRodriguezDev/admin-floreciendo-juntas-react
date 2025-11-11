@@ -139,7 +139,7 @@ const System = () => {
                           mr: 1,
                         }}
                         onClick={() =>
-                          history.push(`/app/system/editsystem/${system.id}`)
+                          history.push(`/system/editsystem/${system.id}`)
                         }
                       >
                         <EditIcon fontSize="medium" />
@@ -161,7 +161,7 @@ const System = () => {
                     </Box>
 
                     <Card
-                      // onClick={() => history.push(`/app/system/detail/${system.id}`)}
+                      // onClick={() => history.push(`/system/detail/${system.id}`)}
                     >
                       {/* Imagen ajustada */}
                       <Box

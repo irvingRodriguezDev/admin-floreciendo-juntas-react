@@ -20,14 +20,15 @@ import {
 import CssBaseline from '@mui/material/CssBaseline';
 import config from '../src/config';
 
-import { createHashHistory, createMemoryHistory } from 'history';
+// CAMBIA ESTA PARTE - usa createBrowserHistory en lugar de createHashHistory
+import { createBrowserHistory, createMemoryHistory } from 'history';
 
 const history =
   typeof window !== 'undefined'
-    ? createHashHistory()
+    ? createBrowserHistory()  // Cambiado de createHashHistory()
     : createMemoryHistory({
-        initialEntries: [],
-      });
+      initialEntries: [],
+    });
 
 export function getHistory() {
   return history;
@@ -70,7 +71,4 @@ root.render(
   </Provider>,
 );
 
-// If you want your app to work offline and load faster, you can change
-// unregister() to register() below. Note this comes with some pitfalls.
-// Learn more about service workers: http://bit.ly/CRA-PWA
 serviceWorker.unregister();

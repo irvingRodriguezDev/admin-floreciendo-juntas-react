@@ -25,8 +25,8 @@ export const PrivateRouter = ({
 
                 if (allowedRoles.length > 0 && !allowedRoles.includes(roleId)) {
                     // Rol no permitido → redirigir a su ruta por rol
-                    if (roleId === "1") return <Redirect to="/app/dashboard" />;
-                    if (roleId === "5") return <Redirect to="/app/scanner" />;
+                    if (roleId === "1") return <Redirect to="/dashboard" />;
+                    if (roleId === "5") return <Redirect to="/scanner" />;
                     return null;
                 }
 

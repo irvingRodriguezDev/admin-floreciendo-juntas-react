@@ -18,57 +18,57 @@ export const useSidebarStructure = () => {
 
   // 🔹 Estructura completa del menú
   const structure = [
-    { id: 100, label: 'Perfil', link: '/app/profile', icon: <ProfileIcon /> },
+    { id: 100, label: 'Perfil', link: '/profile', icon: <ProfileIcon /> },
     {
       id: 1,
       label: 'Cursos',
-      link: '/app/ecommerce',
+      link: '/ecommerce',
       icon: <ShoppingCartIcon />,
       children: [
-        { label: 'Cursos', link: '/app/ecommerce/gridproducts' },
-        { label: 'Agregar Curso', link: '/app/ecommerce/courseadd' },
+        { label: 'Cursos', link: '/ecommerce/gridproducts' },
+        { label: 'Agregar Curso', link: '/ecommerce/courseadd' },
       ],
     },
     {
       id: 101,
       label: 'Sistemas',
-      link: '/app/system',
+      link: '/system',
       icon: <CategoryIcon />,
       children: [
-        { label: 'Lista de sistemas', link: '/app/system/list' },
-        { label: 'Agregar sistema', link: '/app/system/addsystem' }
+        { label: 'Lista de sistemas', link: '/system/list' },
+        { label: 'Agregar sistema', link: '/system/addsystem' }
       ]
     },
     {
       id: 102,
       label: 'Eventos',
-      link: '/app/event',
+      link: '/event',
       icon: <EventIcon />,
       children: [
-        { label: 'Lista de eventos', link: '/app/events/list' },
-        { label: 'Agregar evento', link: '/app/events/addevent' }
+        { label: 'Lista de eventos', link: '/events/list' },
+        { label: 'Agregar evento', link: '/events/addevent' }
       ]
     },
-    { id: 103, label: 'Escáner', link: '/app/scanner', icon: <CameraIcon /> },
-    { id: 0, label: 'Dashboard', link: '/app/dashboard', icon: <HomeIcon /> },
+    { id: 103, label: 'Escáner', link: '/scanner', icon: <CameraIcon /> },
+    { id: 0, label: 'Dashboard', link: '/dashboard', icon: <HomeIcon /> },
     // {
     //   id: 1,
     //   label: 'Cursos',
-    //   link: '/app/ecommerce',
+    //   link: '/ecommerce',
     //   icon: <ShoppingCartIcon />,
     //   children: [
-    //     { label: 'Cursos', link: '/app/ecommerce/gridproducts' },
-    //     { label: 'Agregar Curso', link: '/app/ecommerce/courseadd' },
+    //     { label: 'Cursos', link: '/ecommerce/gridproducts' },
+    //     { label: 'Agregar Curso', link: '/ecommerce/courseadd' },
     //   ],
     // },
     {
       id: 2,
       label: 'Usuarios',
-      link: '/app/user',
+      link: '/user',
       icon: <PersonIcon />,
       children: [
-        { label: 'Lista de Usuarios', link: '/app/users/list' },
-        { label: 'Crear Usuario', link: '/app/users/useradd' },
+        { label: 'Lista de Usuarios', link: '/users/list' },
+        { label: 'Crear Usuario', link: '/users/useradd' },
       ],
     },
   ];

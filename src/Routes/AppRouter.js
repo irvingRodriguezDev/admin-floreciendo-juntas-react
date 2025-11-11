@@ -1,5 +1,6 @@
 import React, { useContext, useEffect } from "react";
-import { BrowserRouter as Router, Switch } from "react-router-dom";
+// Se renombra a 'BrowserRouter' para mayor claridad.
+import { BrowserRouter, Switch, Route } from "react-router-dom";
 import { Grid, Box, CircularProgress } from "@mui/material";
 
 // Context
@@ -29,7 +30,7 @@ export default function AppRouter() {
 				<Box
 					sx={{
 						width: "105%",
-						height: "177%",
+						height: "100vh", // Usar 100vh para ocupar toda la altura visible
 						display: "flex",
 						alignItems: "center",
 						justifyContent: "center",
@@ -45,9 +46,10 @@ export default function AppRouter() {
 	}
 
 	return (
-		<Router>
+		// Se usa BrowserRouter directamente en lugar de Router
+		<BrowserRouter>
 			<Switch>
-				{/* Rutas públicas */}
+				{/* 1. Rutas públicas - EXACT MATCH for /login */}
 				<PublicRouter
 					exact
 					path="/login"
@@ -55,20 +57,20 @@ export default function AppRouter() {
 					isAuthenticated={autenticado}
 				/>
 
-				{/* Rutas privadas */}
+				{/* 2. Rutas privadas principales - Layout es el contenedor de /dashboard, /profile, etc. */}
 				<PrivateRouter
-					path="/app"
+					path="/"
 					component={Layout}
 					isAuthenticated={autenticado}
 				/>
 
-				{/* Fallback: error 404 */}
-				<PrivateRouter
+				{/* 3. Fallback: error 404 - Usa Route simple, ya que no importa el estado de autenticación aquí, 
+                    solo que ninguna ruta haya coincidido. Se coloca al final de Switch. */}
+				<Route
 					path="*"
 					component={Error}
-					isAuthenticated={autenticado}
 				/>
 			</Switch>
-		</Router>
+		</BrowserRouter>
 	);
 }

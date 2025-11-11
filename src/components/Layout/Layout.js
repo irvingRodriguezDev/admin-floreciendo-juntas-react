@@ -24,50 +24,14 @@ import EditUser from '../../pages/user/EditUser';
 // pages
 import Dashboard from '../../pages/dashboard';
 import Profile from '../../pages/profile'
-import TypographyPage from '../../pages/typography'
-import ColorsPage from '../../pages/colors'
-import GridPage from '../../pages/grid'
-
-import StaticTablesPage from '../../pages/tables'
-import DynamicTablesPage from '../../pages/tables/dynamic'
-
-import IconsPage from '../../pages/icons'
-import BadgesPage from '../../pages/badge'
-import CarouselsPage from '../../pages/carousel'
-import CardsPage from '../../pages/cards'
-import ModalsPage from '../../pages/modal'
-import NotificationsPage from '../../pages/notifications'
-import NavbarsPage from '../../pages/nav'
-import TooltipsPage from '../../pages/tooltips'
-import TabsPage from '../../pages/tabs'
-import ProgressPage from '../../pages/progress'
-import WidgetsPage from '../../pages/widget'
 
 import Ecommerce from '../../pages/ecommerce'
 import Product from '../../pages/ecommerce/Products'
 import ProductsGrid from '../../pages/ecommerce/ProductsGrid'
 import CreateProduct from '../../pages/ecommerce/CreateProduct'
 
-import FormsElements from '../../pages/forms/elements'
-import FormValidation from '../../pages/forms/validation'
-
-import Charts from '../../pages/charts'
-import LineCharts from '../../pages/charts/LineCharts'
-import BarCharts from '../../pages/charts/BarCharts'
-import PieCharts from '../../pages/charts/PieCharts'
-
-import DraggableGrid from '../../pages/draggablegrid'
-
 // import MapsGoogle from '../../pages/maps'
 // import VectorMaps from '../../pages/maps/VectorMap'
-
-import Timeline from '../../pages/timeline'
-import Search from '../../pages/search'
-import Gallery from '../../pages/gallery'
-import Invoice from '../../pages/invoice'
-import Calendar from '../../pages/calendar'
-
-import BreadCrumbs from '../../components/BreadCrumbs';
 
 import System from '../../pages/systems/System';
 import AddSystem from '../../pages/systems/AddSystem';
@@ -112,134 +76,71 @@ function Layout(props) {
   return (
     <div className={classes.root}>
       <Header history={props.history} />
-      <Sidebar structure={structure}/>
+      <Sidebar structure={structure} />
       <div
         className={classnames(classes.content, {
           [classes.contentShift]: layoutState.isSidebarOpened,
         })}
       >
         <div className={classes.fakeToolbar} />
-        <BreadCrumbs />
         <Switch>
-          <Route path='/app/dashboard' component={Dashboard} />
-          <Route path="/app/profile" component={Profile} />
-          <Route path='/app/user/edit' component={EditUser} />
+          <Route path='/dashboard' component={Dashboard} />
+          <Route path="/profile" component={Profile} />
+          <Route path='/user/edit' component={EditUser} />
 
-          <Route path="/app/scanner" component={ScannerComponent} />
-
-          <Route exact path="/app/core" render={() => <Redirect to="/app/core/typography" />} />
-          <Route path="/app/core/typography" component={TypographyPage} />
-          <Route path="/app/core/colors" component={ColorsPage} />
-          <Route path="/app/core/grid" component={GridPage} />
+          <Route path="/scanner" component={ScannerComponent} />
 
           <Route
             exact
-            path="/app/system"
-            render={() => <Redirect to="/app/system/list" />}
+            path="/system"
+            render={() => <Redirect to="/system/list" />}
           />
 
           {/* Página de lista de sistemas */}
-          <Route path="/app/system/list" component={System} />
+          <Route path="/system/list" component={System} />
 
           {/* Página para agregar un sistema */}
-          <Route path="/app/system/addsystem" component={AddSystem} />
-          <Route path="/app/system/editsystem/:id" component={AddSystem} />
+          <Route path="/system/addsystem" component={AddSystem} />
+          <Route path="/system/editsystem/:id" component={AddSystem} />
 
           <Route
             exact
-            path="/app/event"
-            render={() => <Redirect to="/app/events/list" />}
+            path="/event"
+            render={() => <Redirect to="/events/list" />}
           />
 
           {/* Página de lista de sistemas */}
-          <Route path="/app/events/list" component={Event} />
+          <Route path="/events/list" component={Event} />
 
           {/* Página para agregar un sistema */}
-          <Route path="/app/events/addevent" component={EventAdd} />
-          <Route path="/app/events/editevent/:id" component={EventAdd} />
+          <Route path="/events/addevent" component={EventAdd} />
+          <Route path="/events/editevent/:id" component={EventAdd} />
 
-          <Route exact path="/app/tables" render={() => <Redirect to={'/app/tables/static'} />} />
-          <Route path="/app/tables/static" component={StaticTablesPage} />
-          <Route path="/app/tables/dynamic" component={DynamicTablesPage} />
-
-          <Route exact path="/app/ui" render={() => <Redirect to="/app/ui/icons" />} />
-          <Route path="/app/ui/icons" component={IconsPage} />
-          <Route path="/app/ui/badge" component={BadgesPage} />
-          <Route path="/app/ui/carousel" component={CarouselsPage} />
-          <Route path="/app/ui/modal" component={ModalsPage} />
-          <Route path="/app/ui/navbar" component={NavbarsPage} />
-          <Route path="/app/ui/tooltips" component={TooltipsPage} />
-          <Route path="/app/ui/tabs" component={TabsPage} />
-          <Route path="/app/ui/cards" component={CardsPage} />
-          <Route path="/app/ui/widget" component={WidgetsPage} />
-          <Route path="/app/ui/progress" component={ProgressPage} />
-          <Route path="/app/ui/notifications" component={NotificationsPage} />
-
-          <Route exact path="/app/forms" render={() => <Redirect to="/app/forms/elements" />} />
-          <Route path="/app/forms/elements" component={FormsElements} />
-          <Route path="/app/forms/validation" component={FormValidation} />
-
-          <Route exact path="/app/charts" render={() => <Redirect to={'/app/charts/overview'} />} />
-          <Route path="/app/charts/overview" component={Charts} />
-          <Route path="/app/charts/line" component={LineCharts} />
-          <Route path="/app/charts/bar" component={BarCharts} />
-          <Route path="/app/charts/pie" component={PieCharts} />
-
-          <Route path="/app/grid" component={DraggableGrid} />
-
-          <Route exact path="/app/maps" render={() => <Redirect to="/app/maps/google" />} />
-          {/* <Route path="/app/maps/google" component={MapsGoogle} />
-          <Route path="/app/maps/vector" component={VectorMaps} /> */}
-
-          <Route exact path="/app/extra" render={() => <Redirect to="/app/extra/timeline" />}/>
-          <Route path="/app/extra/timeline" component={Timeline} />
-          <Route path="/app/extra/search" component={Search} />
-          <Route path="/app/extra/gallery" component={Gallery} />
-          <Route path="/app/extra/invoice" component={Invoice} />
-          <Route path="/app/extra/calendar" component={Calendar} />
-
-          <Route path="/app/ecommerce/management" exact>
+          <Route path="/ecommerce/management" exact>
             <ProductsProvider>
               <Ecommerce />
             </ProductsProvider>
           </Route>
-          <Route path="/app/ecommerce/management/edit/:id" exact>
+          <Route path="/ecommerce/management/edit/:id" exact>
             <ProductsProvider>
               <CreateProduct />
             </ProductsProvider>
           </Route>
-          <Route path="/app/ecommerce/management/create">
+          <Route path="/ecommerce/management/create">
             <ProductsProvider>
               <CreateProduct />
             </ProductsProvider>
           </Route>
-          <Route path="/app/ecommerce/product/:id" component={Product}/>
-          <Route path="/app/ecommerce/product" component={Product} />
-          <Route path="/app/ecommerce/gridproducts" component={ProductsGrid}/>
-          <Route path="/app/ecommerce/courseadd" component={CourseAdd} />
-          <Route path="/app/ecommerce/coursevideoadd/:id" component={CourseVideoAdd} />
-          <Route exact path="/app/ecommerce/edit/:id" component={CourseAdd} />
+          <Route path="/ecommerce/product/:id" component={Product} />
+          <Route path="/ecommerce/product" component={Product} />
+          <Route path="/ecommerce/gridproducts" component={ProductsGrid} />
+          <Route path="/ecommerce/courseadd" component={CourseAdd} />
+          <Route path="/ecommerce/coursevideoadd/:id" component={CourseVideoAdd} />
+          <Route exact path="/ecommerce/edit/:id" component={CourseAdd} />
 
-          />
-
-          <Route path={'/app/users/list'} exact component={UsersTablePage} />
-          <Route path={'/app/users/useradd'} exact component={UserAdd} />
-          {/* <Route path={'/app/user/new'} exact component={UsersFormPage} />
-          <Route
-            path={'/app/users/:id/edit'}
-            exact
-            component={UsersFormPage}
-          /> */}
+          <Route path={'/users/list'} exact component={UsersTablePage} />
+          <Route path={'/users/useradd'} exact component={UserAdd} />
         </Switch>
-        {/* <Fab
-          color='primary'
-          aria-label='settings'
-          onClick={(e) => handleClick(e)}
-          className={classes.changeThemeFab}
-          style={{ zIndex: 100 }}
-        >
-          <SettingsIcon style={{ color: '#fff' }} />
-        </Fab> */}
         <ColorChangeThemePopper id={id} open={open} anchorEl={anchorEl} />
         <Footer>
           <div>

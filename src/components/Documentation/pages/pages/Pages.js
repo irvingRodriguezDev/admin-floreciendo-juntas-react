@@ -85,7 +85,7 @@ const Pages = props => {
             <Button
               variant={"contained"}
               color={"primary"}
-              onClick={() => props.history.push("/app/dashboard")}
+              onClick={() => props.history.push("/dashboard")}
             >
               Demo
             </Button>

@@ -122,7 +122,7 @@ const AddSystem = ({ onCancel }) => {
       }
 
       if (onCancel) onCancel();
-      else history.push("/app/system/list");
+      else history.push("/system/list");
     } catch (error) {
       console.error("Error al guardar sistema:", error);
       Swal.fire({
@@ -222,7 +222,7 @@ const AddSystem = ({ onCancel }) => {
                   fullWidth
                   sx={{ mt: 1 }}
                   onClick={() =>
-                    onCancel ? onCancel() : history.push("/app/system/list")
+                    onCancel ? onCancel() : history.push("/system/list")
                   }
                 >
                   Cancelar

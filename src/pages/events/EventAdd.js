@@ -221,7 +221,7 @@ const EventAdd = ({ onCancel }) => {
             });
 
             if (onCancel) onCancel();
-            else history.push('/app/events/list');
+            else history.push('/events/list');
         } catch (error) {
             console.error('Error al guardar evento:', error);
             Swal.fire('Error', 'Ocurrió un error al guardar el evento', 'error');
@@ -395,7 +395,7 @@ const EventAdd = ({ onCancel }) => {
                                 <Button
                                     variant="outlined"
                                     color="secondary"
-                                    onClick={() => onCancel ? onCancel() : history.push("/app/events/list")}
+                                    onClick={() => onCancel ? onCancel() : history.push("/events/list")}
                                 >
                                     Cancelar
                                 </Button>

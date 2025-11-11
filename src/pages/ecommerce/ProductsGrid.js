@@ -229,7 +229,7 @@ const Product = () => {
                           height: 40,
                           mr: 1,
                         }}
-                        onClick={() => history.push(`/app/ecommerce/coursevideoadd/${c.id}`)}
+                        onClick={() => history.push(`/ecommerce/coursevideoadd/${c.id}`)}
                       >
                         <VideoLibrary fontSize="medium" />
                       </IconButton>
@@ -244,7 +244,7 @@ const Product = () => {
                           height: 40,
                           mr: 1,
                         }}
-                        onClick={() => history.push(`/app/ecommerce/edit/${c.id}`)}
+                        onClick={() => history.push(`/ecommerce/edit/${c.id}`)}
                       >
                         <EditIcon fontSize="medium" />
                       </IconButton>

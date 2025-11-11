@@ -1,4 +1,4 @@
-import * as dataFormat from 'pages/CRUD/Users/table/UsersDataFormatters';
+// import * as dataFormat from 'pages/CRUD/Users/table/UsersDataFormatters';
 import React, { useContext, useEffect, useState, useMemo } from 'react';
 import { useHistory } from 'react-router';
 import { uniqueId } from 'lodash';

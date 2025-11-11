@@ -110,7 +110,7 @@ const Event = () => {
                                                 size="large"
                                                 color="primary"
                                                 sx={{ backgroundColor: "white", "&:hover": { backgroundColor: "rgba(0,0,0,0.08)" }, borderRadius: "50%", width: 40, height: 40, mr: 1 }}
-                                                onClick={() => history.push(`/app/events/editevent/${event.id}`)}
+                                                onClick={() => history.push(`/events/editevent/${event.id}`)}
                                             >
                                                 <EditIcon fontSize="medium" />
                                             </IconButton>

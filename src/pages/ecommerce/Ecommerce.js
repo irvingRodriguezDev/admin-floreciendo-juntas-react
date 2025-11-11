@@ -257,7 +257,7 @@ function EcommercePage({ history }) {
   };
 
   const openProduct = (id, event) => {
-    history.push("/app/ecommerce/product/" + id);
+    history.push("/ecommerce/product/" + id);
     event.stopPropagation();
   };
 
@@ -335,7 +335,7 @@ function EcommercePage({ history }) {
   };
 
   const openProductEdit = (event, id) => {
-    history.push("/app/ecommerce/management/edit/" + id);
+    history.push("/ecommerce/management/edit/" + id);
     event.stopPropagation();
   };
 
@@ -394,7 +394,7 @@ function EcommercePage({ history }) {
                   style={{marginTop: -10}}
                   variant={"contained"}
                   component={RouterLink}
-                  to={"/app/ecommerce/management/create"}
+                  to={"/ecommerce/management/create"}
                   color={"success"}
               >
                 Create Product

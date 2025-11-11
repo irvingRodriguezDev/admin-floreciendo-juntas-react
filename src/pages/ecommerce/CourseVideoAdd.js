@@ -161,7 +161,7 @@ const CourseVideoAdd = () => {
         text: 'El video se subió correctamente.',
         timer: 2000,
         showConfirmButton: false,
-        willClose: () => history.push('/app/ecommerce/gridproducts'),
+        willClose: () => history.push('/ecommerce/gridproducts'),
       });
     } catch (error) {
       console.error('Error al subir el video:', error);

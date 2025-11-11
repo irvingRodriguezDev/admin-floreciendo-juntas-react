@@ -43,7 +43,7 @@ function Login(props) {
   const isLoginFormValid = () => loginValue.length && passwordValue.length;
 
   useEffect(() => {
-    if (autenticado) props.history.push("/app/profile");
+    if (autenticado) props.history.push("/profile");
   }, [autenticado, props.history]);
 
   const handleLogin = async () => {
