@@ -12,6 +12,7 @@ import {
   FormControlLabel,
   Checkbox,
   Paper,
+  CircularProgress, // 🔹 agregado
 } from '@mui/material';
 import CoursesContext from '../../context/CoursesContext/CoursesContext';
 import MethodGet from '../../config/Service';
@@ -52,7 +53,6 @@ const CourseAdd = ({ onCancel }) => {
     ],
   };
 
-  // 🔹 Estilos opcionales
   const quillFormats = [
     'header', 'bold', 'italic', 'underline', 'strike', 'blockquote',
     'color', 'background', 'list', 'bullet', 'align', 'link'
@@ -182,6 +182,7 @@ const CourseAdd = ({ onCancel }) => {
   // 🔹 Guardar curso
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true); // 🔹 Activar loading
 
     if (!form.certificate && !certificatePreview) {
       Swal.fire({
@@ -189,6 +190,7 @@ const CourseAdd = ({ onCancel }) => {
         title: 'Falta certificado',
         text: 'Debes subir un archivo PDF válido.',
       });
+      setLoading(false);
       return;
     }
 
@@ -206,20 +208,36 @@ const CourseAdd = ({ onCancel }) => {
         await actualizarCurso(id, form);
       } else {
         await crearCurso(formData);
-        setForm({ title: '', description: '', level: '', hasCertificate: true, coverImage: null, certificate: null, system_id: '' });
+        setForm({
+          title: '',
+          description: '',
+          level: '',
+          hasCertificate: true,
+          coverImage: null,
+          certificate: null,
+          system_id: '',
+        });
         setPreview(null);
         setCertificatePreview(null);
       }
 
-      Swal.fire({ icon: 'success', title: 'Guardado correctamente', timer: 1500, showConfirmButton: false });
+      Swal.fire({
+        icon: 'success',
+        title: 'Guardado correctamente',
+        timer: 1500,
+        showConfirmButton: false,
+      });
+
       if (onCancel) onCancel();
       else history.push('/ecommerce/gridproducts');
     } catch (error) {
       console.error('Error al guardar curso:', error);
+    } finally {
+      setLoading(false); // 🔹 Desactivar loading
     }
   };
 
-  if (loading) return <Typography>Cargando curso...</Typography>;
+  if (loading && !id) return <Typography>Cargando curso...</Typography>;
 
   return (
     <Box sx={{ p: 3 }}>
@@ -260,7 +278,7 @@ const CourseAdd = ({ onCancel }) => {
                 </TextField>
               </Grid>
 
-              {/* Descripción con ReactQuill */}
+              {/* Descripción */}
               <Grid item xs={12}>
                 <Typography sx={{ mb: 1, fontWeight: 500 }}>Descripción</Typography>
                 <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, backgroundColor: '#fffefc' }}>
@@ -275,7 +293,7 @@ const CourseAdd = ({ onCancel }) => {
                 </Paper>
               </Grid>
 
-              {/* Sistema y certificado */}
+              {/* Sistema */}
               <Grid item xs={12} sm={6}>
                 <TextField
                   select
@@ -329,13 +347,44 @@ const CourseAdd = ({ onCancel }) => {
                 </Grid>
               </Grid>
 
+              {/* Botones */}
               <Grid item xs={12}>
-                <Button type="submit" variant="contained" color="primary" fullWidth sx={{ mt: 2 }}>
-                  {id ? 'Actualizar curso' : 'Guardar curso'}
+                <Button
+                  type="submit"
+                  variant="contained"
+                  color="primary"
+                  fullWidth
+                  disabled={loading}
+                  sx={{ mt: 2, minHeight: 45, position: "relative" }}
+                >
+                  {loading ? (
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 1,
+                      }}
+                    >
+                      <CircularProgress size={22} color="inherit" thickness={5} />
+                      Guardando...
+                    </Box>
+                  ) : id ? (
+                    "Actualizar curso"
+                  ) : (
+                    "Guardar curso"
+                  )}
                 </Button>
-                <Button variant="outlined" color="secondary" fullWidth sx={{ mt: 2 }} onClick={() =>
-                  onCancel ? onCancel() : history.push("/ecommerce/gridproducts")
-                }>
+
+                <Button
+                  variant="outlined"
+                  color="secondary"
+                  fullWidth
+                  sx={{ mt: 2 }}
+                  onClick={() =>
+                    onCancel ? onCancel() : history.push("/ecommerce/gridproducts")
+                  }
+                >
                   Cancelar
                 </Button>
               </Grid>

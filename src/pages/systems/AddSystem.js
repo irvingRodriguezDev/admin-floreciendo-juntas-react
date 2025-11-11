@@ -8,6 +8,7 @@ import {
   TextField,
   Typography,
   Button,
+  CircularProgress,
 } from "@mui/material";
 import Swal from "sweetalert2";
 import SystemContext from "../../context/SystemContext/SystemContext";
@@ -30,7 +31,6 @@ const AddSystem = ({ onCancel }) => {
   // 🧠 Efecto para cargar datos o limpiar formulario según el ID
   useEffect(() => {
     if (!id) {
-      // 🔹 Si no hay ID => modo "agregar nuevo"
       setForm({
         name: "",
         description: "",
@@ -40,7 +40,6 @@ const AddSystem = ({ onCancel }) => {
       return;
     }
 
-    // 🔹 Si hay ID => modo "editar"
     const fetchSystem = async () => {
       setLoading(true);
       try {
@@ -100,6 +99,7 @@ const AddSystem = ({ onCancel }) => {
   // 💾 Enviar formulario
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true); // 🔹 activar spinner
 
     try {
       if (id) {
@@ -112,7 +112,6 @@ const AddSystem = ({ onCancel }) => {
 
         await addSystem(formData);
 
-        // 🔹 Limpiar formulario después de agregar
         setForm({
           name: "",
           description: "",
@@ -120,6 +119,13 @@ const AddSystem = ({ onCancel }) => {
         });
         setPreview(null);
       }
+
+      Swal.fire({
+        icon: "success",
+        title: "Guardado correctamente",
+        timer: 1500,
+        showConfirmButton: false,
+      });
 
       if (onCancel) onCancel();
       else history.push("/system/list");
@@ -130,10 +136,12 @@ const AddSystem = ({ onCancel }) => {
         title: "Error al guardar",
         text: "Ocurrió un problema al guardar el sistema.",
       });
+    } finally {
+      setLoading(false); // 🔹 desactivar spinner
     }
   };
 
-  if (loading) return <Typography>Cargando sistema...</Typography>;
+  if (loading && !id) return <Typography>Cargando sistema...</Typography>;
 
   return (
     <Box sx={{ p: 3 }}>
@@ -211,9 +219,26 @@ const AddSystem = ({ onCancel }) => {
                   variant="contained"
                   color="primary"
                   fullWidth
-                  sx={{ mt: 2 }}
+                  disabled={loading}
+                  sx={{ mt: 2, minHeight: 45, position: "relative" }}
                 >
-                  {id ? "Actualizar Sistema" : "Guardar Sistema"}
+                  {loading ? (
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 1,
+                      }}
+                    >
+                      <CircularProgress size={22} color="inherit" thickness={5} />
+                      Guardando...
+                    </Box>
+                  ) : id ? (
+                    "Actualizar Sistema"
+                  ) : (
+                    "Guardar Sistema"
+                  )}
                 </Button>
 
                 <Button
