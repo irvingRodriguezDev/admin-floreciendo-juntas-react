@@ -60,6 +60,25 @@ const AuthState = (props) => {
     try {
       const res = await MethodPost("/auth/login", datos);
 
+      const roleId = res.data.user?.roleId;
+
+      // Solo permitir acceso a roles 1 y 5
+      if (roleId !== 1 && roleId !== 5) {
+        Swal.fire(
+          "Acceso denegado",
+          "No tienes permisos para ingresar",
+          "error"
+        );
+
+        // Limpieza total
+        localStorage.removeItem("token");
+        localStorage.removeItem("usuario");
+        localStorage.removeItem("roleId");
+
+        return { unauthorized: true };
+      }
+
+      // Guardar token porque el rol sí es válido
       dispatch({
         type: types.LOGIN_EXITOSO,
         payload: res.data,
@@ -69,6 +88,9 @@ const AuthState = (props) => {
 
       // Obtener usuario autenticado y guardar roleId en localStorage
       await usuarioAutenticado();
+
+      return res.data;
+
     } catch (error) {
       Swal.fire({
         title: "Error",
@@ -82,6 +104,7 @@ const AuthState = (props) => {
       });
     }
   };
+
 
 
 
