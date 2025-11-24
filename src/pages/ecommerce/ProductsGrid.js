@@ -158,7 +158,7 @@ const Product = () => {
                   label="Nivel"
                 >
                   <MenuItem value="Todos">Todos</MenuItem>
-                  <MenuItem value="Básico">principiante</MenuItem>
+                  <MenuItem value="Principiante">principiante</MenuItem>
                   <MenuItem value="Intermedio">intermedio</MenuItem>
                   <MenuItem value="Avanzado">avanzado</MenuItem>
                 </Select>
@@ -238,7 +238,7 @@ const Product = () => {
                         color="primary"
                         sx={{
                           backgroundColor: "white",
-                          "&:hover": { backgroundColor: "rgba(0,0,0,0.08)" },
+                          "&:hover": { backgroundColor: "rgba(125, 11, 72, 0.69)" },
                           borderRadius: "50%",
                           width: 40,
                           height: 40,
@@ -253,7 +253,7 @@ const Product = () => {
                         color="error"
                         sx={{
                           backgroundColor: "white",
-                          "&:hover": { backgroundColor: "rgba(0,0,0,0.08)" },
+                          "&:hover": { backgroundColor: "rgba(125, 11, 72, 0.69)" },
                           borderRadius: "50%",
                           width: 40,
                           height: 40,

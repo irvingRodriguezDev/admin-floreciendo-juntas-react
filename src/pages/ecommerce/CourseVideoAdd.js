@@ -26,8 +26,7 @@ const CourseVideoAdd = () => {
   const [videoInfo, setVideoInfo] = useState({ name: '', type: '' });
   const [existingVideoUrl, setExistingVideoUrl] = useState(null);
 
-  // Obtener curso al montar
-  // 🔹 Obtener curso al montar el componente
+  //Obtener curso al montar el componente
   useEffect(() => {
     const fetchCourse = async () => {
       const data = await obtenerCursoPorId(id);
@@ -60,7 +59,7 @@ const CourseVideoAdd = () => {
   }, [existingVideoUrl, videoPreview]);
 
   const handleVideoChange = (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files[0]; 
     if (!file) return;
 
     if (!file.type.startsWith('video/')) {
@@ -123,8 +122,8 @@ const CourseVideoAdd = () => {
         title: 'Subiendo video...',
         html: `
           <div style="display:flex;flex-direction:column;align-items:center;gap:10px;width:100%;">
-            <div style="width:100%;background:#FF5C93;border-radius:4px;overflow:hidden;">
-              <div id="swal-progress-bar" style="width:0%;height:10px;background:#3085d6;transition:width 0.2s;"></div>
+            <div style="width:100%;background:#d8d6d7;border-radius:4px;overflow:hidden;">
+              <div id="swal-progress-bar" style="width:0%;height:10px;background:#FF5C93;transition:width 0.2s;"></div>
             </div>
             <div id="swal-progress-text">0%</div>
           </div>

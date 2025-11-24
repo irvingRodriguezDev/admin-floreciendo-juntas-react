@@ -1,4 +1,3 @@
-// import * as dataFormat from 'pages/CRUD/Users/table/UsersDataFormatters';
 import React, { useContext, useEffect, useState, useMemo } from 'react';
 import { useHistory } from 'react-router';
 import { uniqueId } from 'lodash';
@@ -29,6 +28,7 @@ import UserContext from '../../../../context/UserContext/UserContext';
 const useStyles = makeStyles(() => ({
   actions: {
     display: 'flex',
+    flexWrap: 'wrap',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 16,
@@ -50,7 +50,6 @@ const UsersTable = () => {
   const history = useHistory();
   const classes = useStyles();
 
-  // 🔹 Traemos el contexto de usuarios
   const { users, loading, getUsers, deleteUser } = useContext(UserContext);
 
   const [filterItems, setFilterItems] = useState([]);
@@ -64,19 +63,16 @@ const UsersTable = () => {
     pageSize: 5,
   });
 
-  // Campos disponibles para filtrar (adaptados)
   const filters = [
     { label: 'Nombre', title: 'name' },
     { label: 'Teléfono', title: 'phone' },
     { label: 'E-Mail', title: 'email' },
   ];
 
-  // 🔄 Llamamos al contexto para cargar usuarios al montar
   useEffect(() => {
     getUsers();
   }, []);
 
-  // 🔍 Filtrado frontend
   const displayRows = useMemo(() => {
     if (filterItems.length === 0) return users;
 
@@ -89,7 +85,6 @@ const UsersTable = () => {
     );
   }, [filterItems, users]);
 
-  // 🔁 Filtros dinámicos
   const handleChange = (id) => (e) => {
     const { name, value } = e.target;
     setFilterItems((prev) =>
@@ -100,6 +95,7 @@ const UsersTable = () => {
   };
 
   const handleReset = () => setFilterItems([]);
+
   const addFilter = () => {
     const newItem = {
       id: uniqueId(),
@@ -110,31 +106,32 @@ const UsersTable = () => {
     };
     setFilterItems([...filterItems, newItem]);
   };
+
   const deleteFilter = (id) => setFilterItems(filterItems.filter((item) => item.id !== id));
 
-  // 🗑️ Eliminar usuario
   const openModal = (event, id) => {
     event.stopPropagation();
     setIdToDelete(id);
     setModalOpen(true);
   };
+
   const closeModal = () => setModalOpen(false);
+
   const handleDelete = async () => {
     await deleteUser(idToDelete);
     setModalOpen(false);
   };
 
-  // 📋 Definición de columnas (adaptadas al backend)
   const columns = [
     { field: 'name', flex: 1, headerName: 'Nombre' },
     { field: 'phone', flex: 1, headerName: 'Teléfono' },
     { field: 'email', flex: 1.2, headerName: 'E-Mail' },
+
     {
       field: 'isSubscribed',
       flex: 0.8,
       headerName: 'Suscripción',
       renderCell: (params) => {
-        // Si el rol es 5 o 1 -> "No aplica"
         if (params.row.roleId === 5 || params.row.roleId === 1) {
           return (
             <Chip
@@ -150,20 +147,17 @@ const UsersTable = () => {
           );
         }
 
-        // Si no, muestra según el estado de suscripción
         return (
           <Chip
             label={params.value ? 'Activa' : 'Inactiva'}
             color={params.value ? 'success' : 'secondary'}
             size="small"
-            sx={{
-              fontWeight: 'bold',
-              color: '#fff',
-            }}
+            sx={{ fontWeight: 'bold', color: '#fff' }}
           />
         );
       },
     },
+
     {
       field: 'avatar',
       headerName: 'Avatar',
@@ -171,7 +165,6 @@ const UsersTable = () => {
       flex: 0.5,
       renderCell: (params) => {
         const imageUrl = params.row.profileImageUrl;
-
         return (
           <Box
             sx={{
@@ -192,11 +185,7 @@ const UsersTable = () => {
               <img
                 src={imageUrl}
                 alt={params.row.name}
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                }}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 onError={(e) => {
                   e.target.onerror = null;
                   e.target.style.display = 'none';
@@ -211,15 +200,6 @@ const UsersTable = () => {
         );
       },
     },
-    // {
-    //   field: 'id',
-    //   headerName: 'Acciones',
-    //   sortable: false,
-    //   flex: 0.6,
-    //   renderCell: (params) => (
-    //     <Actions classes={classes} entity="users" openModal={openModal} {...params} />
-    //   ),
-    // },
   ];
 
   const NoRowsOverlay = () => (
@@ -237,21 +217,15 @@ const UsersTable = () => {
             <Typography variant="subtitle1" sx={{ mb: 1 }}>
               Filtros
             </Typography>
+
             {filterItems.map((item) => (
-              <Grid
-                container
-                alignItems="center"
-                spacing={1.5}
-                key={item.id}
-                sx={{ mb: 1 }}
-              >
-                <Grid item xs={3}>
+              <Grid container alignItems="center" spacing={2} key={item.id} sx={{ mb: 1 }}>
+                <Grid item xs={12} sm={6} md={4}>
                   <FormControl size="small" fullWidth>
                     <InputLabel>Campo</InputLabel>
                     <Select
                       label="Campo"
                       name="selectedField"
-                      size="small"
                       value={item.fields.selectedField}
                       onChange={handleChange(item.id)}
                     >
@@ -263,10 +237,10 @@ const UsersTable = () => {
                     </Select>
                   </FormControl>
                 </Grid>
-                <Grid item xs={5}>
+
+                <Grid item xs={12} sm={6} md={6}>
                   <TextField
                     label="Contiene"
-                    type="text"
                     name="filterValue"
                     size="small"
                     fullWidth
@@ -274,10 +248,12 @@ const UsersTable = () => {
                     onChange={handleChange(item.id)}
                   />
                 </Grid>
-                <Grid item xs={2}>
+
+                <Grid item xs={12} sm={12} md={2}>
                   <Button
                     variant="outlined"
                     color="error"
+                    fullWidth
                     onClick={() => deleteFilter(item.id)}
                   >
                     <CloseIcon />
@@ -285,7 +261,8 @@ const UsersTable = () => {
                 </Grid>
               </Grid>
             ))}
-            <Stack direction="row" spacing={1}>
+
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
               <Button variant="contained">Aplicar</Button>
               <Button
                 color="error"
@@ -299,50 +276,52 @@ const UsersTable = () => {
           </Paper>
         )}
 
-        {/* TABLA */}
+        {/* TABLA - SIEMPRE MOSTRAR TODA LA INFO */}
         <Box
           sx={{
-            height: 520,
             width: '100%',
             borderRadius: 2,
             boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
             backgroundColor: '#fff',
             p: 1.5,
+            overflowX: 'auto',    // Permite ver todo con desplazamiento horizontal
+            overflowY: 'hidden',
           }}
         >
-          <DataGrid
-            rows={displayRows}
-            columns={columns}
-            getRowId={(row) => row.id}
-            sortingMode="server"
-            sortModel={sortModel}
-            onSortModelChange={setSortModel}
-            rowsPerPageOptions={[5, 10, 20, 50]}
-            pageSize={rowsState.pageSize}
-            pagination
-            paginationMode="client"
-            components={{ NoRowsOverlay, LoadingOverlay: LinearProgress }}
-            loading={loading}
-            onPageChange={(page) =>
-              setRowsState((prev) => ({ ...prev, page }))
-            }
-            onPageSizeChange={(pageSize) =>
-              setRowsState((prev) => ({ ...prev, pageSize }))
-            }
-            onSelectionModelChange={(newSelectionModel) =>
-              setSelectionModel(newSelectionModel)
-            }
-            selectionModel={selectionModel}
-            // checkboxSelection
-            disableSelectionOnClick
-            disableColumnMenu
-            // onRowClick={(e) => history.push(`/app/users/${e.id}/edit`)}
-            autoHeight
-          />
+          <Box sx={{ minWidth: 900 }}>  {/* Nunca oculta columnas */}
+            <DataGrid
+              autoHeight
+              rows={displayRows}
+              columns={columns}
+              getRowId={(row) => row.id}
+              sortingMode="server"
+              sortModel={sortModel}
+              onSortModelChange={setSortModel}
+              rowsPerPageOptions={[5, 10, 20, 50]}
+              pageSize={rowsState.pageSize}
+              pagination
+              paginationMode="client"
+              components={{
+                NoRowsOverlay,
+                LoadingOverlay: LinearProgress,
+              }}
+              loading={loading}
+              onPageChange={(page) =>
+                setRowsState((prev) => ({ ...prev, page }))
+              }
+              onPageSizeChange={(pageSize) =>
+                setRowsState((prev) => ({ ...prev, pageSize }))
+              }
+              onSelectionModelChange={setSelectionModel}
+              selectionModel={selectionModel}
+              disableSelectionOnClick
+              disableColumnMenu
+            />
+          </Box>
         </Box>
       </Widget>
 
-      {/* MODAL DE ELIMINACIÓN */}
+      {/* MODAL */}
       <Dialog
         open={modalOpen}
         title="Confirmar eliminación"

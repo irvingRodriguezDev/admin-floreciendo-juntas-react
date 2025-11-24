@@ -53,7 +53,7 @@ export default makeStyles(theme => ({
     marginTop: 20,
     fontWeight: 700,
     fontSize: 11,
-    width: 57,
+    width: 'auto',
     height: 26,
   },
   socials: {

@@ -12,42 +12,35 @@ import {
 } from "@mui/material";
 import Swal from "sweetalert2";
 import SystemContext from "../../context/SystemContext/SystemContext";
-import MethodGet from "../../config/Service";
 
 const AddSystem = ({ onCancel }) => {
-  const { id } = useParams(); // Si existe, estamos editando
+  const { id } = useParams();
   const history = useHistory();
-  const { systems, addSystem, updateSystem } = useContext(SystemContext);
+  const { obtenerSystemPorId, addSystem, updateSystem } = useContext(SystemContext);
 
   const [form, setForm] = useState({
     name: "",
     description: "",
     icon: null,
   });
-
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // 🧠 Efecto para cargar datos o limpiar formulario según el ID
+  // 🧠 Cargar sistema al editar
   useEffect(() => {
-    if (!id) {
-      setForm({
-        name: "",
-        description: "",
-        icon: null,
-      });
-      setPreview(null);
-      return;
-    }
-
-    const fetchSystem = async () => {
+    const cargarSistema = async () => {
+      if (!id) return; // Si no hay ID, es creación
       setLoading(true);
       try {
-        let system = systems.find((s) => s.id === parseInt(id));
+        const system = await obtenerSystemPorId(id);
 
         if (!system) {
-          const res = await MethodGet(`/systems/${id}`);
-          system = res.data;
+          Swal.fire({
+            icon: "error",
+            title: "No encontrado",
+            text: "El sistema solicitado no existe.",
+          });
+          return;
         }
 
         setForm({
@@ -56,24 +49,27 @@ const AddSystem = ({ onCancel }) => {
           icon: null,
         });
 
-        if (system.icon) setPreview(system.icon);
+        if (system.system_icon) {
+          setPreview(system.system_icon);
+        }
       } catch (error) {
         console.error("Error al cargar sistema:", error);
+        Swal.fire("Error", "No se pudo cargar el sistema", "error");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchSystem();
-  }, [id, systems]);
+    cargarSistema();
+  }, [id]);
 
-  // 📤 Cambios en inputs
+  // 📤 Manejar cambios de texto
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm({ ...form, [name]: value });
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  // 🖼️ Manejar ícono (solo SVG)
+  // 🖼️ Subir ícono SVG
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -96,10 +92,10 @@ const AddSystem = ({ onCancel }) => {
     }
   };
 
-  // 💾 Enviar formulario
+  // 💾 Guardar sistema
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true); // 🔹 activar spinner
+    setLoading(true);
 
     try {
       if (id) {
@@ -109,15 +105,7 @@ const AddSystem = ({ onCancel }) => {
         formData.append("name", form.name);
         formData.append("description", form.description);
         if (form.icon instanceof File) formData.append("icon", form.icon);
-
         await addSystem(formData);
-
-        setForm({
-          name: "",
-          description: "",
-          icon: null,
-        });
-        setPreview(null);
       }
 
       Swal.fire({
@@ -137,11 +125,16 @@ const AddSystem = ({ onCancel }) => {
         text: "Ocurrió un problema al guardar el sistema.",
       });
     } finally {
-      setLoading(false); // 🔹 desactivar spinner
+      setLoading(false);
     }
   };
 
-  if (loading && !id) return <Typography>Cargando sistema...</Typography>;
+  if (loading && id)
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+        <CircularProgress />
+      </Box>
+    );
 
   return (
     <Box sx={{ p: 3 }}>
@@ -192,6 +185,7 @@ const AddSystem = ({ onCancel }) => {
                 </Button>
               </Grid>
 
+              {/* Vista previa */}
               {preview && (
                 <Grid item xs={12} sm={6}>
                   <Box
