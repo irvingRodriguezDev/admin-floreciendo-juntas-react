@@ -127,7 +127,7 @@ const Event = () => {
                                         {/* IMAGEN */}
                                         <Box sx={{
                                             width: "100%",
-                                            aspectRatio: "14/11",
+                                            aspectRatio: "14/8",
                                             backgroundColor: "#f7f7f7",
                                             display: "flex",
                                             alignItems: "center",
@@ -140,7 +140,7 @@ const Event = () => {
                                                 component="img"
                                                 src={getEventImage(event)}
                                                 alt={event.title}
-                                                sx={{ width: "100%", height: "100%", objectFit: "contain" }}
+                                                sx={{ width: "100%", height: "100%", objectFit: "fill" }}
                                             />
                                         </Box>
 

@@ -7,6 +7,7 @@ import {
   Event as EventIcon,
   CameraAlt as CameraIcon,
   AccountCircle as ProfileIcon,
+  Store as StoreIcon,
 } from '@mui/icons-material';
 import AuthContext from '../../context/AuthContext/AuthContext';
 
@@ -51,6 +52,16 @@ export const useSidebarStructure = () => {
     },
     { id: 103, label: 'Escáner', link: '/scanner', icon: <CameraIcon /> },
     { id: 0, label: 'Dashboard', link: '/dashboard', icon: <HomeIcon /> },
+    {
+      id: 104,
+      label: 'Productos',
+      link: '/product',
+      icon: <StoreIcon />,
+      children: [
+        { label: 'Lista de prodcutos', link: '/product/list' },
+        { label: 'Agregar producto', link: '/product/addproduct' }
+      ]
+    },
     // {
     //   id: 1,
     //   label: 'Cursos',

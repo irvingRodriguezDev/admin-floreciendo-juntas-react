@@ -26,7 +26,7 @@ import Dashboard from '../../pages/dashboard';
 import Profile from '../../pages/profile'
 
 import Ecommerce from '../../pages/ecommerce'
-import Product from '../../pages/ecommerce/Products'
+import Product from '../../pages/products/Product';
 import ProductsGrid from '../../pages/ecommerce/ProductsGrid'
 import CreateProduct from '../../pages/ecommerce/CreateProduct'
 
@@ -53,6 +53,7 @@ import Event from '../../pages/events/Event';
 import UserAdd from '../../pages/CRUD/Users/table/UserAdd';
 import ScannerComponent from '../../pages/scanner/scanner';
 import UsersTablePage from '../../pages/CRUD/Users/table/UsersTablePage';
+import AddProduct from '../../pages/products/AddProduct';
 
 const Redirect = (props) => {
   useEffect(() => window.location.replace(props.url));
@@ -103,6 +104,13 @@ function Layout(props) {
           <Route path="/system/addsystem" component={AddSystem} />
           <Route path="/system/editsystem/:id" component={AddSystem} />
 
+          {/* Página de lista de productos */}
+          <Route path="/product/list" component={Product} />
+
+          {/* Página para agregar un sistema */}
+          <Route path="/product/addproduct" component={AddProduct} />
+          <Route path="/product/editproduct/:id" component={AddProduct} />
+
           <Route
             exact
             path="/event"
@@ -142,7 +150,7 @@ function Layout(props) {
           <Route path={'/users/useradd'} exact component={UserAdd} />
         </Switch>
         <ColorChangeThemePopper id={id} open={open} anchorEl={anchorEl} />
-        <Footer>
+        {/* <Footer>
           <div>
             <Link
               color={'primary'}
@@ -189,7 +197,7 @@ function Layout(props) {
               </IconButton>
             </Link>
           </div>
-        </Footer>
+        </Footer> */}
       </div>
     </div>
   );

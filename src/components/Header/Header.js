@@ -204,7 +204,7 @@ export default function Header(props) {
           >
             <AccountIcon sx={{ fontSize: 20, mr: 1, color: "primary.main" }} />
             <Link
-              to="/app/profile"
+              to="/profile"
               style={{
                 textDecoration: "none",
                 color: theme.palette.text.primary,
