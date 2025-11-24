@@ -7,6 +7,7 @@ import SystemState from "./context/SystemContext/SystemState";
 import CoursesState from "./context/CoursesContext/CoursesState";
 import UserState from "./context/UserContext/UserState";
 import EventState from "./context/EventContext/EventState";
+import ProductState from "./context/ProductContext/ProdcutState";
 
 const App = () => {
   return (
@@ -16,9 +17,11 @@ const App = () => {
         <CoursesState>
          <UserState>
           <EventState>
-           <Router>
-             <AppRouter />
-           </Router>
+           <ProductState>
+            <Router>
+              <AppRouter />
+            </Router>
+           </ProductState>
           </EventState>
          </UserState>
         </CoursesState>
