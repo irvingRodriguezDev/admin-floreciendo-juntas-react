@@ -1,4 +1,5 @@
 import React, { useContext, useState } from "react";
+import { useHistory } from "react-router-dom";
 import {
     Box,
     Card,
@@ -14,6 +15,7 @@ import UserContext from "../../../../context/UserContext/UserContext";
 
 const UserAdd = ({ onCancel }) => {
     const { addUser } = useContext(UserContext);
+    const history = useHistory();
     const [preview, setPreview] = useState(null);
     const [loading, setLoading] = useState(false);
 
@@ -80,6 +82,7 @@ const UserAdd = ({ onCancel }) => {
             setPreview(null);
 
             if (onCancel) onCancel();
+            else history.push("/users/list");
         } catch (error) {
             console.error("Error al crear usuario:", error);
         } finally {
@@ -161,9 +164,9 @@ const UserAdd = ({ onCancel }) => {
                                 >
                                     <MenuItem value="">Seleccionar rol</MenuItem>
                                     {/* <MenuItem value={1}>Administrador</MenuItem> */}
-                                    <MenuItem value={2}>Gerente</MenuItem>
-                                    <MenuItem value={3}>Supervisor</MenuItem>
-                                    <MenuItem value={4}>Vendedor</MenuItem>
+                                    {/* <MenuItem value={2}>Gerente</MenuItem>
+                                    <MenuItem value={3}>Supervisor</MenuItem> */}
+                                    {/* <MenuItem value={4}>Cliente</MenuItem> */}
                                     <MenuItem value={5}>Escaneador</MenuItem>
                                 </TextField>
                             </Grid>

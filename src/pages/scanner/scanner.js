@@ -8,7 +8,7 @@ const ScannerComponent = () => {
     const [scanned, setScanned] = useState(false);
     const [hasCamera, setHasCamera] = useState(null); // null = aún no se ha comprobado
 
-    // 🔍 Comprobamos si hay cámaras disponibles antes de montar QrScanner
+    // Comprobamos si hay cámaras disponibles antes de montar QrScanner
     useEffect(() => {
         const checkCamera = async () => {
             try {
@@ -71,7 +71,7 @@ const ScannerComponent = () => {
         });
     };
 
-    // ⏳ Mientras se comprueba si hay cámara
+    // Mientras se comprueba si hay cámara
     if (hasCamera === null) {
         return (
             <Box sx={{ textAlign: "center", mt: 5 }}>
@@ -80,7 +80,7 @@ const ScannerComponent = () => {
         );
     }
 
-    // ❌ Si no hay cámara, solo mostramos aviso
+    // Si no hay cámara, solo mostramos aviso
     if (hasCamera === false) {
         return (
             <Box sx={{ textAlign: "center", mt: 5 }}>
@@ -91,7 +91,7 @@ const ScannerComponent = () => {
         );
     }
 
-    // ✅ Solo se monta QrScanner si hay cámara
+    // Solo se monta QrScanner si hay cámara
     return (
         <Grid container spacing={3} justifyContent="center">
             <Grid item xs={12} md={6}>
