@@ -28,20 +28,26 @@ import top1Image from "../../assets/images/top1.png";
 const medalColors = ["#FF85C0", "#FF69B4", "#FFB6D9"]; // Top 2,1,3 colores rosas
 
 export default function Dashboard() {
-  const { eventos, obtenerEventos, cargando } = useContext(EventContext);
+  const { boletosMasVendidos, obtenerBoletosMasVendidos, cargando } =
+    useContext(EventContext);
   const [showChart, setShowChart] = useState(true);
 
   useEffect(() => {
-    obtenerEventos();
+    obtenerBoletosMasVendidos();
   }, []);
 
-  const sortedEvents = useMemo(() => {
-    if (!Array.isArray(eventos)) return [];
-    return [...eventos].sort(
-      (a, b) => (b.availableTickets ?? 0) - (a.availableTickets ?? 0)
-    );
-  }, [eventos]);
+  useEffect(() => {
+    // console.log("🎟️ boletosMasVendidos actualizado:", boletosMasVendidos);
+  }, [boletosMasVendidos]);
 
+  const sortedEvents = useMemo(() => {
+    if (!Array.isArray(boletosMasVendidos)) return [];
+    return [...boletosMasVendidos].sort(
+      (a, b) => (b.tickets_sold ?? 0) - (a.tickets_sold ?? 0)
+    );
+  }, [boletosMasVendidos]);
+
+  
   if (cargando) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" mt={6}>
@@ -50,11 +56,24 @@ export default function Dashboard() {
     );
   }
 
+  if (!sortedEvents.length) {
+    return (
+      <Typography
+        variant="h6"
+        color="text.secondary"
+        textAlign="center"
+        mt={6}
+      >
+        No hay datos disponibles de boletos vendidos.
+      </Typography>
+    );
+  }
+
   const topThree = sortedEvents.slice(0, 3);
 
   return (
     <Box mt={4}>
-      {/* Top 3 estilo podio */}
+      {/* 🌸 Podio de Eventos */}
       <Typography
         variant="h5"
         fontWeight="bold"
@@ -62,7 +81,7 @@ export default function Dashboard() {
         mb={2}
         textAlign="center"
       >
-        🌸 Podio de Eventos con Más boletos Vendidos
+        🌸 Podio de Eventos con Más Boletos Vendidos
       </Typography>
 
       <Grid container spacing={2} justifyContent="center" alignItems="flex-end" mb={4}>
@@ -106,15 +125,12 @@ export default function Dashboard() {
               <Typography variant="subtitle1" fontWeight="bold">
                 {topThree[1].title}
               </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {topThree[1].location || "Sin ubicación"}
-              </Typography>
               <Typography
                 variant="h6"
                 fontWeight="bold"
                 color={medalColors[0]}
               >
-                {topThree[1].availableTickets} boletos
+                {topThree[1].tickets_sold} boletos
               </Typography>
             </Paper>
           </Grid>
@@ -147,13 +163,15 @@ export default function Dashboard() {
                 src={top1Image}
                 alt="Corona Top 1"
                 sx={{
-                  width: 155,
-                  height: 155,
+                  width: { xs: 170, sm: 155, md: 155, lg: 180, },
+                  height: "auto",
                   position: "absolute",
-                  top: 0,
+                  top: { xs: -10, sm: -30, md: -30, lg: -16 },
                   left: "50%",
                   transform: "translateX(-50%)",
-                  zIndex: 1, // detrás del número
+                  zIndex: 1,
+                  objectFit: "contain",
+                  pointerEvents: "none",
                 }}
               />
 
@@ -191,7 +209,7 @@ export default function Dashboard() {
                 fontWeight="bold"
                 color={medalColors[1]}
               >
-                {topThree[0].availableTickets} boletos
+                {topThree[0].tickets_sold} boletos
               </Typography>
             </Paper>
           </Grid>
@@ -238,25 +256,22 @@ export default function Dashboard() {
               <Typography variant="subtitle1" fontWeight="bold">
                 {topThree[2].title}
               </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {topThree[2].location || "Sin ubicación"}
-              </Typography>
               <Typography
                 variant="h6"
                 fontWeight="bold"
                 color={medalColors[2]}
               >
-                {topThree[2].availableTickets} boletos
+                {topThree[2].tickets_sold} boletos
               </Typography>
             </Paper>
           </Grid>
         )}
       </Grid>
 
-      {/* Gráfica con todos los eventos */}
+      {/* 📊 Gráfica */}
       <Paper elevation={4} sx={{ borderRadius: 3, p: 3, mb: 4 }}>
         <Typography variant="h6" fontWeight="bold" mb={2} color="primary">
-          🌸 Todos los Eventos
+          📊 Boletos Vendidos por Evento
         </Typography>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart
@@ -280,7 +295,10 @@ export default function Dashboard() {
                 boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
               }}
             />
-            <Bar dataKey="availableTickets">
+            <Bar 
+            dataKey="tickets_sold"
+            name="Boletos vendidos"
+            >
               {sortedEvents.map((entry, index) => (
                 <Cell
                   key={`cell-${index}`}
@@ -292,7 +310,7 @@ export default function Dashboard() {
         </ResponsiveContainer>
       </Paper>
 
-      {/* Tabla con ranking */}
+      {/* 🏅 Tabla Ranking */}
       {sortedEvents.length > 0 && (
         <TableContainer component={Paper} sx={{ borderRadius: 3 }}>
           <Table>
@@ -300,7 +318,6 @@ export default function Dashboard() {
               <TableRow>
                 <TableCell>#</TableCell>
                 <TableCell>Evento</TableCell>
-                <TableCell>Ubicación</TableCell>
                 <TableCell align="right">Boletos vendidos</TableCell>
               </TableRow>
             </TableHead>
@@ -334,7 +351,6 @@ export default function Dashboard() {
                     )}
                   </TableCell>
                   <TableCell>{event.title}</TableCell>
-                  <TableCell>{event.location || "Sin ubicación"}</TableCell>
                   <TableCell
                     align="right"
                     sx={{
@@ -342,7 +358,7 @@ export default function Dashboard() {
                       color: index < 3 ? medalColors[index] : "#FF69B4",
                     }}
                   >
-                    {event.availableTickets}
+                    {event.tickets_sold}
                   </TableCell>
                 </TableRow>
               ))}
