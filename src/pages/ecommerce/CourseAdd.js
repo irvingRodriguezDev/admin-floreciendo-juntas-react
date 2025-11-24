@@ -42,11 +42,30 @@ const CourseAdd = ({ onCancel }) => {
   const [loading, setLoading] = useState(false);
 
   // 🔹 Configuración del toolbar de Quill
+  // 🔹 Configuración del toolbar de Quill con una paleta extendida
   const quillModules = {
     toolbar: [
       [{ header: [1, 2, 3, false] }],
       ['bold', 'italic', 'underline', 'strike', 'blockquote'],
-      [{ color: [] }, { background: [] }],
+      [{
+        color: [
+          '#000000', '#424242', '#636363', '#9c9c9c', '#cecece', '#efefef', '#ffffff', // Neutros (7)
+          '#e60000', '#ff6600', '#ff9900', '#ffff00', '#008a00', '#0066cc', '#9933ff', // Vivos (7)
+          '#fa9c9c', '#ffdd99', '#ffff99', '#b3d9b3', '#99ccff', '#cc99ff', '#FF5C93', // Pastel y acento (7)
+          '#00b8e6', '#00cccc', '#20b2aa', '#1e90ff', '#1f3e7a', '#0a0a2a', '#4b0082', // Azules y fríos (7)
+          '#800000', '#cc3300', '#996600', '#666600', '#4d4d00', '#330000', '#808000', // Oscuros y tierra (7)
+          '#ffc0cb', '#f08080', '#ffa07a', '#ffb6c1', '#f0e68c', '#bdb76b', '#dda0dd'  // Otros pasteles (7)
+        ]
+      }, {
+        background: [
+          '#000000', '#424242', '#636363', '#9c9c9c', '#cecece', '#efefef', '#ffffff',
+          '#e60000', '#ff6600', '#ff9900', '#ffff00', '#008a00', '#0066cc', '#9933ff',
+          '#fa9c9c', '#ffdd99', '#ffff99', '#b3d9b3', '#99ccff', '#cc99ff', '#FF5C93',
+          '#00b8e6', '#00cccc', '#20b2aa', '#1e90ff', '#1f3e7a', '#0a0a2a', '#4b0082',
+          '#800000', '#cc3300', '#996600', '#666600', '#4d4d00', '#330000', '#808000',
+          '#ffc0cb', '#f08080', '#ffa07a', '#ffb6c1', '#f0e68c', '#bdb76b', '#dda0dd'
+        ]
+      }],
       [{ list: 'ordered' }, { list: 'bullet' }],
       [{ align: [] }],
       ['link', 'clean'],
