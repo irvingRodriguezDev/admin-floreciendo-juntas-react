@@ -101,6 +101,23 @@ const SystemState = (props) => {
     }
   };
 
+  // 🔍 Obtener un sistema por ID
+  const obtenerSystemPorId = async (id) => {
+    try {
+      const { data } = await MethodGet(`/systems/${id}`);
+      return data;
+    } catch (error) {
+      console.error("Error al obtener sistema:", error);
+      Swal.fire({
+        title: "Error",
+        text: error.response?.data?.message || "No se pudo cargar el sistema",
+        icon: "error",
+      });
+      throw error;
+    }
+  };
+
+
 
 
   // 🗑️ Eliminar sistema
@@ -140,6 +157,7 @@ const SystemState = (props) => {
         getSystems,
         addSystem,
         updateSystem,
+        obtenerSystemPorId,
         deleteSystem,
       }}
     >
