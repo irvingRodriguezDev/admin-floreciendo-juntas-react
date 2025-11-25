@@ -161,19 +161,35 @@ export default function Dashboard() {
               <Box
                 component="img"
                 src={top1Image}
-                alt="Corona Top 1"
+                alt="Top 1"
                 sx={{
-                  width: { xs: 170, sm: 155, md: 155, lg: 180, },
-                  height: "auto",
                   position: "absolute",
-                  top: { xs: -10, sm: -30, md: -30, lg: -16 },
+                  top: -20,
                   left: "50%",
                   transform: "translateX(-50%)",
+                  // opacity: 0.15,
                   zIndex: 1,
-                  objectFit: "contain",
-                  pointerEvents: "none",
+
+                  // Tamaños por breakpoint
+                  width: {
+                    xs: 170,   // móviles
+                    sm: 160,  // tablets
+                    md: 130,  // pantallas medianas
+                    lg: 170,  // pantallas grandes
+                    xl: 180,  // pantallas muy grandes
+                  },
+
+                  // Puedes ajustar la posición para pantallas grandes también
+                  top: {
+                    xs: -8,
+                    sm: -30,
+                    md: -20,
+                    lg: -34,
+                    xl: -15,
+                  },
                 }}
               />
+
 
               {/* Círculo con número 1 de frente */}
               <Box
