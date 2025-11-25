@@ -21,7 +21,7 @@ import {
 //components
 import Widget from "../../components/Widget";
 import { Typography, Button } from "../../components/Wrappers";
-import config from "../../config";
+// import config from "../../config";
 
 const CreateProduct = () => {
   const { id } = useParams();
@@ -134,95 +134,95 @@ const CreateProduct = () => {
         {/*  closeOnClick={false}*/}
         {/*  progressClassName={classes.notificationProgress}*/}
         {/*/>*/}
-        <Grid item xs={12}>
-          <Widget
-            title={isCreateProduct ? "New product" : "Edit product"}
-            disableWidgetMenu
-          >
-            {config.isBackend && !context.products.isLoaded ? (
-              <Box
-                display={"flex"}
-                justifyContent={"center"}
-                alignItems={"center"}
-              >
-                <CircularProgress size={26} />
-              </Box>
-            ) : (
-              <Box display={"flex"} flexDirection="column">
-                <Box display={"flex"} alignItems={"center"}>
-                  <Box width={300}>
-                    <Typography variant={"h6"}>Image</Typography>
-                  </Box>
-                  <Box width={200}>
-                    <Select
-                      value={
-                        isCreateProduct ? newProduct.img : localProducts.img
-                      }
-                      fullWidth
-                      onChange={e => changeImgSrc(e)}
-                    >
-                      {context.products.images.map((c, i) => (
-                        <MenuItem value={c} key={c}>
-                          <img src={c} style={{ height: 100, width: 200 }} alt={"ecommerce product"}/>
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </Box>
+          <Grid item xs={12}>
+            <Widget
+              title={isCreateProduct ? "New product" : "Edit product"}
+              disableWidgetMenu
+            >
+              {/* {config.isBackend && !context.products.isLoaded ? (
+                <Box
+                  display={"flex"}
+                  justifyContent={"center"}
+                  alignItems={"center"}
+                >
+                  <CircularProgress size={26} />
                 </Box>
-                <Box display={"flex"} alignItems={"center"}>
-                  <Box width={300}>
-                    <Typography variant={"h6"}>Title</Typography>
+              ) : (
+                <Box display={"flex"} flexDirection="column">
+                  <Box display={"flex"} alignItems={"center"}>
+                    <Box width={300}>
+                      <Typography variant={"h6"}>Image</Typography>
+                    </Box>
+                    <Box width={200}>
+                      <Select
+                        value={
+                          isCreateProduct ? newProduct.img : localProducts.img
+                        }
+                        fullWidth
+                        onChange={e => changeImgSrc(e)}
+                      >
+                        {context.products.images.map((c, i) => (
+                          <MenuItem value={c} key={c}>
+                            <img src={c} style={{ height: 100, width: 200 }} alt={"ecommerce product"}/>
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </Box>
                   </Box>
-                  <Box width={500}>
-                    <Input
-                      id="title"
-                      margin="normal"
-                      variant="outlined"
-                      value={
-                        isCreateProduct ? newProduct.title : localProducts.title
-                      }
-                      fullWidth
-                      onChange={e =>
-                        isCreateProduct ? editNewProduct(e) : editProduct(e)
-                      }
-                    />
+                  <Box display={"flex"} alignItems={"center"}>
+                    <Box width={300}>
+                      <Typography variant={"h6"}>Title</Typography>
+                    </Box>
+                    <Box width={500}>
+                      <Input
+                        id="title"
+                        margin="normal"
+                        variant="outlined"
+                        value={
+                          isCreateProduct ? newProduct.title : localProducts.title
+                        }
+                        fullWidth
+                        onChange={e =>
+                          isCreateProduct ? editNewProduct(e) : editProduct(e)
+                        }
+                      />
+                    </Box>
                   </Box>
-                </Box>
-                <Box display={"flex"} alignItems={"center"}>
-                  <Box width={300}>
-                    <Typography variant={"h6"}>Subtitle</Typography>
+                  <Box display={"flex"} alignItems={"center"}>
+                    <Box width={300}>
+                      <Typography variant={"h6"}>Subtitle</Typography>
+                    </Box>
+                    <Box width={500}>
+                      <Input
+                        id="subtitle"
+                        margin="normal"
+                        variant="outlined"
+                        value={
+                          isCreateProduct
+                            ? newProduct.subtitle
+                            : localProducts.subtitle
+                        }
+                        fullWidth
+                        onChange={e =>
+                          isCreateProduct ? editNewProduct(e) : editProduct(e)
+                        }
+                      />
+                    </Box>
                   </Box>
-                  <Box width={500}>
-                    <Input
-                      id="subtitle"
-                      margin="normal"
-                      variant="outlined"
-                      value={
-                        isCreateProduct
-                          ? newProduct.subtitle
-                          : localProducts.subtitle
-                      }
-                      fullWidth
-                      onChange={e =>
-                        isCreateProduct ? editNewProduct(e) : editProduct(e)
-                      }
-                    />
-                  </Box>
-                </Box>
-                <Box display={"flex"} alignItems={"center"}>
-                  <Box width={300}>
-                    <Typography variant={"h6"}>Price</Typography>
-                  </Box>
-                  <Box width={500}>
-                    <Input
-                      id="price"
-                      margin="normal"
-                      variant="outlined"
-                      value={
-                        isCreateProduct ? newProduct.price : localProducts.price
-                      }
-                      type={"number"}
-                      fullWidth
+                  <Box display={"flex"} alignItems={"center"}>
+                    <Box width={300}>
+                      <Typography variant={"h6"}>Price</Typography>
+                    </Box>
+                    <Box width={500}>
+                      <Input
+                        id="price"
+                        margin="normal"
+                        variant="outlined"
+                        value={
+                          isCreateProduct ? newProduct.price : localProducts.price
+                        }
+                        type={"number"}
+                        fullWidth
                       onChange={e =>
                         isCreateProduct ? editNewProduct(e) : editProduct(e)
                       }
@@ -398,7 +398,7 @@ const CreateProduct = () => {
                   </Button>
                 </Box>
               </Box>
-            )}
+            )} */}
           </Widget>
         </Grid>
       </Grid>

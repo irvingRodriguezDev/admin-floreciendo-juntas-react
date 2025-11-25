@@ -22,14 +22,14 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 
-import {
-  useManagementDispatch,
-  useManagementState,
-} from '../../context/ManagementContext';
-import config from '../../config';
+// import {
+//   useManagementDispatch,
+//   useManagementState,
+// } from '../../context/ManagementContext';
+// import config from '../../config';
 import Axios from 'axios';
 
-import { actions } from '../../context/ManagementContext';
+// import { actions } from '../../context/ManagementContext';
 import { showSnackbar } from '../../components/Snackbar';
 
 const EditUser = () => {
@@ -48,8 +48,8 @@ const EditUser = () => {
     setTab(newValue);
   };
   const location = useLocation();
-  const managementDispatch = useManagementDispatch();
-  const managementValue = useManagementState();
+  // const managementDispatch = useManagementDispatch();
+  // const managementValue = useManagementState();
 
   function extractExtensionFrom(filename) {
     if (!filename) {
@@ -73,7 +73,7 @@ const EditUser = () => {
 
     const privateUrl = `${path}/${filename}`;
 
-    return `${config.baseURLApi}/file/download?privateUrl=${privateUrl}`;
+    // return `${config.baseURLApi}/file/download?privateUrl=${privateUrl}`;
   };
 
   const handleFile = async (event) => {
@@ -103,10 +103,10 @@ const EditUser = () => {
   };
   const history = useHistory();
 
-  useEffect(() => {
-    actions.doFind(sessionStorage.getItem('user_id'))(managementDispatch);
-    // eslint-disable-next-line  react-hooks/exhaustive-deps
-  }, []);
+  // useEffect(() => {
+  //   actions.doFind(sessionStorage.getItem('user_id'))(managementDispatch);
+  //   // eslint-disable-next-line  react-hooks/exhaustive-deps
+  // }, []);
 
   useEffect(() => {
     if (location.pathname.includes('edit')) {
@@ -114,9 +114,9 @@ const EditUser = () => {
     }
   }, [location.pathname]);
 
-  useEffect(() => {
-    setData(managementValue.currentUser);
-  }, [managementDispatch, managementValue, id]);
+  // useEffect(() => {
+  //   setData(managementValue.currentUser);
+  // }, [managementDispatch, managementValue, id]);
 
   const deleteOneImage = (id) => {
     setData({
@@ -125,18 +125,18 @@ const EditUser = () => {
     });
   };
 
-  function handleSubmit() {
-    actions.doUpdate(
-      sessionStorage.getItem('user_id'),
-      data,
-      history,
-    )(managementDispatch);
-    showSnackbar({ type: 'success', message: 'User Edited' });
-  }
+  // function handleSubmit() {
+  //   actions.doUpdate(
+  //     sessionStorage.getItem('user_id'),
+  //     data,
+  //     history,
+  //   )(managementDispatch);
+  //   showSnackbar({ type: 'success', message: 'User Edited' });
+  // }
 
-  function handleUpdatePassword() {
-    actions.doChangePassword(password)(managementDispatch);
-  }
+  // function handleUpdatePassword() {
+  //   actions.doChangePassword(password)(managementDispatch);
+  // }
 
   function handleChangePassword(e) {
     setPassword({
@@ -412,7 +412,7 @@ const EditUser = () => {
                       <Button variant={'outlined'} color={'primary'}>
                         Resetear
                       </Button>
-                      <Button variant={'contained'} onClick={handleSubmit}>
+                      <Button variant={'contained'} >
                         Guardar
                       </Button>
                     </>
@@ -423,7 +423,6 @@ const EditUser = () => {
                       </Button>
                       <Button
                         variant={'contained'}
-                        onClick={handleUpdatePassword}
                       >
                         Guardar contraseña
                       </Button>

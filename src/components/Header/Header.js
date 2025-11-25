@@ -14,7 +14,7 @@ import { deepOrange } from '@mui/material/colors';
 
 //images
 import profile from '../../assets/images/main-profile.png';
-import config from '../../config';
+// import config from '../../config';
 
 // styles
 import useStyles from './styles';
@@ -28,13 +28,13 @@ import {
   useLayoutDispatch,
   toggleSidebar,
 } from '../../context/LayoutContext';
-import {
-  useManagementDispatch,
-  useManagementState,
-} from '../../context/ManagementContext';
+// import {
+//   useManagementDispatch,
+//   useManagementState,
+// } from '../../context/ManagementContext';
 
-import { actions } from '../../context/ManagementContext';
-import { useUserDispatch, signOut } from '../../context/UserContext';
+// import { actions } from '../../context/ManagementContext';
+// import { useUserDispatch, signOut } from '../../context/UserContext';
 import AuthContext from '../../context/AuthContext/AuthContext';
 
 export default function Header(props) {
@@ -44,15 +44,15 @@ export default function Header(props) {
   // global
   let layoutState = useLayoutState();
   let layoutDispatch = useLayoutDispatch();
-  let userDispatch = useUserDispatch();
-  const managementDispatch = useManagementDispatch();
+  // let userDispatch = useUserDispatch();
+  // const managementDispatch = useManagementDispatch();
 
   // local
   const [profileMenu, setProfileMenu] = useState(null);
   const [currentUser, setCurrentUser] = useState();
   const [isSmall, setSmall] = useState(false);
 
-  const managementValue = useManagementState();
+  // const managementValue = useManagementState();
 
   // Obtenemos el usuario del contexto
   const { usuario, cerrarSesion } = useContext(AuthContext);
@@ -64,16 +64,16 @@ export default function Header(props) {
   };
 
 
-  useEffect(() => {
-    actions.doFind(sessionStorage.getItem('user_id'))(managementDispatch);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // useEffect(() => {
+  //   actions.doFind(sessionStorage.getItem('user_id'))(managementDispatch);
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, []);
 
-  useEffect(() => {
-    if (config.isBackend) {
-      setCurrentUser(managementValue.currentUser);
-    }
-  }, [managementValue]);
+  // useEffect(() => {
+  //   if (config.isBackend) {
+  //     setCurrentUser(managementValue.currentUser);
+  //   }
+  // }, [managementValue]);
 
   useEffect(function () {
     window.addEventListener('resize', handleWindowWidthChange);

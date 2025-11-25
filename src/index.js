@@ -10,15 +10,13 @@ import { StyledEngineProvider } from '@mui/material/styles';
 import App from './App';
 import * as serviceWorker from './serviceWorker';
 import { LayoutProvider } from './context/LayoutContext';
-import { UserProvider } from './context/UserContext';
-import { ManagementProvider } from './context/ManagementContext';
 import createRootReducer from './reducers';
 import {
   ThemeProvider as ThemeChangeProvider,
   ThemeStateContext,
 } from './context/ThemeContext';
 import CssBaseline from '@mui/material/CssBaseline';
-import config from '../src/config';
+// import config from '../src/config';
 
 // CAMBIA ESTA PARTE - usa createBrowserHistory en lugar de createHashHistory
 import { createBrowserHistory, createMemoryHistory } from 'history';
@@ -34,7 +32,7 @@ export function getHistory() {
   return history;
 }
 
-axios.defaults.baseURL = config.baseURLApi;
+// axios.defaults.baseURL = config.baseURLApi;
 axios.defaults.headers.common['Content-Type'] = 'application/json';
 const token = localStorage.getItem('token');
 if (token) {
@@ -51,22 +49,18 @@ const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <Provider store={store}>
     <LayoutProvider>
-      <UserProvider>
         <StyledEngineProvider injectFirst>
           <ThemeChangeProvider>
             <ThemeStateContext.Consumer>
               {(theme) => (
                 <ThemeProviderV5 theme={theme}>
-                  <ManagementProvider>
                     <CssBaseline />
                     <App />
-                  </ManagementProvider>
                 </ThemeProviderV5>
               )}
             </ThemeStateContext.Consumer>
           </ThemeChangeProvider>
         </StyledEngineProvider>
-      </UserProvider>
     </LayoutProvider>
   </Provider>,
 );

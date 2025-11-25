@@ -1,7 +1,7 @@
 import React from 'react';
 import axios from 'axios';
 
-import config from '../config';
+// import config from '../config';
 
 const ProductsContext = React.createContext();
 
@@ -66,16 +66,16 @@ const useProductsState = () => {
 
 export function getProductsRequest(dispatch) {
   // We check if app runs with backend mode
-  if (config.isBackend) {
-    return axios.get('/products').then((res) => {
-      dispatch({ type: 'UPDATE_PRODUCTS', payload: res.data });
-    });
-  }
+  // if (config.isBackend) {
+  //   return axios.get('/products').then((res) => {
+  //     dispatch({ type: 'UPDATE_PRODUCTS', payload: res.data });
+  //   });
+  // }
 }
 
 export function deleteProductRequest({ id, history, dispatch }) {
   // We check if app runs with backend mode
-  if (!config.isBackend) return;
+  // if (!config.isBackend) return;
 
   if (Array.isArray(id)) {
     for (let key in id) {
@@ -95,16 +95,16 @@ export function deleteProductRequest({ id, history, dispatch }) {
 
 export function getProductInfo(dispatch) {
   // We check if app runs with backend mode
-  if (config.isBackend) {
-    axios.get('/products').then((res) => {
-      dispatch({ type: 'UPDATE_PRODUCTS', payload: res.data });
-    });
-  }
+  // if (config.isBackend) {
+  //   axios.get('/products').then((res) => {
+  //     dispatch({ type: 'UPDATE_PRODUCTS', payload: res.data });
+  //   });
+  // }
 }
 
 export function updateProduct(product, dispatch) {
   // We check if app runs with backend mode
-  if (!config.isBackend) return;
+  // if (!config.isBackend) return;
 
   axios.put('/products/' + product.id, product).then((res) => {
     dispatch({ type: 'EDIT_PRODUCT', payload: res.data });
@@ -113,7 +113,7 @@ export function updateProduct(product, dispatch) {
 
 export function createProduct(product, dispatch) {
   // We check if app runs with backend mode
-  if (!config.isBackend) return;
+  // if (!config.isBackend) return;
 
   axios.post('/products', product).then((res) => {
     dispatch({ type: 'CREATE_PRODUCT', payload: res.data });
@@ -122,7 +122,7 @@ export function createProduct(product, dispatch) {
 
 export function getProductsImages(dispatch) {
   // We check if app runs with backend mode
-  if (!config.isBackend) return;
+  // if (!config.isBackend) return;
 
   const replacer = (data) => {
     return data.map((c) => {

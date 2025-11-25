@@ -20,7 +20,7 @@ import {
 import { Link as RouterLink, withRouter, useHistory } from "react-router-dom";
 
 //config
-import config from "../../config";
+// import config from "../../config";
 
 // Material UI icons
 import {
@@ -389,7 +389,7 @@ function EcommercePage({ history }) {
               </Box>
             }
           >
-            { config.isBackend ? (
+            {/* { config.isBackend ? (
               <Button
                   style={{marginTop: -10}}
                   variant={"contained"}
@@ -415,8 +415,8 @@ function EcommercePage({ history }) {
               numSelected={selected.length}
               selected={selected}
               deleteProducts={deleteProduct}
-            />
-            {config.isBackend && !context.products.isLoaded ? (
+            /> */}
+            {/* {config.isBackend && !context.products.isLoaded ? (
               <Box
                 display={"flex"}
                 justifyContent={"center"}
@@ -424,7 +424,7 @@ function EcommercePage({ history }) {
               >
                 <CircularProgress size={26} />
               </Box>
-            ) : (
+            ) : ( */}
               <div className={classes.tableWrapper}>
                 <Table
                   className={classes.table}
@@ -539,7 +539,7 @@ function EcommercePage({ history }) {
                               {/*</TableCell>*/}
                               <TableCell>
                                 <Box display={"flex"} alignItems={"center"}>
-                                  { config.isBackend ? (
+                                  {/* { config.isBackend ? (
                                     <Button
                                         color="success"
                                         size="small"
@@ -560,7 +560,7 @@ function EcommercePage({ history }) {
                                         Edit
                                       </Button>
                                   )
-                                  }
+                                  } */}
                                   <Button
                                     color="secondary"
                                     size="small"
