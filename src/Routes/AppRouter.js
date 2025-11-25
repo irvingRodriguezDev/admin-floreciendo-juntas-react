@@ -1,6 +1,6 @@
 import React, { useContext, useEffect } from "react";
-// Se renombra a 'BrowserRouter' para mayor claridad.
-import { BrowserRouter, Switch, Route } from "react-router-dom";
+// REMOVER BrowserRouter de aquí - ya existe en App.js
+import { Switch, Route } from "react-router-dom";
 import { Grid, Box, CircularProgress } from "@mui/material";
 
 // Context
@@ -23,14 +23,13 @@ export default function AppRouter() {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
-	// Spinner mientras se valida la sesión
 	if (cargando) {
 		return (
 			<Grid item xs={12}>
 				<Box
 					sx={{
 						width: "105%",
-						height: "100vh", // Usar 100vh para ocupar toda la altura visible
+						height: "100vh",
 						display: "flex",
 						alignItems: "center",
 						justifyContent: "center",
@@ -46,31 +45,28 @@ export default function AppRouter() {
 	}
 
 	return (
-		// Se usa BrowserRouter directamente en lugar de Router
-		<BrowserRouter>
-			<Switch>
-				{/* 1. Rutas públicas - EXACT MATCH for /login */}
-				<PublicRouter
-					exact
-					path="/login"
-					component={Login}
-					isAuthenticated={autenticado}
-				/>
+		// REMOVER BrowserRouter de aquí - ya está en App.js
+		<Switch>
+			{/* 1. Rutas públicas */}
+			<PublicRouter
+				exact
+				path="/login"
+				component={Login}
+				isAuthenticated={autenticado}
+			/>
 
-				{/* 2. Rutas privadas principales - Layout es el contenedor de /dashboard, /profile, etc. */}
-				<PrivateRouter
-					path="/"
-					component={Layout}
-					isAuthenticated={autenticado}
-				/>
+			{/* 2. Rutas privadas principales */}
+			<PrivateRouter
+				path="/"
+				component={Layout}
+				isAuthenticated={autenticado}
+			/>
 
-				{/* 3. Fallback: error 404 - Usa Route simple, ya que no importa el estado de autenticación aquí, 
-                    solo que ninguna ruta haya coincidido. Se coloca al final de Switch. */}
-				<Route
-					path="*"
-					component={Error}
-				/>
-			</Switch>
-		</BrowserRouter>
+			{/* 3. Fallback: error 404 */}
+			<Route
+				path="*"
+				component={Error}
+			/>
+		</Switch>
 	);
 }
