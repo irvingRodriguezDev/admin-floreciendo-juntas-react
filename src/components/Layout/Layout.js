@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Route, Switch, withRouter } from 'react-router-dom';
+import { Route, Switch, withRouter, Redirect } from 'react-router-dom';
 import classnames from 'classnames';
 
 import SettingsIcon from '@mui/icons-material/Settings';
@@ -55,10 +55,10 @@ import ScannerComponent from '../../pages/scanner/scanner';
 import UsersTablePage from '../../pages/CRUD/Users/table/UsersTablePage';
 import AddProduct from '../../pages/products/AddProduct';
 
-const Redirect = (props) => {
-  useEffect(() => window.location.replace(props.url));
-  return <span>Redirecting...</span>;
-};
+// const Redirect = (props) => {
+//   useEffect(() => window.location.replace(props.url));
+//   return <span>Redirecting...</span>;
+// };
 
 function Layout(props) {
   const classes = useStyles();
@@ -85,6 +85,11 @@ function Layout(props) {
       >
         <div className={classes.fakeToolbar} />
         <Switch>
+          <Route 
+            exact 
+            path="/" 
+            render={() => <Redirect to="/dashboard" />} 
+          />
           <Route path='/dashboard' component={Dashboard} />
           <Route path="/profile" component={Profile} />
           <Route path='/user/edit' component={EditUser} />
