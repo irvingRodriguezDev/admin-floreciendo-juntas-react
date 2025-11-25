@@ -74,14 +74,26 @@ const Event = () => {
             {/* Buscador */}
             <Grid item xs={12}>
                 <Paper elevation={0} sx={{ p: 3, borderRadius: 4, background: "#f9f9f9" }}>
-                    <Box display="flex" flexWrap="wrap" alignItems="center" gap={2}>
+                    <Box
+                        display="flex"
+                        justifyContent="center"
+                        alignItems="center"
+                        width="100%"
+                    >
                         <TextField
                             variant="outlined"
                             size="small"
                             placeholder="Buscar evento..."
                             value={state.searchTerm}
                             onChange={(e) => dispatch({ searchTerm: e.target.value })}
-                            sx={{ backgroundColor: "white", borderRadius: 2, width: 250 }}
+                            sx={{
+                                width: isMobile ? "100%" : 400,
+                                backgroundColor: "white",
+                                borderRadius: 2,
+                                "& .MuiOutlinedInput-root": {
+                                    borderRadius: "12px",
+                                },
+                            }}
                             InputProps={{
                                 startAdornment: (
                                     <InputAdornment position="start">

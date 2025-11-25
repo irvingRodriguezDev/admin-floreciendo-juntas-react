@@ -9,6 +9,8 @@ import {
     Fade,
     IconButton,
     Pagination,
+    useMediaQuery,
+    useTheme,
 } from "@mui/material";
 import { useHistory } from "react-router-dom";
 import { Search as SearchIcon, Edit as EditIcon, Delete as DeleteIcon } from "@mui/icons-material";
@@ -18,20 +20,39 @@ import Swal from "sweetalert2";
 
 const Product = () => {
     const history = useHistory();
-    const { products, getProducts, loading, deleteProduct, pagination } = useContext(ProductContext);
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
+    const { products, getProducts, loading, deleteProduct } = useContext(ProductContext);
 
     const [state, dispatch] = useReducer(
         (s, a) => ({ ...s, ...a }),
         { searchTerm: "" }
     );
 
+    const [filteredProducts, setFilteredProducts] = useState([]);
     const [page, setPage] = useState(1);
     const itemsPerPage = 10;
 
-    // ✅ Único useEffect para traer productos
+    // Traer productos solo una vez
     useEffect(() => {
-        getProducts(page, state.searchTerm);
-    }, [page, state.searchTerm]);
+        getProducts();
+    }, []);
+
+    // Filtrar localmente
+    useEffect(() => {
+        if (!products) return;
+
+        const term = state.searchTerm.toLowerCase();
+
+        const filtered = products.filter((p) =>
+            p.name?.toLowerCase().includes(term) ||
+            p.description?.toLowerCase().includes(term)
+        );
+
+        setFilteredProducts(filtered);
+        setPage(1);
+    }, [state.searchTerm, products]);
 
     const handlePageChange = (event, value) => {
         setPage(value);
@@ -50,7 +71,7 @@ const Product = () => {
         }).then((result) => {
             if (result.isConfirmed) {
                 deleteProduct(id).then(() => {
-                    getProducts(page, state.searchTerm);
+                    getProducts();
                 });
             }
         });
@@ -59,9 +80,13 @@ const Product = () => {
     const getImageUrl = (product) =>
         product.image?.url || "https://via.placeholder.com/300x190?text=Producto";
 
+    // Calcular productos paginados
+    const startIndex = (page - 1) * itemsPerPage;
+    const paginatedProducts = filteredProducts.slice(startIndex, startIndex + itemsPerPage);
+
     return (
         <Grid container spacing={3}>
-            {/* Filtro de búsqueda */}
+            {/* Filtro de búsqueda con estilo de EVENT */}
             <Grid item xs={12}>
                 <Paper
                     elevation={0}
@@ -73,17 +98,26 @@ const Product = () => {
                         border: "1px solid rgba(200,200,200,0.3)",
                     }}
                 >
-                    <Box display="flex" flexWrap="wrap" alignItems="center" gap={2}>
+                    <Box
+                        display="flex"
+                        justifyContent="center"
+                        alignItems="center"
+                        width="100%"
+                    >
                         <TextField
                             variant="outlined"
-                            size="small"
                             placeholder="Buscar producto..."
+                            size="small"
                             value={state.searchTerm}
-                            onChange={(e) => {
-                                dispatch({ searchTerm: e.target.value });
-                                setPage(1); // Resetear página al buscar
+                            onChange={(e) => dispatch({ searchTerm: e.target.value })}
+                            sx={{
+                                width: isMobile ? "100%" : 400,
+                                backgroundColor: "white",
+                                borderRadius: 2,
+                                "& .MuiOutlinedInput-root": {
+                                    borderRadius: "12px",
+                                },
                             }}
-                            sx={{ backgroundColor: "white", borderRadius: 2, width: 250 }}
                             InputProps={{
                                 startAdornment: (
                                     <InputAdornment position="start">
@@ -100,12 +134,12 @@ const Product = () => {
             <Grid item xs={12}>
                 {loading ? (
                     <Typography align="center">Cargando productos...</Typography>
-                ) : products.length === 0 ? (
-                    <Typography align="center">No hay productos disponibles.</Typography>
+                ) : paginatedProducts.length === 0 ? (
+                    <Typography align="center">No hay productos encontrados.</Typography>
                 ) : (
                     <>
                         <Grid container spacing={3}>
-                            {products.map((product, index) => (
+                            {paginatedProducts.map((product, index) => (
                                 <Grid item xs={12} sm={6} md={3} key={product.id}>
                                     <Fade in timeout={400 + index * 80}>
                                         <Card
@@ -120,7 +154,7 @@ const Product = () => {
                                                 },
                                             }}
                                         >
-                                            {/* Iconos Editar / Eliminar */}
+                                            {/* Iconos */}
                                             <Box sx={{ position: "absolute", top: 10, right: 10, zIndex: 2 }}>
                                                 <IconButton
                                                     size="large"
@@ -137,6 +171,7 @@ const Product = () => {
                                                 >
                                                     <EditIcon fontSize="medium" />
                                                 </IconButton>
+
                                                 <IconButton
                                                     size="large"
                                                     color="error"
@@ -153,7 +188,7 @@ const Product = () => {
                                                 </IconButton>
                                             </Box>
 
-                                            {/* Imagen del producto */}
+                                            {/* Imagen */}
                                             <Box
                                                 sx={{
                                                     position: "relative",
@@ -184,6 +219,7 @@ const Product = () => {
                                                 <Typography variant="h6" fontWeight={600} gutterBottom>
                                                     <b>{product.name}</b>
                                                 </Typography>
+
                                                 <Typography
                                                     variant="body2"
                                                     color="text.secondary"
@@ -197,9 +233,11 @@ const Product = () => {
                                                 >
                                                     {product.description || "Sin descripción"}
                                                 </Typography>
+
                                                 <Typography variant="body2" color="text.secondary">
                                                     Precio: ${product.price ?? "N/D"}
                                                 </Typography>
+
                                                 <Typography variant="body2" color="text.secondary">
                                                     Stock: {product.stock ?? "N/A"}
                                                 </Typography>
@@ -211,10 +249,10 @@ const Product = () => {
                         </Grid>
 
                         {/* Paginación */}
-                        {pagination && pagination.totalPages > 1 && (
+                        {filteredProducts.length > itemsPerPage && (
                             <Box display="flex" justifyContent="center" sx={{ mt: 4 }}>
                                 <Pagination
-                                    count={pagination.totalPages}
+                                    count={Math.ceil(filteredProducts.length / itemsPerPage)}
                                     page={page}
                                     onChange={handlePageChange}
                                     color="primary"
