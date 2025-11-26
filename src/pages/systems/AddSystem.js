@@ -141,7 +141,7 @@ const AddSystem = ({ onCancel }) => {
       <Card>
         <CardContent>
           <Typography variant="h5" sx={{ mb: 3 }}>
-            {id ? "Editar Sistema" : "Agregar Nuevo Sistema"}
+            {id ? "Editar Academia" : "Agregar Nueva Academia"}
           </Typography>
 
           <form onSubmit={handleSubmit} encType="multipart/form-data">
@@ -149,7 +149,7 @@ const AddSystem = ({ onCancel }) => {
               {/* Nombre */}
               <Grid item xs={12}>
                 <TextField
-                  label="Nombre del sistema"
+                  label="Nombre de la academia"
                   name="name"
                   fullWidth
                   required
@@ -229,9 +229,9 @@ const AddSystem = ({ onCancel }) => {
                       Guardando...
                     </Box>
                   ) : id ? (
-                    "Actualizar Sistema"
+                    "Actualizar Academia"
                   ) : (
-                    "Guardar Sistema"
+                    "Guardar Academia"
                   )}
                 </Button>
 

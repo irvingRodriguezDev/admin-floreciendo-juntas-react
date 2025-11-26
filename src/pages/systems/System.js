@@ -79,7 +79,7 @@ const System = () => {
               <TextField
                 variant="outlined"
                 size="small"
-                placeholder="Buscar sistema..."
+                placeholder="Buscar academia..."
                 value={state.searchTerm}
                 onChange={(e) => dispatch({ searchTerm: e.target.value })}
                 sx={{
@@ -103,9 +103,9 @@ const System = () => {
       {/* Cards de Sistemas */}
       <Grid item xs={12}>
         {loading ? (
-          <Typography align="center">Cargando sistemas...</Typography>
+          <Typography align="center">Cargando academias...</Typography>
         ) : filteredSystems.length === 0 ? (
-          <Typography align="center">No hay sistemas disponibles.</Typography>
+            <Typography align="center">No hay academias disponibles.</Typography>
         ) : (
           <Grid container spacing={3}>
             {filteredSystems.map((system, index) => (

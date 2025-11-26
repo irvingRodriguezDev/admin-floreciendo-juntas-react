@@ -32,12 +32,12 @@ export const useSidebarStructure = () => {
     },
     {
       id: 101,
-      label: 'Sistemas',
+      label: 'Academias',
       link: '/system',
       icon: <CategoryIcon />,
       children: [
-        { label: 'Lista de sistemas', link: '/system/list' },
-        { label: 'Agregar sistema', link: '/system/addsystem' }
+        { label: 'Lista de academias', link: '/system/list' },
+        { label: 'Agregar academia', link: '/system/addsystem' }
       ]
     },
     {
