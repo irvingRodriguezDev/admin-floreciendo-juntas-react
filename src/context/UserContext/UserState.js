@@ -21,7 +21,7 @@ const UserState = (props) => {
 
     const [state, dispatch] = useReducer(UserReducer, initialState);
 
-    // 📦 Obtener todos los usuarios
+    // Obtener todos los usuarios
     const getUsers = async () => {
         try {
             const res = await MethodGet("admin/users");
@@ -38,13 +38,13 @@ const UserState = (props) => {
         }
     };
 
-    // ➕ Crear usuario
+    // Crear usuario
     const addUser = async (data) => {
         try {
             const res = await MethodPost("auth/create-user", data);
             dispatch({
                 type: ADD_USER,
-                payload: res.data,
+                payload: res.data.user,
             });
 
             Swal.fire({
@@ -67,13 +67,13 @@ const UserState = (props) => {
         }
     };
 
-    // ✏️ Actualizar usuario
+    // Actualizar usuario
     const updateUser = async (id, datos) => {
         try {
             const res = await MethodPut(`/users/${id}`, datos);
             dispatch({
                 type: UPDATE_USER,
-                payload: res.data.user, // ✅ asegúrate que el backend retorne { user: {...} }
+                payload: res.data.user, // asegúrate que el backend retorne { user: {...} }
             });
 
             Swal.fire({
@@ -92,7 +92,7 @@ const UserState = (props) => {
         }
     };
 
-    // 🗑️ Eliminar usuario
+    // Eliminar usuario
     const deleteUser = async (id) => {
         try {
             await MethodDelete(`/users/${id}`);
