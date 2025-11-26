@@ -19,6 +19,7 @@ export const useSidebarStructure = () => {
 
   // 🔹 Estructura completa del menú
   const structure = [
+    { id: 0, label: 'Dashboard', link: '/dashboard', icon: <HomeIcon /> },
     { id: 100, label: 'Perfil', link: '/profile', icon: <ProfileIcon /> },
     {
       id: 1,
@@ -51,7 +52,7 @@ export const useSidebarStructure = () => {
       ]
     },
     { id: 103, label: 'Escáner', link: '/scanner', icon: <CameraIcon /> },
-    { id: 0, label: 'Dashboard', link: '/dashboard', icon: <HomeIcon /> },
+    // { id: 0, label: 'Dashboard', link: '/dashboard', icon: <HomeIcon /> },
     {
       id: 104,
       label: 'Productos',
