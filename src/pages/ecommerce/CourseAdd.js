@@ -112,7 +112,7 @@ const CourseAdd = ({ onCancel }) => {
       try {
         const curso = await obtenerCursoPorId(id);
         if (!curso) {
-          Swal.fire({ icon: 'error', title: 'Curso no encontrado' });
+          Swal.fire({ icon: 'error', title: 'Sube el video del curso para poder editarlo' });
           history.push('/ecommerce/gridproducts');
           return;
         }
