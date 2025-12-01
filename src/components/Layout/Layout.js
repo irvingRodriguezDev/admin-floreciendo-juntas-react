@@ -54,6 +54,7 @@ import UserAdd from '../../pages/CRUD/Users/table/UserAdd';
 import ScannerComponent from '../../pages/scanner/scanner';
 import UsersTablePage from '../../pages/CRUD/Users/table/UsersTablePage';
 import AddProduct from '../../pages/products/AddProduct';
+import Order from '../../pages/orders/Order';
 
 // const Redirect = (props) => {
 //   useEffect(() => window.location.replace(props.url));
@@ -115,6 +116,15 @@ function Layout(props) {
           {/* Página para agregar un sistema */}
           <Route path="/product/addproduct" component={AddProduct} />
           <Route path="/product/editproduct/:id" component={AddProduct} />
+
+          <Route
+            exact
+            path="/salon_of_your_dreams"
+            render={() => <Redirect to="/salon_of_your_dreams/orders" />}
+          />
+
+          {/* Página de lista de sistemas */}
+          <Route path="/salon_of_your_dreams/orders" component={Order} />
 
           <Route
             exact

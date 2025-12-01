@@ -8,6 +8,7 @@ import CoursesState from "./context/CoursesContext/CoursesState";
 import UserState from "./context/UserContext/UserState";
 import EventState from "./context/EventContext/EventState";
 import ProductState from "./context/ProductContext/ProdcutState";
+import OrdersState from "./context/OrdersContext/OrdersState";
 
 const App = () => {
   return (
@@ -18,9 +19,11 @@ const App = () => {
          <UserState>
           <EventState>
            <ProductState>
-            <Router>
-              <AppRouter />
-            </Router>
+            <OrdersState>
+             <Router>
+               <AppRouter />
+             </Router>
+            </OrdersState>
            </ProductState>
           </EventState>
          </UserState>

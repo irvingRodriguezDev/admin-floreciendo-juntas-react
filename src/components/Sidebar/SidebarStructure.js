@@ -8,6 +8,7 @@ import {
   CameraAlt as CameraIcon,
   AccountCircle as ProfileIcon,
   Store as StoreIcon,
+  Spa,
 } from '@mui/icons-material';
 import AuthContext from '../../context/AuthContext/AuthContext';
 
@@ -61,6 +62,16 @@ export const useSidebarStructure = () => {
       children: [
         { label: 'Lista de prodcutos', link: '/product/list' },
         { label: 'Agregar producto', link: '/product/addproduct' }
+      ]
+    },
+    {
+      id: 105,
+      label: 'Salón de tus sueños',
+      link: '/salon_of_your_dreams',
+      icon: <Spa />,
+      children: [
+        { label: 'Ordenes', link: '/salon_of_your_dreams/orders' },
+        // { label: 'Agregar producto', link: '/product/addproduct' }
       ]
     },
     // {
