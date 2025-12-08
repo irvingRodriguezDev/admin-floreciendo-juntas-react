@@ -8,6 +8,10 @@ import {
     LIMPIAR_ORDER_ACTUAL,
     LIMPIAR_ERROR_ORDER,
     RESET_SUCCESS_ORDER,
+    OBTENER_ORDENES_ACTIVAS,
+    OBTENER_ORDENES_LIQUIDADAS,
+    OBTENER_ORDENES_ENVIO_PAGADO,
+    OBTENER_ORDENES_ENVIADAS,
 } from "../../types";
 
 export default (state, action) => {
@@ -29,12 +33,48 @@ export default (state, action) => {
                 error: null,
                 cargando: false,
             };
-        case ACTUALIZAR_ORDER:
+        case OBTENER_ORDENES_ACTIVAS:
             return {
                 ...state,
-                orders: state.orders.map(order =>
-                    order.id === action.payload.id ? action.payload : order
-                ),
+                ordenesActivas: action.payload,
+                error: null,
+                cargando: false,
+            };
+        case OBTENER_ORDENES_LIQUIDADAS:
+            return {
+                ...state,
+                ordenesLiquidadas: action.payload,
+                error: null,
+                cargando: false,
+            };
+        case OBTENER_ORDENES_ENVIO_PAGADO:
+            return {
+                ...state,
+                enviosPagados: action.payload,
+                error: null,
+                cargando: false,
+            };
+        case OBTENER_ORDENES_ENVIADAS:
+            return {
+                ...state,
+                ordenesEnviadas: action.payload,
+                error: null,
+                cargando: false,
+            };
+        case ACTUALIZAR_ORDER:
+            // Función auxiliar para actualizar una orden en un array
+            const actualizarOrdenEnArray = (array, ordenActualizada) => {
+                return array.map(order =>
+                    order.id === ordenActualizada.id ? ordenActualizada : order
+                );
+            };
+
+            return {
+                ...state,
+                orders: actualizarOrdenEnArray(state.orders, action.payload),
+                ordenesActivas: actualizarOrdenEnArray(state.ordenesActivas, action.payload),
+                ordenesLiquidadas: actualizarOrdenEnArray(state.ordenesLiquidadas, action.payload),
+                enviosPagados: actualizarOrdenEnArray(state.enviosPagados, action.payload),
                 orderActual: action.payload,
                 success: true,
                 error: null,

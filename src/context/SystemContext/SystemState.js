@@ -21,7 +21,7 @@ const SystemState = (props) => {
 
   const [state, dispatch] = useReducer(SystemReducer, initialState);
 
-  // 📦 Obtener todos los sistemas
+  // Obtener todos los sistemas
   const getSystems = async () => {
     try {
       const res = await MethodGet("/systems");
@@ -37,7 +37,7 @@ const SystemState = (props) => {
     }
   };
 
-  // ➕ Crear un nuevo sistema
+  // Crear un nuevo sistema
   const addSystem = async (data) => {
     try {
       const res = await MethodPost("/systems", data);
@@ -65,7 +65,7 @@ const SystemState = (props) => {
     }
   };
 
-  // ✏️ Actualizar sistema
+  // Actualizar sistema
   const updateSystem = async (id, datos) => {
     try {
       const formData = new FormData();
@@ -76,10 +76,10 @@ const SystemState = (props) => {
         formData.append("icon", datos.icon);
       }
 
-      // 🟢 Hacemos la petición y obtenemos los datos actualizados
+      // Hacemos la petición y obtenemos los datos actualizados
       const { data } = await MethodPut(`/systems/${id}`, formData);
 
-      // 🟢 Actualizamos el contexto con el sistema modificado
+      // Actualizamos el contexto con el sistema modificado
       dispatch({
         type: UPDATE_SYSTEM,
         payload: data.system, // ⚠️ aquí va el objeto completo, no solo el id
@@ -101,7 +101,7 @@ const SystemState = (props) => {
     }
   };
 
-  // 🔍 Obtener un sistema por ID
+  // Obtener un sistema por ID
   const obtenerSystemPorId = async (id) => {
     try {
       const { data } = await MethodGet(`/systems/${id}`);
@@ -120,7 +120,7 @@ const SystemState = (props) => {
 
 
 
-  // 🗑️ Eliminar sistema
+  // Eliminar sistema
   const deleteSystem = async (id) => {
     try {
       await MethodDelete(`/systems/${id}`);

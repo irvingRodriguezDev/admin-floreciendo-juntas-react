@@ -8,7 +8,7 @@ import {
 
 export default (state, action) => {
   switch (action.type) {
-    // 📦 Obtener todos los sistemas
+    // Obtener todos los sistemas
     case GET_SYSTEMS:
       return {
         ...state,
@@ -16,7 +16,7 @@ export default (state, action) => {
         loading: false,
       };
 
-    // ➕ Agregar un nuevo sistema
+    // Agregar un nuevo sistema
     case ADD_SYSTEM:
       return {
         ...state,
@@ -24,7 +24,7 @@ export default (state, action) => {
         loading: false,
       };
 
-    // ✏️ Actualizar sistema existente
+    // Actualizar sistema existente
     case UPDATE_SYSTEM:
       return {
         ...state,
@@ -34,7 +34,7 @@ export default (state, action) => {
         loading: false,
       };
 
-    // 🗑️ Eliminar sistema
+    // Eliminar sistema
     case DELETE_SYSTEM:
       return {
         ...state,
@@ -44,7 +44,7 @@ export default (state, action) => {
         loading: false,
       };
 
-    // ⚠️ Error en API
+    // Error en API
     case SYSTEM_ERROR:
       return {
         ...state,
