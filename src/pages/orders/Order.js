@@ -1153,7 +1153,7 @@ const Order = () => {
                                                         </Tooltip>
 
                                                         {/* Botón para marcar como enviado (si aún no lo está) */}
-                                                        {order.status !== 'shipped' && order.status !== 'enviado' && (
+                                                        {/* {order.status !== 'shipped' && order.status !== 'enviado' && (
                                                             <Tooltip title="Marcar como enviado" arrow>
                                                                 <IconButton
                                                                     onClick={() => openSendModal(order)}
@@ -1170,7 +1170,7 @@ const Order = () => {
                                                                     <CheckCircleIcon />
                                                                 </IconButton>
                                                             </Tooltip>
-                                                        )}
+                                                        )} */}
                                                     </Box>
                                                 )}
                                             </TableCell>
