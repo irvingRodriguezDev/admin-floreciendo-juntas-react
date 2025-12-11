@@ -55,6 +55,7 @@ import ScannerComponent from '../../pages/scanner/scanner';
 import UsersTablePage from '../../pages/CRUD/Users/table/UsersTablePage';
 import AddProduct from '../../pages/products/AddProduct';
 import Order from '../../pages/orders/Order';
+import Lottery from '../../pages/lottery/lottery';
 
 // const Redirect = (props) => {
 //   useEffect(() => window.location.replace(props.url));
@@ -125,6 +126,8 @@ function Layout(props) {
 
           {/* Página de lista de sistemas */}
           <Route path="/salon_of_your_dreams/orders" component={Order} />
+          <Route path="/salon_of_your_dreams/lottery" component={Lottery} />
+
 
           <Route
             exact

@@ -71,6 +71,8 @@ export const useSidebarStructure = () => {
       icon: <Spa />,
       children: [
         { label: 'Ordenes', link: '/salon_of_your_dreams/orders' },
+        { label: 'Sorteo', link: '/salon_of_your_dreams/lottery' },
+
         // { label: 'Agregar producto', link: '/product/addproduct' }
       ]
     },
