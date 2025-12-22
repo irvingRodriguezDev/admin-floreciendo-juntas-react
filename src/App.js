@@ -9,6 +9,7 @@ import UserState from "./context/UserContext/UserState";
 import EventState from "./context/EventContext/EventState";
 import ProductState from "./context/ProductContext/ProdcutState";
 import OrdersState from "./context/OrdersContext/OrdersState";
+import LiveState from "./context/LiveContext/LiveState";
 
 const App = () => {
   return (
@@ -20,9 +21,11 @@ const App = () => {
           <EventState>
            <ProductState>
             <OrdersState>
-             <Router>
-               <AppRouter />
-             </Router>
+             <LiveState>
+              <Router>
+                <AppRouter />
+              </Router>
+             </LiveState>
             </OrdersState>
            </ProductState>
           </EventState>

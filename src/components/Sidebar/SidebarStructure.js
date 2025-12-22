@@ -9,6 +9,7 @@ import {
   AccountCircle as ProfileIcon,
   Store as StoreIcon,
   Spa,
+  LiveTv,
 } from '@mui/icons-material';
 import AuthContext from '../../context/AuthContext/AuthContext';
 
@@ -72,6 +73,18 @@ export const useSidebarStructure = () => {
       children: [
         { label: 'Ordenes', link: '/salon_of_your_dreams/orders' },
         { label: 'Sorteo', link: '/salon_of_your_dreams/lottery' },
+
+        // { label: 'Agregar producto', link: '/product/addproduct' }
+      ]
+    },
+    {
+      id: 106,
+      label: 'Lives',
+      link: '/lives',
+      icon: <LiveTv />,
+      children: [
+        { label: 'Lista de lives', link: '/lives/live_playlist' },
+        { label: 'Crea un live', link: '/lives/addlive' },
 
         // { label: 'Agregar producto', link: '/product/addproduct' }
       ]

@@ -56,6 +56,8 @@ import UsersTablePage from '../../pages/CRUD/Users/table/UsersTablePage';
 import AddProduct from '../../pages/products/AddProduct';
 import Order from '../../pages/orders/Order';
 import Lottery from '../../pages/lottery/lottery';
+import Live from '../../pages/lives/Live';
+import AddLive from '../../pages/lives/AddLive';
 
 // const Redirect = (props) => {
 //   useEffect(() => window.location.replace(props.url));
@@ -127,6 +129,17 @@ function Layout(props) {
           {/* Página de lista de sistemas */}
           <Route path="/salon_of_your_dreams/orders" component={Order} />
           <Route path="/salon_of_your_dreams/lottery" component={Lottery} />
+
+          <Route
+            exact
+            path="/lives"
+            render={() => <Redirect to="/lives/live_playlist" />}
+          />
+
+          {/* Página de lista de lives */}
+          <Route path="/lives/live_playlist" component={Live} />
+          <Route path="/lives/addlive" component={AddLive} />
+          <Route path="/lives/editlive/:id" component={AddLive} />
 
 
           <Route
