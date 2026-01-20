@@ -119,8 +119,13 @@ export default function Dashboard() {
           🌸 Dashboard de Eventos
         </Typography>
 
-        <Grid container spacing={3} mb={4}>
-          <Grid item xs={12} md={4}>
+        <Grid 
+          container 
+          spacing={3} mb={4}
+          justifyContent="center" // centra horizontalmente
+          alignItems="center"     // centra verticalmente (opcional)
+>
+          {/* <Grid item xs={12} md={4}>
             <Paper
               elevation={0}
               sx={{
@@ -155,7 +160,7 @@ export default function Dashboard() {
                 </Avatar>
                 <Box>
                   <Typography variant="h4" fontWeight="700">
-                    {/* {totalTickets} */}$100000
+                    {totalTickets}$100000
                   </Typography>
                   <Typography variant="body2" sx={{ opacity: 0.9 }}>
                     Total de Dinero Acumulado
@@ -163,7 +168,7 @@ export default function Dashboard() {
                 </Box>
               </Box>
             </Paper>
-          </Grid>
+          </Grid> */}
 
           <Grid item xs={12} md={4}>
             <Paper
@@ -210,7 +215,7 @@ export default function Dashboard() {
             </Paper>
           </Grid>
 
-          <Grid item xs={12} md={4}>
+          {/* <Grid item xs={12} md={4}>
             <Paper
               elevation={0}
               sx={{
@@ -245,7 +250,7 @@ export default function Dashboard() {
                 </Avatar>
                 <Box>
                   <Typography variant="h4" fontWeight="700">
-                    {/* {topThree[0]?.tickets_sold || 0} */}$50000
+                    {topThree[0]?.tickets_sold || 0}$50000
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     Total en comisiones
@@ -253,7 +258,7 @@ export default function Dashboard() {
                 </Box>
               </Box>
             </Paper>
-          </Grid>
+          </Grid> */}
         </Grid>
       </Box>
 
@@ -377,7 +382,7 @@ export default function Dashboard() {
                     </Typography>
                   </Box>
 
-                  <Box
+                  {/* <Box
                     sx={{
                       bgcolor: `${medalColors[0]}10`,
                       borderRadius: 2,
@@ -386,12 +391,12 @@ export default function Dashboard() {
                     }}
                   >
                     <Typography variant="h4" fontWeight="700" color={medalColors[0]}>
-                      {/* {topThree[1].tickets_sold} */}$15000
+                      {topThree[1].tickets_sold}$15000
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
                       Dinero Generado
                     </Typography>
-                  </Box>
+                  </Box> */}
                 </Box>
               </Paper>
             </Grid>
@@ -494,7 +499,7 @@ export default function Dashboard() {
                     </Typography>
                   </Box>
 
-                  <Box
+                  {/* <Box
                     sx={{
                       bgcolor: `${medalColors[1]}15`,
                       borderRadius: 2,
@@ -503,12 +508,12 @@ export default function Dashboard() {
                     }}
                   >
                     <Typography variant="h4" fontWeight="700" color={medalColors[1]}>
-                      {/* {topThree[0].tickets_sold} */}$20000
+                      {topThree[0].tickets_sold}$20000
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
                       Dinero Generado
                     </Typography>
-                  </Box>
+                  </Box> */}
                 </Box>
               </Paper>
             </Grid>
@@ -595,7 +600,7 @@ export default function Dashboard() {
                     </Typography>
                   </Box>
 
-                  <Box
+                  {/* <Box
                     sx={{
                       bgcolor: `${medalColors[0]}10`,
                       borderRadius: 2,
@@ -604,12 +609,12 @@ export default function Dashboard() {
                     }}
                   >
                     <Typography variant="h4" fontWeight="700" color={medalColors[0]}>
-                      {/* {topThree[2].tickets_sold} */}$10000
+                      {topThree[2].tickets_sold}$10000
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
                       Dinero Generado
                     </Typography>
-                  </Box>
+                  </Box> */}
                 </Box>
               </Paper>
             </Grid>
@@ -773,12 +778,12 @@ export default function Dashboard() {
                 <TableCell sx={{ fontWeight: "700", color: "#FF69B4" }}>
                   Evento
                 </TableCell>
-                <TableCell
+                {/* <TableCell
                   align="right"
                   sx={{ fontWeight: "700", color: "#FF69B4" }}
                 >
                   Efectivo
-                </TableCell>
+                </TableCell> */}
                 <TableCell
                   align="right"
                   sx={{ fontWeight: "700", color: "#FF69B4" }}
@@ -837,15 +842,15 @@ export default function Dashboard() {
                       </Typography>
                     )}
                   </TableCell>
-                  <TableCell align="right">
+                  {/* <TableCell align="right">
                     <Typography
                       variant="body2"
                       fontWeight="600"
                       color={index < 3 ? medalColors[index] : "text.secondary"}
                     >
-                      {/* {((event.tickets_sold / totalTickets) * 100).toFixed(1)}% */}$20000
+                      {((event.tickets_sold / totalTickets) * 100).toFixed(1)}%$20000
                     </Typography>
-                  </TableCell>
+                  </TableCell> */}
                   <TableCell align="right">
                     <Chip
                       label={event.tickets_sold}

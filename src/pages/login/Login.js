@@ -18,7 +18,7 @@ import { withRouter } from "react-router-dom";
 import { Button } from "../../components/Wrappers";
 import AuthContext from "../../context/AuthContext/AuthContext";
 import ResetPasswordContext from "../../context/ResetPasswordContext/ResetPasswordContext";
-import logo from "../../logo_carolina_tavera.png";
+import logo from "../../LOGOTIPO FLORECIENDO JUNTAS negro.png";
 
 const getGreeting = () => {
   const d = new Date();
