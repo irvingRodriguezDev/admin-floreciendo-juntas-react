@@ -58,8 +58,8 @@ import Order from '../../pages/orders/Order';
 import Lottery from '../../pages/lottery/lottery';
 import Live from '../../pages/lives/Live';
 import AddLive from '../../pages/lives/AddLive';
-import Secrets from '../../pages/secretsComponent/secrets';
-import AddSecret from '../../pages/secretsComponent/Addsecret';
+// import Secrets from '../../pages/secretsComponent/secrets';
+// import AddSecret from '../../pages/secretsComponent/Addsecret';
 
 // const Redirect = (props) => {
 //   useEffect(() => window.location.replace(props.url));
@@ -122,10 +122,10 @@ function Layout(props) {
           />
 
           {/* Página de lista de secretos */}
-          <Route path="/secrets/list" component={Secrets} />
+          {/* <Route path="/secrets/list" component={Secrets} /> */}
           
           {/* Página para agregar un secreto */}
-          <Route path="/secrets/addsecret" component={AddSecret} />
+          {/* <Route path="/secrets/addsecret" component={AddSecret} /> */}
           {/* <Route path="/secrets/editsecret/:id" component={} /> */}
 
           {/* Página de lista de productos */}
