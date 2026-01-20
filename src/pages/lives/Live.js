@@ -197,6 +197,7 @@ const Live = () => {
         sendComment(commentText);
         setCommentText("");
     };
+    // console.log(commentText);
 
 
     // FINALIZAR LIVE
@@ -864,7 +865,7 @@ const Live = () => {
                             <MenuItem value="Todos">Todos</MenuItem>
                             <MenuItem value="scheduled">Programado</MenuItem>
                             <MenuItem value="live">En vivo</MenuItem>
-                            <MenuItem value="ended">Finalizado</MenuItem>
+                            {/* <MenuItem value="ended">Finalizado</MenuItem> */}
                         </Select>
                     </FormControl>
                 </Box>

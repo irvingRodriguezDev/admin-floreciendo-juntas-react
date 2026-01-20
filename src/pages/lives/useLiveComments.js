@@ -23,6 +23,8 @@ const useLiveComments = (liveId) => {
 
         socket.on("load_comments", (data) => {
             setComments(data);
+            // console.log("Comments loaded:", data);
+
         });
 
         socket.on("new_comment", (comment) => {
