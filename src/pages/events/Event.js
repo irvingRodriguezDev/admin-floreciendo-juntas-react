@@ -49,6 +49,9 @@ const Event = () => {
         )
         : [];
 
+        // console.log(filteredEvents);
+        
+
     const handleDelete = (id) => {
         Swal.fire({
             title: "¿Estás seguro?",
@@ -65,9 +68,12 @@ const Event = () => {
     };
 
     const getEventImage = (event) => {
-        if (event.image && event.image !== "") return getImageUrl(event.image, optimalWidth, imageQuality);
-        return "https://via.placeholder.com/350x200?text=Evento"; // fallback
+        if (event.image && event.image !== "") {
+            return event.image;
+        }
+        return "https://via.placeholder.com/350x200?text=Evento";
     };
+
 
     return (
         <Grid container spacing={3}>

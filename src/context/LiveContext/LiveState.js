@@ -105,10 +105,11 @@ const LiveState = (props) => {
                     "Content-Type": "multipart/form-data",
                 },
             });
+           // console.log(res.data);
 
             dispatch({
                 type: ACTUALIZAR_LIVE,
-                payload: res.data.data,
+                payload: res.data.live,
             });
 
             return true;

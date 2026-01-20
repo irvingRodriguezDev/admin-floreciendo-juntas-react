@@ -132,25 +132,29 @@ const EventAdd = ({ onCancel }) => {
     }, [id]);
 
     useEffect(() => {
-        if (eventoEditar) {
-            setForm({
-                title: eventoEditar.title || '',
-                description: eventoEditar.description || '',
-                image: null,
-                startDate: formatDateForInput(eventoEditar.startDate),
-                time: eventoEditar.time || '',
-                location: eventoEditar.location || '',
-                map: eventoEditar.map || '',
-                price: eventoEditar.price || '',
-                totalTickets: eventoEditar.totalTickets || '',
-            });
+        if (!eventoEditar) return;
 
-            setPreview(eventoEditar.image
-                ? getImageUrl(eventoEditar.image, optimalWidth, imageQuality)
-                : null
-            );
+        setForm({
+            title: eventoEditar.title || '',
+            description: eventoEditar.description || '',
+            image: null, // solo File cuando el usuario cambia imagen
+            startDate: formatDateForInput(eventoEditar.startDate),
+            time: eventoEditar.time || '',
+            location: eventoEditar.location || '',
+            map: eventoEditar.map || '',
+            price: eventoEditar.price || '',
+            totalTickets: eventoEditar.totalTickets || '',
+        });
+
+        // Si ya es una URL válida, úsala directamente
+        if (eventoEditar.image) {
+            setPreview(eventoEditar.image);
+        } else {
+            setPreview(null);
         }
-    }, [eventoEditar]);
+
+    }, [eventoEditar, optimalWidth]);
+
 
     const timeRegex = /^(1[0-2]|0?[1-9]):[0-5][0-9]\s?(am|pm)\s?a\s?(1[0-2]|0?[1-9]):[0-5][0-9]\s?(am|pm)$/i;
 
