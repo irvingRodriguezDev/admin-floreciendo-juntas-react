@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import MethodGet, { MethodPost } from "../../config/Service";
 import Swal from 'sweetalert2';
+import * as ExcelJS from 'exceljs';
 import './Lottery.css';
 
 const Lottery = () => {
@@ -21,15 +22,29 @@ const Lottery = () => {
     const [winningIndex, setWinningIndex] = useState(-1);
     const [showResults, setShowResults] = useState(false);
     const [targetRotation, setTargetRotation] = useState(0);
-    const [currentWinners, setCurrentWinners] = useState([]); // Para mostrar ganadores en la tabla
+    const [currentWinners, setCurrentWinners] = useState([]); // Para mostrar ganadores actuales
 
     // Estados para el modal de creación de premios
     const [showPrizeModal, setShowPrizeModal] = useState(false);
     const [newPrizeName, setNewPrizeName] = useState('');
     const [creatingPrize, setCreatingPrize] = useState(false);
 
+    // Estados para la tabla de ganadores históricos
+    const [historicalWinners, setHistoricalWinners] = useState([]);
+    const [loadingHistorical, setLoadingHistorical] = useState(false);
+    const [activeTable, setActiveTable] = useState('current'); // 'current' o 'historical'
+    const [selectedMonth, setSelectedMonth] = useState('');
+    const [exportingExcel, setExportingExcel] = useState(false);
+    const [availableMonths, setAvailableMonths] = useState([]);
+
     const canvasRef = useRef(null);
     const animationRef = useRef(null);
+
+    // Obtener el mes actual en formato YYYY-MM
+    const getCurrentMonth = () => {
+        const now = new Date();
+        return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    };
 
     // Cargar participantes con manejo robusto de errores
     const fetchParticipants = async () => {
@@ -102,11 +117,133 @@ const Lottery = () => {
         }
     };
 
+    // Cargar ganadores del mes actual
+    const fetchCurrentWinners = async () => {
+        try {
+            const response = await MethodGet('/admin/user-winners-current-month');
+
+            let winnersData = [];
+
+            if (response && response.data) {
+                if (response.data.winners && Array.isArray(response.data.winners)) {
+                    winnersData = response.data.winners;
+                } else if (Array.isArray(response.data)) {
+                    winnersData = response.data;
+                } else if (Array.isArray(response)) {
+                    winnersData = response;
+                }
+            }
+
+            // Formatear los datos para currentWinners
+            const formattedCurrentWinners = winnersData.map(winner => ({
+                id: winner.user?.id || winner.id,
+                name: winner.user?.name || winner.name || 'N/A',
+                email: winner.user?.email || winner.email || 'N/A',
+                phone: winner.user?.phone || winner.phone || 'N/A',
+                prize: winner.prize?.prize_name || winner.prize_name || 'N/A',
+                prize_id: winner.prize?.id || winner.prize_id,
+                timestamp: winner.createdAt ? new Date(winner.createdAt).toLocaleTimeString() : new Date().toLocaleTimeString()
+            }));
+
+            setCurrentWinners(formattedCurrentWinners);
+
+        } catch (error) {
+            console.error('Error al cargar ganadores actuales:', error);
+            setCurrentWinners([]);
+        }
+    };
+
+    // Cargar ganadores históricos
+    const fetchHistoricalWinners = async (month = '') => {
+        try {
+            setLoadingHistorical(true);
+            let endpoint = '/admin/user-winners-current-month';
+            if (month) {
+                endpoint = `/admin/user-winners-current-month?month=${month}`;
+            }
+
+            const response = await MethodGet(endpoint);
+
+            let winnersData = [];
+
+            if (response && response.data) {
+                // Manejar diferentes estructuras de respuesta
+                if (response.data.winners && Array.isArray(response.data.winners)) {
+                    winnersData = response.data.winners;
+                } else if (Array.isArray(response.data)) {
+                    winnersData = response.data;
+                } else if (Array.isArray(response)) {
+                    winnersData = response;
+                }
+            }
+
+            // Formatear los datos para mostrar
+            const formattedWinners = winnersData.map(winner => ({
+                id: winner.id,
+                name: winner.user?.name || winner.name || 'N/A',
+                email: winner.user?.email || winner.email || 'N/A',
+                phone: winner.user?.phone || winner.phone || 'N/A',
+                prize_name: winner.prize?.prize_name || winner.prize_name || 'N/A',
+                position: winner.position,
+                month: winner.raffle_month || month,
+                createdAt: winner.createdAt
+            }));
+
+            setHistoricalWinners(formattedWinners);
+
+        } catch (error) {
+            console.error('Error al cargar ganadores:', error);
+            setHistoricalWinners([]);
+            Swal.fire({
+                title: 'Error',
+                text: 'No se pudieron cargar los ganadores',
+                icon: 'error',
+                confirmButtonColor: '#FF69B4'
+            });
+        } finally {
+            setLoadingHistorical(false);
+        }
+    };
+
+    // Cargar meses disponibles
+    const fetchAvailableMonths = async () => {
+        try {
+            // Esta función debería llamar a un endpoint que devuelva los meses disponibles
+            // Por ahora, generamos los últimos 12 meses
+            const months = [];
+            const currentDate = new Date();
+
+            for (let i = 0; i < 12; i++) {
+                const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                months.push(`${year}-${month}`);
+            }
+
+            setAvailableMonths(months);
+            if (months.length > 0 && !selectedMonth) {
+                setSelectedMonth(months[0]);
+            }
+        } catch (error) {
+            console.error('Error al cargar meses:', error);
+            setAvailableMonths([getCurrentMonth()]);
+        }
+    };
+
     // Efecto para cargar datos iniciales
     useEffect(() => {
         fetchParticipants();
         fetchPrizes();
+        // fetchCurrentWinners();
+        fetchAvailableMonths();
     }, []);
+
+    // Efecto para cargar ganadores cuando cambia el mes seleccionado
+    useEffect(() => {
+        if (selectedMonth && activeTable === 'historical') {
+            fetchHistoricalWinners(selectedMonth);
+        }
+    }, [selectedMonth, activeTable]);
 
     // Función para verificar si hay participantes disponibles para premios
     const checkAvailableParticipants = () => {
@@ -324,7 +461,6 @@ const Lottery = () => {
     };
 
     // Función para mostrar alerta de no participantes
-    // Función para mostrar alerta de no participantes
     const showNoParticipantsAlert = () => {
         Swal.fire({
             title: '🎯 ¡Atención!',
@@ -334,30 +470,11 @@ const Lottery = () => {
                 <p style="font-size: 1.3rem; margin-bottom: 15px; color: #FF1493;">
                     <strong>No hay participantes disponibles para recibir premios.</strong>
                 </p>
-                <div style="background: linear-gradient(135deg, #fff5f9 0%, #ffe6f2 100%); 
-                         padding: 20px; border-radius: 12px; margin: 20px 0; 
-                         border-left: 4px solid #FF69B4;">
-                    <p style="font-weight: 600; color: #333; margin-bottom: 15px;">📊 Estadísticas:</p>
-                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
-                        <div style="text-align: center;">
-                            <div style="font-size: 2rem; color: #FF1493;">${participants.length}</div>
-                            <div style="font-size: 0.9rem; color: #666;">Participantes totales</div>
-                        </div>
-                        <div style="text-align: center;">
-                            <div style="font-size: 2rem; color: #FF1493;">${currentWinners.length}</div>
-                            <div style="font-size: 0.9rem; color: #666;">Ganadores registrados</div>
-                        </div>
-                        <div style="text-align: center;">
-                            <div style="font-size: 2rem; color: #FF1493;">${prizes.length}</div>
-                            <div style="font-size: 0.9rem; color: #666;">Premios disponibles</div>
-                        </div>
-                    </div>
-                </div>
                 <p style="color: #666; font-size: 1rem; margin-top: 20px; padding: 0 20px;">
                     <span style="color: #FF1493;">💡</span> 
                     Todos los participantes ya han recibido un premio. 
                     <br>
-                    Agrega más participantes o crea nuevos sorteos para continuar.
+                    Agrega más participantes para continuar.
                 </p>
             </div>
         `,
@@ -376,7 +493,6 @@ const Lottery = () => {
         });
     };
 
-    // Función para ejecutar el sorteo
     // Función para ejecutar el sorteo
     const runRaffle = async () => {
         // Verificar si hay participantes disponibles ANTES de hacer la petición
@@ -410,7 +526,7 @@ const Lottery = () => {
         try {
             // Ejecutar el sorteo en el backend
             const response = await MethodGet('/admin/run-raffle');
-            console.log('🎰 RESPUESTA DEL SORTEO:', response);
+            console.log('RESPUESTA DEL SORTEO:', response);
 
             // Verificar si la respuesta contiene el error de no participantes disponibles
             if (response && response.message && response.message.includes("no quedan usuarios disponibles")) {
@@ -568,15 +684,28 @@ const Lottery = () => {
 
                 // Agregar ganador a la lista de ganadores actuales
                 if (winner && selectedPrize) {
-                    setCurrentWinners(prev => [
-                        ...prev,
-                        {
-                            ...winner,
-                            prize: selectedPrize.name,
-                            prize_id: selectedPrize.id,
-                            timestamp: new Date().toLocaleTimeString()
-                        }
-                    ]);
+                    const newWinner = {
+                        ...winner,
+                        prize: selectedPrize.name,
+                        prize_id: selectedPrize.id,
+                        timestamp: new Date().toLocaleTimeString()
+                    };
+
+                    setCurrentWinners(prev => [...prev, newWinner]);
+
+                    // También actualizar ganadores históricos si estamos en el mes actual
+                    if (selectedMonth === getCurrentMonth() || !selectedMonth) {
+                        setHistoricalWinners(prev => [...prev, {
+                            id: winner.id,
+                            name: winner.name,
+                            email: winner.email,
+                            phone: winner.phone || 'N/A',
+                            prize_name: selectedPrize.name,
+                            position: prev.length + 1,
+                            month: getCurrentMonth(),
+                            createdAt: new Date().toISOString()
+                        }]);
+                    }
                 }
 
                 // Pequeña pausa dramática antes de mostrar resultados
@@ -587,6 +716,7 @@ const Lottery = () => {
                     setTimeout(() => {
                         fetchParticipants();
                         fetchPrizes();
+                        fetchCurrentWinners();
                     }, 1000);
                 }, 500);
             }
@@ -677,6 +807,211 @@ const Lottery = () => {
         setTargetRotation(0);
     };
 
+    // Función para exportar a Excel
+    const exportToExcel = async () => {
+        try {
+            setExportingExcel(true);
+
+            // Determinar qué datos exportar basado en la tabla activa
+            let dataToExport = [];
+            let sheetTitle = '';
+
+            if (activeTable === 'current') {
+                // Exportar ganadores actuales
+                dataToExport = currentWinners.map(winner => ({
+                    name: winner.name,
+                    email: winner.email,
+                    phone: winner.phone,
+                    prize_name: winner.prize
+                }));
+                sheetTitle = 'Ganadores Actuales';
+            } else {
+                // Exportar ganadores históricos
+                dataToExport = historicalWinners.map(winner => ({
+                    name: winner.name,
+                    email: winner.email,
+                    phone: winner.phone,
+                    prize_name: winner.prize_name
+                }));
+                sheetTitle = `Ganadores - ${selectedMonth}`;
+            }
+
+            if (dataToExport.length === 0) {
+                Swal.fire({
+                    title: 'Información',
+                    text: 'No hay datos para exportar',
+                    icon: 'info',
+                    confirmButtonColor: '#FF69B4'
+                });
+                setExportingExcel(false);
+                return;
+            }
+
+            // Crear libro de Excel
+            const workbook = new ExcelJS.Workbook();
+            const worksheet = workbook.addWorksheet('Ganadores');
+
+            // Estilo para el título
+            const titleRow = worksheet.addRow([sheetTitle]);
+            titleRow.font = {
+                name: 'Arial',
+                size: 18,
+                bold: true,
+                color: { argb: 'FFFF1493' }
+            };
+            titleRow.alignment = { horizontal: 'center' };
+            worksheet.mergeCells('A1:D1');
+            titleRow.height = 30;
+
+            // Información adicional
+            const infoRow = worksheet.addRow([
+                `Fecha de exportación: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`
+            ]);
+            worksheet.mergeCells('A2:D2');
+            infoRow.font = { size: 11, color: { argb: 'FF666666' } };
+            infoRow.alignment = { horizontal: 'center' };
+
+            // Encabezados
+            const headers = ['Nombre', 'Email', 'Teléfono', 'Premio'];
+            const headerRow = worksheet.addRow(headers);
+
+            // Estilo para encabezados
+            headerRow.eachCell((cell, colNumber) => {
+                cell.fill = {
+                    type: 'pattern',
+                    pattern: 'solid',
+                    fgColor: { argb: 'FFFF69B4' }
+                };
+                cell.font = {
+                    name: 'Arial',
+                    bold: true,
+                    color: { argb: 'FFFFFFFF' },
+                    size: 12
+                };
+                cell.alignment = {
+                    horizontal: 'center',
+                    vertical: 'middle'
+                };
+                cell.border = {
+                    top: { style: 'thin', color: { argb: 'FFFFFFFF' } },
+                    left: { style: 'thin', color: { argb: 'FFFFFFFF' } },
+                    bottom: { style: 'thin', color: { argb: 'FFFFFFFF' } },
+                    right: { style: 'thin', color: { argb: 'FFFFFFFF' } }
+                };
+            });
+
+            // Agregar datos
+            dataToExport.forEach((item, index) => {
+                const row = worksheet.addRow([
+                    item.name,
+                    item.email,
+                    item.phone,
+                    item.prize_name
+                ]);
+
+                const isEven = index % 2 === 0;
+                row.eachCell((cell, colNumber) => {
+                    cell.fill = {
+                        type: 'pattern',
+                        pattern: 'solid',
+                        fgColor: { argb: isEven ? 'FFFFFFFF' : 'FFFFF5F9' }
+                    };
+                    cell.border = {
+                        top: { style: 'thin', color: { argb: 'FFE6E6E6' } },
+                        left: { style: 'thin', color: { argb: 'FFE6E6E6' } },
+                        bottom: { style: 'thin', color: { argb: 'FFE6E6E6' } },
+                        right: { style: 'thin', color: { argb: 'FFE6E6E6' } }
+                    };
+                    cell.alignment = { vertical: 'middle' };
+                });
+            });
+
+            // Ajustar columnas
+            worksheet.columns.forEach(column => {
+                let maxLength = 0;
+                column.eachCell({ includeEmpty: true }, cell => {
+                    const columnLength = cell.value ? cell.value.toString().length : 10;
+                    if (columnLength > maxLength) {
+                        maxLength = columnLength;
+                    }
+                });
+                column.width = Math.min(maxLength + 5, 50);
+            });
+
+            // Generar archivo
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], {
+                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            });
+            const link = document.createElement('a');
+            const fileName = `ganadores_${activeTable === 'current' ? 'actuales' : selectedMonth}_${new Date().toISOString().split('T')[0]}.xlsx`;
+            link.href = URL.createObjectURL(blob);
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(link.href);
+
+            Swal.fire({
+                title: '✅ Exportación Exitosa',
+                html: `
+                    <div style="text-align: center;">
+                        <p>Archivo <strong>${fileName}</strong> descargado.</p>
+                        <p style="color: #666; font-size: 0.9rem;">
+                            ${dataToExport.length} registros exportados
+                        </p>
+                    </div>
+                `,
+                icon: 'success',
+                confirmButtonColor: '#FF69B4',
+                timer: 3000
+            });
+
+        } catch (error) {
+            console.error('Error al exportar a Excel:', error);
+            Swal.fire({
+                title: '❌ Error',
+                text: 'No se pudo exportar el archivo',
+                icon: 'error',
+                confirmButtonColor: '#FF69B4'
+            });
+        } finally {
+            setExportingExcel(false);
+        }
+    };
+
+    // Formatear fecha para mostrar
+    const formatDisplayDate = (dateString) => {
+        if (!dateString) return 'Selecciona una fecha';
+        const [year, month] = dateString.split('-');
+        const date = new Date(year, month - 1, 1);
+        return date.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+    };
+
+    // Manejar búsqueda de ganadores históricos
+    const handleSearchHistorical = () => {
+        if (!selectedMonth) {
+            Swal.fire({
+                title: '⚠️ Fecha requerida',
+                text: 'Por favor selecciona un mes y año',
+                icon: 'warning',
+                confirmButtonColor: '#FF69B4'
+            });
+            return;
+        }
+        fetchHistoricalWinners(selectedMonth);
+    };
+
+    // Refrescar datos
+    const refreshData = () => {
+        if (activeTable === 'current') {
+            fetchParticipants();
+            // fetchCurrentWinners();
+        } else {
+            handleSearchHistorical();
+        }
+    };
+
     return (
         <div className="lottery-container">
             <div className="lottery-header">
@@ -709,22 +1044,102 @@ const Lottery = () => {
             </div>
 
             <div className="lottery-content">
-                {/* Columna izquierda - Participantes */}
+                {/* Columna izquierda - Tabla de participantes/ganadores */}
                 <div className="participants-column">
                     <div className="section-header">
                         <div className="section-title">
-                            <span className="section-icon">🎟️</span>
-                            <h2>Lista de Participantes</h2>
+                            <span className="section-icon">
+                                {activeTable === 'current' ? '🎟️' : '🏆'}
+                            </span>
+                            <h2>
+                                {activeTable === 'current'
+                                    ? 'Lista de Participantes'
+                                    : 'Ganadores'}
+                            </h2>
                         </div>
                         <div className="section-actions">
+                            {/* Botones para cambiar entre tablas */}
+                            <div className="table-switcher">
+                                <button
+                                    className={`table-btn ${activeTable === 'current' ? 'active' : ''}`}
+                                    onClick={() => setActiveTable('current')}
+                                    disabled={spinning}
+                                >
+                                    <span className="btn-icon">👥</span>
+                                    Participantes
+                                </button>
+                                <button
+                                    className={`table-btn ${activeTable === 'historical' ? 'active' : ''}`}
+                                    onClick={() => setActiveTable('historical')}
+                                    disabled={spinning}
+                                >
+                                    <span className="btn-icon">🏆</span>
+                                    Ganadores
+                                </button>
+                            </div>
+
+                            {/* Selector de mes (solo para históricos) */}
+                            {activeTable === 'historical' && availableMonths.length > 0 && (
+                                <div className="month-selector">
+                                    <select
+                                        value={selectedMonth}
+                                        onChange={(e) => setSelectedMonth(e.target.value)}
+                                        className="month-select"
+                                        disabled={spinning}
+                                    >
+                                        {availableMonths.map(month => (
+                                            <option key={month} value={month}>
+                                                {formatDisplayDate(month)}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
+
+                            {/* Botón de búsqueda para históricos */}
+                            {/* {activeTable === 'historical' && (
+                                <button
+                                    className="action-btn search-btn"
+                                    onClick={handleSearchHistorical}
+                                    disabled={loadingHistorical || spinning}
+                                >
+                                    <span className="btn-icon">🔍</span>
+                                    Buscar
+                                </button>
+                            )} */}
+
+                            {/* Botón para exportar */}
+                            <button
+                                className="action-btn export-btn"
+                                onClick={exportToExcel}
+                                disabled={exportingExcel || spinning ||
+                                    (activeTable === 'current' && currentWinners.length === 0) ||
+                                    (activeTable === 'historical' && historicalWinners.length === 0)}
+                            >
+                                {exportingExcel ? (
+                                    <>
+                                        <span className="btn-icon">⏳</span>
+                                        Exportando...
+                                    </>
+                                ) : (
+                                    <>
+                                        <span className="btn-icon">📊</span>
+                                        Exportar Excel
+                                    </>
+                                )}
+                            </button>
+
+                            {/* Botón para actualizar */}
                             <button
                                 className="action-btn refresh-btn"
-                                onClick={fetchParticipants}
-                                disabled={loadingParticipants || spinning}
+                                onClick={refreshData}
+                                disabled={(activeTable === 'current' ? loadingParticipants : loadingHistorical) || spinning}
                             >
                                 <span className="btn-icon">🔄</span>
                                 Actualizar
                             </button>
+
+                            {/* Botón para crear premio */}
                             <button
                                 className="action-btn add-prize-btn"
                                 onClick={openCreatePrizeModal}
@@ -737,85 +1152,158 @@ const Lottery = () => {
                     </div>
 
                     <div className="table-wrapper">
-                        {loadingParticipants ? (
-                            <div className="loading-state">
-                                <div className="spinner"></div>
-                                <p>Cargando participantes...</p>
-                            </div>
-                        ) : participants.length === 0 ? (
-                            <div className="empty-state">
-                                <span className="empty-icon">👥</span>
-                                <p>No hay participantes disponibles</p>
-                                <button
-                                    className="retry-btn"
-                                    onClick={fetchParticipants}
-                                >
-                                    Intentar de nuevo
-                                </button>
-                            </div>
-                        ) : (
-                            <div className="table-container">
-                                <table className="participants-table">
-                                    <thead>
-                                        <tr>
-                                            <th>ID</th>
-                                            <th>Nombre</th>
-                                            <th>Email</th>
-                                            <th>Teléfono</th>
-                                            <th>Estado</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {participants.map((participant) => {
-                                            // Verificar si este participante ha ganado en sorteos anteriores
-                                            const isWinner = currentWinners.some(w => w.id === participant.id);
-                                            const winnerInfo = isWinner ? currentWinners.find(w => w.id === participant.id) : null;
-
-                                            return (
-                                                <tr
-                                                    key={participant.id}
-                                                    className={isWinner ? 'winner-row' : ''}
-                                                >
-                                                    <td className="id-cell">{participant.id}</td>
-                                                    <td className="name-cell">
-                                                        <div className="user-info">
-                                                            <span className="user-name">{participant.name}</span>
-                                                            {isWinner && (
-                                                                <span className="winner-badge" title={`Premio: ${winnerInfo.prize}`}>
-                                                                    🏆 GANADOR
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                    </td>
-                                                    <td className="email-cell">{participant.email}</td>
-                                                    <td className="phone-cell">{participant.phone || 'N/A'}</td>
-                                                    <td className="status-cell">
-                                                        <span className={`status-badge ${isWinner ? 'winner' : participant.subscriptions?.[0]?.status === 'active' ? 'active' : 'inactive'}`}>
-                                                            {isWinner ? 'Premiado' : participant.subscriptions?.[0]?.status === 'active' ? 'Activo' : 'Inactivo'}
-                                                        </span>
-                                                    </td>
+                        {activeTable === 'current' ? (
+                            // Tabla de participantes actuales
+                            <>
+                                {loadingParticipants ? (
+                                    <div className="loading-state">
+                                        <div className="spinner"></div>
+                                        <p>Cargando participantes...</p>
+                                    </div>
+                                ) : participants.length === 0 ? (
+                                    <div className="empty-state">
+                                        <span className="empty-icon">👥</span>
+                                        <p>No hay participantes disponibles</p>
+                                        <button
+                                            className="retry-btn"
+                                            onClick={fetchParticipants}
+                                        >
+                                            Intentar de nuevo
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="table-container">
+                                        <table className="participants-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>ID</th>
+                                                    <th>Nombre</th>
+                                                    <th>Email</th>
+                                                    <th>Teléfono</th>
+                                                    <th>Estado</th>
                                                 </tr>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
+                                            </thead>
+                                            <tbody>
+                                                {participants.map((participant) => {
+                                                    // Verificar si este participante ha ganado
+                                                    const isWinner = currentWinners.some(w => w.id === participant.id);
+                                                    const winnerInfo = isWinner ? currentWinners.find(w => w.id === participant.id) : null;
 
-                                {/* Sección de ganadores actuales */}
-                                {currentWinners.length > 0 && (
-                                    <div className="winners-section">
-                                        <h3 className="winners-title">🏆 Ganadores de Hoy</h3>
-                                        <div className="winners-list">
-                                            {currentWinners.map((winner, index) => (
-                                                <div key={index} className="winner-item">
-                                                    <span className="winner-name">{winner.name}</span>
-                                                    <span className="winner-prize">🎁 {winner.prize}</span>
-                                                    <span className="winner-time">{winner.timestamp}</span>
+                                                    return (
+                                                        <tr
+                                                            key={participant.id}
+                                                            className={isWinner ? 'winner-row' : ''}
+                                                        >
+                                                            <td className="id-cell">{participant.id}</td>
+                                                            <td className="name-cell">
+                                                                <div className="user-info">
+                                                                    <span className="user-name">{participant.name}</span>
+                                                                    {isWinner && (
+                                                                        <span className="winner-badge" title={`Premio: ${winnerInfo.prize}`}>
+                                                                            🏆 GANADOR
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            </td>
+                                                            <td className="email-cell">{participant.email}</td>
+                                                            <td className="phone-cell">{participant.phone || 'N/A'}</td>
+                                                            <td className="status-cell">
+                                                                <span className={`status-badge ${isWinner ? 'winner' : participant.subscriptions?.[0]?.status === 'active' ? 'active' : 'inactive'}`}>
+                                                                    {isWinner ? 'Premiado' : participant.subscriptions?.[0]?.status === 'active' ? 'Activo' : 'Inactivo'}
+                                                                </span>
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })}
+                                            </tbody>
+                                        </table>
+
+                                        {/* Sección de ganadores actuales */}
+                                        {currentWinners.length > 0 && (
+                                            <div className="winners-section">
+                                                <h3 className="winners-title">🏆 Ganadores de Hoy</h3>
+                                                <div className="winners-list">
+                                                    {currentWinners.map((winner, index) => (
+                                                        <div key={index} className="winner-item">
+                                                            <span className="winner-name">{winner.name}</span>
+                                                            <span className="winner-prize">🎁 {winner.prize}</span>
+                                                            <span className="winner-time">{winner.timestamp}</span>
+                                                        </div>
+                                                    ))}
                                                 </div>
-                                            ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </>
+                        ) : (
+                            // Tabla de ganadores
+                            <>
+                                {loadingHistorical ? (
+                                    <div className="loading-state">
+                                        <div className="spinner"></div>
+                                        <p>Cargando ganadores...</p>
+                                    </div>
+                                ) : historicalWinners.length === 0 ? (
+                                    <div className="empty-state">
+                                        <span className="empty-icon">🏆</span>
+                                        <p>No hay ganadores para el mes seleccionado</p>
+                                        <div className="empty-info">
+                                            <p>Selecciona otro mes o realiza nuevos sorteos</p>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="table-container">
+                                        <div className="table-header-info">
+                                            <span className="month-info">
+                                                📅 Mes: <strong>{formatDisplayDate(selectedMonth)}</strong>
+                                            </span>
+                                            <span className="count-info">
+                                                👥 Total ganadores: <strong>{historicalWinners.length}</strong>
+                                            </span>
+                                        </div>
+                                        <table className="historical-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Posición</th>
+                                                    <th>Nombre</th>
+                                                    <th>Email</th>
+                                                    <th>Teléfono</th>
+                                                    <th>Premio</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {historicalWinners.map((winner) => (
+                                                    <tr key={winner.id}>
+                                                        <td className="position-cell">
+                                                            <span className={`position-badge position-${winner.position}`}>
+                                                                {winner.position}°
+                                                            </span>
+                                                        </td>
+                                                        <td className="name-cell">
+                                                            <div className="user-info">
+                                                                <span className="user-name">{winner.name}</span>
+                                                            </div>
+                                                        </td>
+                                                        <td className="email-cell">{winner.email}</td>
+                                                        <td className="phone-cell">{winner.phone}</td>
+                                                        <td className="prize-cell">
+                                                            <span className="prize-badge">
+                                                                🎁 {winner.prize_name}
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                        <div className="table-footer">
+                                            <p className="export-note">
+                                                💡 Puedes exportar esta tabla a Excel usando el botón "Exportar Excel"
+                                            </p>
                                         </div>
                                     </div>
                                 )}
-                            </div>
+                            </>
                         )}
                     </div>
                 </div>
@@ -825,7 +1313,7 @@ const Lottery = () => {
                     <div className="wheel-header">
                         <div className="section-title">
                             <span className="section-icon">🎡</span>
-                            <h2>Ruleta de la Fortuna</h2>
+                            <h2>Ruleta de tus Sueños</h2>
                         </div>
                         <div className="wheel-stats">
                             <div className="wheel-stat">
@@ -842,50 +1330,98 @@ const Lottery = () => {
                     </div>
 
                     <div className="wheel-section">
-                        <div className="wheel-container">
-                            <div className="wheel-wrapper">
-                                <canvas
-                                    ref={canvasRef}
-                                    width="500"
-                                    height="500"
-                                    className="wheel-canvas"
-                                />
-                            </div>
-
-                            <div className="wheel-instructions">
-                                <p className="instruction-text">
-                                    Haz clic en "Girar Ruleta" para seleccionar un ganador aleatoriamente
-                                </p>
-                                {currentWinners.length > 0 && (
-                                    <p className="instruction-info">
-                                        <span className="info-icon">ℹ️</span>
-                                        Ganadores de hoy: <strong>{currentWinners.length}</strong> de <strong>{participants.length}</strong> participantes
+                        {prizes.length === 0 ? (
+                            // Mostrar cuando no hay premios
+                            <div className="no-prizes-container">
+                                <div className="no-prizes-content">
+                                    <div className="no-prizes-icon">
+                                        <span style={{ fontSize: '5rem', display: 'block' }}>🎁</span>
+                                    </div>
+                                    <h3 className="no-prizes-title">Sin Premios Disponibles</h3>
+                                    <p className="no-prizes-message">
+                                        No hay premios creados para realizar el sorteo.
+                                        <br />
+                                        Crea tu primer premio para comenzar a girar la ruleta.
                                     </p>
-                                )}
+                                    <div className="no-prizes-actions">
+                                        <button
+                                            className="create-prize-btn-large"
+                                            onClick={openCreatePrizeModal}
+                                            disabled={spinning}
+                                        >
+                                            <span className="btn-icon-large">➕</span>
+                                            <div className="btn-text-container">
+                                                <span className="btn-text-main">Crear Nuevo Premio</span>
+                                                <span className="btn-text-sub">Iniciar la experiencia de sorteos</span>
+                                            </div>
+                                        </button>
+                                    </div>
+                                    <div className="no-prizes-info">
+                                        <div className="info-card">
+                                            <span className="info-icon">💡</span>
+                                            <div className="info-content">
+                                                <h4>¿Cómo funciona?</h4>
+                                                <p>Crea premios atractivos para motivar la participación.</p>
+                                            </div>
+                                        </div>
+                                        <div className="info-card">
+                                            <span className="info-icon">🎯</span>
+                                            <div className="info-content">
+                                                <h4>Beneficios</h4>
+                                                <p>Cada premio aumenta la emoción y participación.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
+                        ) : (
+                            // Mostrar la ruleta cuando hay premios
+                            <>
+                                <div className="wheel-container">
+                                    <div className="wheel-wrapper">
+                                        <canvas
+                                            ref={canvasRef}
+                                            width="500"
+                                            height="500"
+                                            className="wheel-canvas"
+                                        />
+                                    </div>
 
-                        <div className="spin-controls">
-                            <button
-                                className="spin-button"
-                                onClick={runRaffle}
-                                disabled={spinning}
-                            >
-                                {spinning ? (
-                                    <>
-                                        <span className="button-spinner"></span>
-                                        <span className="button-text">Girando Ruleta...</span>
-                                        <span className="button-time">⏱️ 5s</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <span className="button-icon">🌸</span>
-                                        <span className="button-text">Girar Ruleta</span>
-                                        {/* <span className="button-hint">(5 segundos de emoción)</span> */}
-                                    </>
-                                )}
-                            </button>
-                        </div>
+                                    <div className="wheel-instructions">
+                                        <p className="instruction-text">
+                                            Haz clic en "Girar Ruleta" para seleccionar un ganador aleatoriamente
+                                        </p>
+                                        {currentWinners.length > 0 && (
+                                            <p className="instruction-info">
+                                                <span className="info-icon">ℹ️</span>
+                                                Ganadores de hoy: <strong>{currentWinners.length}</strong> de <strong>{participants.length}</strong> participantes
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="spin-controls">
+                                    <button
+                                        className="spin-button"
+                                        onClick={runRaffle}
+                                        disabled={spinning}
+                                    >
+                                        {spinning ? (
+                                            <>
+                                                <span className="button-spinner"></span>
+                                                <span className="button-text">Girando Ruleta...</span>
+                                                <span className="button-time">⏱️ 5s</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <span className="button-icon">🌸</span>
+                                                <span className="button-text">Girar Ruleta</span>
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
             </div>
@@ -909,7 +1445,6 @@ const Lottery = () => {
                                     <span className="banner-icon">🏆</span>
                                     <div className="banner-text">
                                         <h3>{raffleResult?.message || '¡Sorteo completado exitosamente!'}</h3>
-                                        {/* <p>La ruleta ha girado durante 5 segundos</p> */}
                                     </div>
                                     <span className="banner-icon">🎁</span>
                                 </div>
@@ -975,7 +1510,7 @@ const Lottery = () => {
                 </div>
             )}
 
-            {/* Modal para crear nuevo premio - CON ESTILOS INLINE */}
+            {/* Modal para crear nuevo premio */}
             {showPrizeModal && (
                 <div style={{
                     position: 'fixed',
@@ -984,7 +1519,6 @@ const Lottery = () => {
                     right: 0,
                     bottom: 0,
                     backgroundColor: 'rgba(0, 0, 0, 0.75)',
-                    // backdropFilter: 'blur(8px)',
                     display: 'flex',
                     justifyContent: 'center',
                     alignItems: 'center',
@@ -1133,69 +1667,6 @@ const Lottery = () => {
                                         Este nombre aparecerá en la ruleta y será visible para todos los participantes
                                     </div>
                                 </div>
-
-                                {/* Vista previa
-                                <div style={{
-                                    marginTop: '25px',
-                                    padding: '20px',
-                                    background: 'linear-gradient(135deg, #fff8fb 0%, #fff0f6 100%)',
-                                    borderRadius: '15px',
-                                    border: '2px dashed #ff69b4'
-                                }}>
-                                    <h4 style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '10px',
-                                        color: '#333',
-                                        marginBottom: '15px',
-                                        fontSize: '1.1rem',
-                                        fontWeight: 600
-                                    }}>
-                                        <span style={{ fontSize: '1.3rem' }}>👁️</span>
-                                        Vista previa en la ruleta
-                                    </h4>
-                                    <div>
-                                        <div style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '15px',
-                                            padding: '15px',
-                                            background: 'white',
-                                            borderRadius: '12px',
-                                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
-                                            border: '1px solid #ffd1dc'
-                                        }}>
-                                            <div style={{
-                                                width: '40px',
-                                                height: '40px',
-                                                borderRadius: '50%',
-                                                background: 'linear-gradient(135deg, #ff69b4, #ff1493)',
-                                                boxShadow: '0 3px 6px rgba(255, 105, 180, 0.3)'
-                                            }}></div>
-                                            <div style={{
-                                                flex: 1,
-                                                fontWeight: 500,
-                                                color: '#333',
-                                                fontSize: '1.1rem',
-                                                padding: '5px 0'
-                                            }}>
-                                                {newPrizeName || "Nombre del premio aparecerá aquí"}
-                                            </div>
-                                        </div>
-                                        <p style={{
-                                            color: '#666',
-                                            fontSize: '0.9rem',
-                                            textAlign: 'center',
-                                            marginTop: '10px',
-                                            padding: '12px',
-                                            background: 'rgba(255, 182, 193, 0.15)',
-                                            borderRadius: '8px',
-                                            border: '1px solid rgba(255, 105, 180, 0.2)'
-                                        }}>
-                                            El premio se agregará como una nueva sección en la ruleta
-                                        </p>
-                                    </div>
-                                </div> */}
                             </div>
 
                             {/* Footer del modal */}
