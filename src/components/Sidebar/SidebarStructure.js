@@ -4,6 +4,7 @@ import {
   ShoppingCart as ShoppingCartIcon,
   Person as PersonIcon,
   Category as CategoryIcon,
+  PrivacyTipSharp as SecretIcon,
   Event as EventIcon,
   CameraAlt as CameraIcon,
   AccountCircle as ProfileIcon,
@@ -35,14 +36,24 @@ export const useSidebarStructure = () => {
     },
     {
       id: 101,
-      label: 'Academias',
+      label: 'Secretos',
       link: '/system',
       icon: <CategoryIcon />,
       children: [
-        { label: 'Lista de academias', link: '/system/list' },
-        { label: 'Agregar academia', link: '/system/addsystem' }
+        { label: 'Lista de secretos', link: '/system/list' },
+        { label: 'Agregar secreto', link: '/system/addsystem' }
       ]
     },
+    // {
+    //   id: 107,
+    //   label: 'Secretos',
+    //   link: '/secrets',
+    //   icon: <SecretIcon />,
+    //   children: [
+    //     { label: 'Lista de secretos', link: '/secrets/list' },
+    //     { label: 'Agregar screto', link: '/secrets/addsecret' }
+    //   ]
+    // },
     {
       id: 102,
       label: 'Eventos',
