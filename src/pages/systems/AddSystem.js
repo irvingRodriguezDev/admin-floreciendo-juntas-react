@@ -9,6 +9,7 @@ import {
   Typography,
   Button,
   CircularProgress,
+  LinearProgress,
 } from "@mui/material";
 import Swal from "sweetalert2";
 import SystemContext from "../../context/SystemContext/SystemContext";
@@ -16,141 +17,149 @@ import SystemContext from "../../context/SystemContext/SystemContext";
 const AddSystem = ({ onCancel }) => {
   const { id } = useParams();
   const history = useHistory();
-  const { obtenerSystemPorId, addSystem, updateSystem } = useContext(SystemContext);
+  const { obtenerSystemPorId, addSystem, updateSystem } =
+    useContext(SystemContext);
 
-  const [form, setForm] = useState({
+  const initialForm = {
     name: "",
     description: "",
-    icon: null,
-  });
+    video: null,
+  };
+
+
+  const [form, setForm] = useState(initialForm);
+
+
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState(0);
 
-  // 🧠 Cargar sistema al editar
+  // 🔹 Cargar academia al editar
   useEffect(() => {
-    const cargarSistema = async () => {
-      if (!id) return; // Si no hay ID, es creación
+    if (!id) return;
+
+    const cargar = async () => {
       setLoading(true);
       try {
         const system = await obtenerSystemPorId(id);
 
-        if (!system) {
-          Swal.fire({
-            icon: "error",
-            title: "No encontrado",
-            text: "El sistema solicitado no existe.",
-          });
-          return;
-        }
-
         setForm({
           name: system.name || "",
           description: system.description || "",
-          icon: null,
+          video: null,
         });
 
         if (system.system_icon) {
           setPreview(system.system_icon);
         }
-      } catch (error) {
-        console.error("Error al cargar sistema:", error);
-        Swal.fire("Error", "No se pudo cargar el sistema", "error");
+      } catch (e) {
+        Swal.fire("Error", "No se pudo cargar la academia", "error");
       } finally {
         setLoading(false);
       }
     };
 
-    cargarSistema();
+    cargar();
   }, [id]);
 
-  // 📤 Manejar cambios de texto
+  useEffect(() => {
+    if (!id) {
+      setForm(initialForm);
+      setPreview(null);
+      setProgress(0);
+    }
+  }, [id]);
+
+
+  // 🔹 Inputs texto
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // 🖼️ Subir ícono SVG
-  const handleImageChange = (e) => {
+  // 🔹 Subir video + preview
+  const handleVideoChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    if (file.type === "image/svg+xml") {
-      setForm({ ...form, icon: file });
-
-      const reader = new FileReader();
-      reader.onloadend = () => setPreview(reader.result);
-      reader.readAsDataURL(file);
-    } else {
-      Swal.fire({
-        title: "Archivo no permitido",
-        text: "Solo se aceptan archivos SVG.",
-        icon: "warning",
-      });
-      e.target.value = "";
-      setForm({ ...form, icon: null });
-      setPreview(null);
+    if (!file.type.startsWith("video/")) {
+      Swal.fire("Archivo inválido", "Solo se permiten videos", "warning");
+      return;
     }
+
+    setForm({ ...form, video: file });
+    setPreview(URL.createObjectURL(file));
   };
 
-  // 💾 Guardar sistema
+  // 🔹 Guardar
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const formData = new FormData();
+    formData.append("name", form.name);
+    formData.append("description", form.description);
+
+    if (form.video instanceof File) {
+      formData.append("video", form.video);
+    }
+
     setLoading(true);
+    setProgress(0);
+
+    // Modal con barra de progreso
+    Swal.fire({
+      title: "Subiendo video...",
+      html: `
+      <div style="display:flex;flex-direction:column;align-items:center;gap:10px;width:100%;">
+        <div style="width:100%;background:#d8d6d7;border-radius:4px;overflow:hidden;">
+          <div id="swal-progress-bar"
+               style="width:0%;height:10px;background:#FF5C93;transition:width 0.2s;">
+          </div>
+        </div>
+        <div id="swal-progress-text">0%</div>
+      </div>
+    `,
+      allowOutsideClick: false,
+      showConfirmButton: false
+    });
 
     try {
       if (id) {
-        await updateSystem(id, form);
+        await updateSystem(id, formData, setProgress);
       } else {
-        const formData = new FormData();
-        formData.append("name", form.name);
-        formData.append("description", form.description);
-        if (form.icon instanceof File) formData.append("icon", form.icon);
-        await addSystem(formData);
+        await addSystem(formData, setProgress);
       }
 
       Swal.fire({
         icon: "success",
-        title: "Guardado correctamente",
+        title: "Academia guardada",
         timer: 1500,
         showConfirmButton: false,
+        willClose: () => history.push("/system/list"),
       });
 
-      if (onCancel) onCancel();
-      else history.push("/system/list");
     } catch (error) {
-      console.error("Error al guardar sistema:", error);
-      Swal.fire({
-        icon: "error",
-        title: "Error al guardar",
-        text: "Ocurrió un problema al guardar el sistema.",
-      });
+      Swal.fire("Error", "No se pudo guardar", "error");
     } finally {
       setLoading(false);
     }
   };
 
-  if (loading && id)
-    return (
-      <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-        <CircularProgress />
-      </Box>
-    );
+
 
   return (
     <Box sx={{ p: 3 }}>
       <Card>
         <CardContent>
-          <Typography variant="h5" sx={{ mb: 3 }}>
-            {id ? "Editar Academia" : "Agregar Nueva Academia"}
+          <Typography variant="h5" mb={3}>
+            {id ? "Editar Academia" : "Agregar Secreto"}
           </Typography>
 
-          <form onSubmit={handleSubmit} encType="multipart/form-data">
+          <form onSubmit={handleSubmit}>
             <Grid container spacing={2}>
-              {/* Nombre */}
               <Grid item xs={12}>
                 <TextField
-                  label="Nombre de la academia"
                   name="name"
+                  label="Nombre"
                   fullWidth
                   required
                   value={form.name}
@@ -158,93 +167,65 @@ const AddSystem = ({ onCancel }) => {
                 />
               </Grid>
 
-              {/* Descripción */}
               <Grid item xs={12}>
                 <TextField
-                  label="Descripción"
                   name="description"
+                  label="Descripción"
                   fullWidth
                   multiline
                   rows={3}
-                  required
                   value={form.description}
                   onChange={handleChange}
                 />
               </Grid>
 
-              {/* Ícono (solo SVG) */}
-              <Grid item xs={12} sm={6}>
+              {/* 🎥 SUBIR VIDEO */}
+              <Grid item xs={12}>
                 <Button variant="contained" component="label" fullWidth>
-                  Subir ícono (solo SVG)
+                  Subir video del secreto
                   <input
                     type="file"
                     hidden
-                    accept="image/svg+xml"
-                    onChange={handleImageChange}
+                    accept="video/*"
+                    onChange={handleVideoChange}
                   />
                 </Button>
               </Grid>
 
-              {/* Vista previa */}
+              {/* 🎬 PREVIEW */}
               {preview && (
-                <Grid item xs={12} sm={6}>
-                  <Box
-                    component="img"
+                <Grid item xs={12}>
+                  <Box sx={{ mb: 3, display: 'flex', justifyContent: 'center' }}>
+                  <video
                     src={preview}
-                    alt="Vista previa ícono"
-                    sx={{
-                      width: 120,
-                      height: 120,
-                      borderRadius: 2,
-                      mt: 1,
-                      objectFit: "contain",
-                      border: "1px solid #ddd",
-                      backgroundColor: "#f8f8f8",
-                      p: 1,
+                    controls
+                    style={{
+                      width: '55%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      borderRadius: '10px',
                     }}
                   />
+                  </Box>
                 </Grid>
               )}
 
-              {/* Botones */}
+              {/* 📊 PROGRESO */}
+              {/* {progress > 0 && (
+                <Grid item xs={12}>
+                  <LinearProgress variant="determinate" value={progress} />
+                  <Typography align="center">{progress}%</Typography>
+                </Grid>
+              )} */}
+
               <Grid item xs={12}>
                 <Button
                   type="submit"
+                  fullWidth
                   variant="contained"
-                  color="primary"
-                  fullWidth
                   disabled={loading}
-                  sx={{ mt: 2, minHeight: 45, position: "relative" }}
                 >
-                  {loading ? (
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: 1,
-                      }}
-                    >
-                      <CircularProgress size={22} color="inherit" thickness={5} />
-                      Guardando...
-                    </Box>
-                  ) : id ? (
-                    "Actualizar Academia"
-                  ) : (
-                    "Guardar Academia"
-                  )}
-                </Button>
-
-                <Button
-                  variant="outlined"
-                  color="secondary"
-                  fullWidth
-                  sx={{ mt: 1 }}
-                  onClick={() =>
-                    onCancel ? onCancel() : history.push("/system/list")
-                  }
-                >
-                  Cancelar
+                  {loading ? "Guardando..." : "Guardar Secreto"}
                 </Button>
               </Grid>
             </Grid>

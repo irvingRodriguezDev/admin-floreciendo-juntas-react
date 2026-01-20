@@ -21,6 +21,13 @@ import Swal from "sweetalert2";
 import LiveContext from "../../context/LiveContext/LiveContext";
 
 const AddLive = () => {
+    const initialFormData = {
+        title: "",
+        description: "",
+        start_time: "",
+        is_private: false,
+    };
+
     const history = useHistory();
     const { id } = useParams();
     const isEditMode = Boolean(id);
@@ -34,12 +41,7 @@ const AddLive = () => {
         cargando,
     } = useContext(LiveContext);
 
-    const [formData, setFormData] = useState({
-        title: "",
-        description: "",
-        start_time: "",
-        is_private: false,
-    });
+    const [formData, setFormData] = useState(initialFormData);
 
     const [file, setFile] = useState(null);
     const [previewUrl, setPreviewUrl] = useState(null);
@@ -69,6 +71,16 @@ const AddLive = () => {
             }
         }
     }, [liveActual]);
+
+    useEffect(() => {
+        if (!isEditMode) {
+            setFormData(initialFormData);
+            setFile(null);
+            setPreviewUrl(null);
+            limpiarLiveActual(); // extra seguridad
+        }
+    }, [isEditMode]);
+
 
     const formatDateTimeForInput = (dateString) => {
         if (!dateString) return "";
