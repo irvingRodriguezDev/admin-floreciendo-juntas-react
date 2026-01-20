@@ -558,8 +558,13 @@ const Order = () => {
                             {order.payments.map((payment, index) => (
                                 <TableRow key={index}>
                                     <TableCell>
-                                        {new Date(payment.paymentDate).toLocaleDateString('es-MX')}
+                                        {(() => {
+                                            const [year, month, day] = payment.paymentDate.split("-");
+                                            const localDate = new Date(year, month - 1, day);
+                                            return localDate.toLocaleDateString('es-MX');
+                                        })()}
                                     </TableCell>
+
                                     <TableCell>
                                         <Chip
                                             label={payment.paymentMethod || 'No especificado'}
@@ -1273,9 +1278,9 @@ const Order = () => {
                                         <Typography variant="body2" gutterBottom>
                                             <strong>Fecha Creación:</strong> {new Date(orderDetail.createdAt).toLocaleString('es-MX')}
                                         </Typography>
-                                        <Typography variant="body2" gutterBottom>
+                                        {/* <Typography variant="body2" gutterBottom>
                                             <strong>Fecha Actualización:</strong> {new Date(orderDetail.updatedAt).toLocaleString('es-MX')}
-                                        </Typography>
+                                        </Typography> */}
                                         <Typography variant="body2" gutterBottom>
                                             <strong>Estado:</strong>
                                             <Chip
@@ -1289,9 +1294,9 @@ const Order = () => {
                                                 }}
                                             />
                                         </Typography>
-                                        <Typography variant="body2" gutterBottom>
+                                        {/* <Typography variant="body2" gutterBottom>
                                             <strong>Carrito ID:</strong> {orderDetail.cartId}
-                                        </Typography>
+                                        </Typography> */}
                                         {orderDetail.notes && (
                                             <Typography variant="body2" sx={{ mt: 1, fontStyle: 'italic' }}>
                                                 <strong>Notas:</strong> {orderDetail.notes}
@@ -1306,17 +1311,27 @@ const Order = () => {
                                             <CalendarTodayIcon sx={{ fontSize: 20, mr: 1, verticalAlign: 'middle' }} />
                                             Fechas Importantes
                                         </Typography>
-                                        {orderDetail.startDate && (
-                                            <Typography variant="body2" gutterBottom>
-                                                <strong>Fecha Inicio:</strong> {new Date(orderDetail.startDate).toLocaleDateString('es-MX')}
-                                            </Typography>
-                                        )}
-                                        {orderDetail.dueDate && (
-                                            <Typography variant="body2" gutterBottom>
-                                                <strong>Fecha Vencimiento:</strong> {new Date(orderDetail.dueDate).toLocaleDateString('es-MX')}
-                                            </Typography>
-                                        )}
-                                        <Typography variant="body2" gutterBottom>
+                                            {orderDetail.startDate && (() => {
+                                                const [year, month, day] = orderDetail.startDate.split("-");
+                                                const localDate = new Date(year, month - 1, day);
+                                                return (
+                                                    <Typography variant="body2" gutterBottom>
+                                                        <strong>Fecha Inicio:</strong> {localDate.toLocaleDateString('es-MX')}
+                                                    </Typography>
+                                                );
+                                            })()}
+
+                                            {orderDetail.dueDate && (() => {
+                                                const [year, month, day] = orderDetail.dueDate.split("-");
+                                                const localDate = new Date(year, month - 1, day);
+                                                return (
+                                                    <Typography variant="body2" gutterBottom>
+                                                        <strong>Fecha Vencimiento:</strong> {localDate.toLocaleDateString('es-MX')}
+                                                    </Typography>
+                                                );
+                                            })()}
+
+                                        {/* <Typography variant="body2" gutterBottom>
                                             <strong>Descuento Stock:</strong>
                                             <Chip
                                                 label={orderDetail.stockDiscounted ? 'Sí' : 'No'}
@@ -1328,7 +1343,7 @@ const Order = () => {
                                                     fontWeight: '500'
                                                 }}
                                             />
-                                        </Typography>
+                                        </Typography> */}
                                         <Typography variant="body2" gutterBottom>
                                             <strong>Método de Pago:</strong> {orderDetail.paymentMethod || 'No especificado'}
                                         </Typography>
@@ -1377,9 +1392,9 @@ const Order = () => {
                                         </Typography>
                                         {orderDetail.address ? (
                                             <Box>
-                                                <Typography variant="body2" gutterBottom>
+                                                {/* <Typography variant="body2" gutterBottom>
                                                     <strong>Dirección ID:</strong> {orderDetail.deliveryAddressId}
-                                                </Typography>
+                                                </Typography> */}
                                                 <Typography variant="body2" gutterBottom>
                                                     <strong>Transportista:</strong> {orderDetail.carrier || 'No especificado'}
                                                 </Typography>
