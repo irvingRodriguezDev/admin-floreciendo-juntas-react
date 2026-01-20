@@ -1,18 +1,15 @@
 import React, { useState, useEffect, useContext } from 'react';
-import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Button,
-  Grid,
-} from '@mui/material';
+import { Box, Card, CardContent, Typography, Button, Grid } from '@mui/material';
 import Swal from 'sweetalert2';
-import 'sweetalert2/src/sweetalert2.scss';
 import { useParams, useHistory } from 'react-router-dom';
 import Hls from 'hls.js';
 import clienteAxios from '../../config/Axios';
 import CoursesContext from '../../context/CoursesContext/CoursesContext';
+import { set } from 'date-fns';
+import { vi } from 'date-fns/locale';
+
+const CHUNK_SIZE = 25 * 1024 * 1024; // 50MB por parte
+const MAX_RETRIES = 3;
 
 const CourseVideoAdd = () => {
   const { id } = useParams();
@@ -25,28 +22,22 @@ const CourseVideoAdd = () => {
   const [videoDuration, setVideoDuration] = useState(null);
   const [videoInfo, setVideoInfo] = useState({ name: '', type: '' });
   const [existingVideoUrl, setExistingVideoUrl] = useState(null);
+  const [videoId, setvideoId] = useState(null);
+  const totalParts = Math.ceil(videoFile?.size / CHUNK_SIZE || 0);
 
-  //Obtener curso al montar el componente
+  // Obtener curso
   useEffect(() => {
     const fetchCourse = async () => {
       const data = await obtenerCursoPorId(id);
-
       if (data) {
         setCourse(data);
-
-        // Si el curso tiene video, guardar su URL existente
-        if (data.video?.cloudfrontUrl) {
-          setExistingVideoUrl(data.video.cloudfrontUrl);
-        }
+        if (data.video?.cloudfrontUrl) setExistingVideoUrl(data.video.cloudfrontUrl);
       }
     };
-
     fetchCourse();
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
-  // Reproducir HLS si es necesario
+  // Reproducir HLS si aplica
   useEffect(() => {
     if (!existingVideoUrl || videoPreview) return;
     const video = document.getElementById('existing-video');
@@ -59,29 +50,20 @@ const CourseVideoAdd = () => {
   }, [existingVideoUrl, videoPreview]);
 
   const handleVideoChange = (e) => {
-    const file = e.target.files[0]; 
+    const file = e.target.files[0];
     if (!file) return;
-
     if (!file.type.startsWith('video/')) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Archivo no válido',
-        text: 'Por favor selecciona un archivo de video.',
-      });
+      Swal.fire({ icon: 'error', title: 'Archivo no válido', text: 'Selecciona un video.' });
       return;
     }
 
-    // 🔹 Limpiar información anterior
+    // Limpiar info anterior
     setCourse(null);
     setExistingVideoUrl(null);
     setVideoDuration(null);
 
-    // 🔹 Cargar nuevo video
     setVideoFile(file);
-    setVideoInfo({
-      name: file.name,
-      type: file.type.split('/')[1].toUpperCase(), // ejemplo: MP4
-    });
+    setVideoInfo({ name: file.name, type: file.type.split('/')[1].toUpperCase() });
 
     const videoURL = URL.createObjectURL(file);
     setVideoPreview(videoURL);
@@ -89,82 +71,178 @@ const CourseVideoAdd = () => {
     const video = document.createElement('video');
     video.preload = 'metadata';
     video.src = videoURL;
-    video.onloadedmetadata = () => {
-      setVideoDuration(video.duration.toFixed(2));
-    };
+    video.onloadedmetadata = () => setVideoDuration(video.duration.toFixed(2));
+  };
+
+  // Función para subir una parte con reintentos
+  const uploadChunkWithRetries = async (url, chunk, partNumber) => {
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        const res = await fetch(url, {
+          method: "PUT",
+          body: chunk,
+          headers: {
+            "Content-Type": videoFile.type,
+          },
+        });
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        return res.headers.get("ETag").replaceAll('"', '');
+      } catch (err) {
+        if (attempt === MAX_RETRIES) throw err;
+        await new Promise(r => setTimeout(r, 1000 * attempt)); // backoff simple
+      }
+    }
+  };
+
+  // Subida multipart completa
+  const uploadMultipart = async (file, uploadId, s3Key) => {
+    const totalParts = Math.ceil(file.size / CHUNK_SIZE);
+    const uploadedParts = [];
+
+    for (let partNumber = 1; partNumber <= totalParts; partNumber++) {
+      const start = (partNumber - 1) * CHUNK_SIZE;
+      const end = Math.min(start + CHUNK_SIZE, file.size);
+      const chunk = file.slice(start, end);
+
+      // 🔹 pedir presigned URL SOLO para esta parte
+      const { data } = await clienteAxios.post("/videos/multipart/presigned", {
+        uploadId,
+        s3Key,
+        partNumber,
+      });
+
+      const etag = await uploadChunkWithRetries(
+        data.presignedUrl,
+        chunk,
+        partNumber
+      );
+
+      uploadedParts.push({
+        PartNumber: partNumber,
+        ETag: etag,
+      });
+
+      // progreso
+      const percent = Math.round((partNumber / totalParts) * 100);
+      const text = document.getElementById("swal-progress-text");
+      if (text) text.innerText = `${percent}%`;
+    }
+
+    return uploadedParts;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!videoFile) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'No hay video',
-        text: 'Por favor selecciona un video antes de guardar.',
-      });
-      return;
-    }
 
     try {
-      const body = {
-        courseId: id,
-        fileName: videoFile.name,
-        fileType: videoFile.type,
-        durationSeconds: Number(videoDuration),
-      };
+      // 1️⃣ iniciar multipart
+      const { data: init } = await clienteAxios.post(
+        "/videos/multipart/init",
+        {
+          courseId: id,
+          fileName: videoFile.name,
+          fileType: videoFile.type,
+          durationSeconds: Number(videoDuration),
+          fileSizeBytes: videoFile.size,
+        }
+      );
 
-      const res = await clienteAxios.post('/videos/presigned-url', body);
-      if (!res?.data?.presignedUrl) throw new Error('No se recibió la URL firmada');
+      const { uploadId, s3Key, videoId } = init;
+      setvideoId(videoId);
+      // console.log(videoId, 'videoId guardado');
+      
 
-      const { presignedUrl } = res.data;
 
       Swal.fire({
-        title: 'Subiendo video...',
+        title: "Subiendo video",
         html: `
-          <div style="display:flex;flex-direction:column;align-items:center;gap:10px;width:100%;">
-            <div style="width:100%;background:#d8d6d7;border-radius:4px;overflow:hidden;">
-              <div id="swal-progress-bar" style="width:0%;height:10px;background:#FF5C93;transition:width 0.2s;"></div>
+            <div class="pink-progress-container">
+              <div class="pink-progress-bar" id="pink-progress-bar"></div>
             </div>
-            <div id="swal-progress-text">0%</div>
-          </div>
-        `,
+            <p id="swal-progress-text">0%</p>
+            <p class="pink-subtext">Por favor espera un momento ✨</p>
+
+            <style>
+              .pink-progress-container {
+                width: 100%;
+                height: 14px;
+                background: #ffe4f1;
+                border-radius: 10px;
+                overflow: hidden;
+                margin-top: 15px;
+              }
+
+              .pink-progress-bar {
+                height: 100%;
+                width: 0%;
+                background: linear-gradient(
+                  90deg,
+                  #ff4da6,
+                  #ff85c2,
+                  #ffc1e3
+                );
+                border-radius: 10px;
+                transition: width 0.4s ease;
+                animation: shimmer 2s infinite;
+              }
+
+              #swal-progress-text {
+                margin-top: 10px;
+                font-size: 18px;
+                font-weight: bold;
+                color: #ff4da6;
+              }
+
+              .pink-subtext {
+                font-size: 12px;
+                color: #d63384;
+                margin-top: 4px;
+              }
+
+              @keyframes shimmer {
+                0% { filter: brightness(1); }
+                50% { filter: brightness(1.2); }
+                100% { filter: brightness(1); }
+              }
+            </style>
+          `,
         allowOutsideClick: false,
         showConfirmButton: false,
+        allowEscapeKey: false,
+        allowEnterKey: false,
+        backdrop: true,
+        // customClass: { popup: 'swal-zindex-400', backdrop: 'swal-backdrop-400' },
         didOpen: () => Swal.showLoading(),
       });
 
-      await new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.open('PUT', presignedUrl);
-        xhr.setRequestHeader('Content-Type', videoFile.type);
+      // 2️⃣ subir partes
+      const parts = await uploadMultipart(videoFile, uploadId, s3Key);
 
-        xhr.upload.addEventListener('progress', (event) => {
-          if (event.lengthComputable) {
-            const percent = Math.round((event.loaded / event.total) * 100);
-            const progressBar = document.getElementById('swal-progress-bar');
-            const progressText = document.getElementById('swal-progress-text');
-            if (progressBar) progressBar.style.width = `${percent}%`;
-            if (progressText) progressText.textContent = `${percent}%`;
-          }
-        });
-
-        xhr.onload = () =>
-          xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error(xhr.statusText));
-        xhr.onerror = () => reject(new Error('Error de red durante la subida'));
-        xhr.send(videoFile);
+      // 3️⃣ completar
+      await clienteAxios.post("/videos/multipart/complete", {
+        uploadId,
+        s3Key,
+        parts,
+        courseId: id,
+        videoId,
       });
 
       Swal.fire({
-        icon: 'success',
-        title: 'Éxito',
-        text: 'El video se subió correctamente.',
+        icon: "success",
+        title: "Video cargado",
         timer: 2000,
         showConfirmButton: false,
-        willClose: () => history.push('/ecommerce/gridproducts'),
+      }).then(() => history.push("/ecommerce/gridproducts"));
+
+    } catch (err) {
+      console.error(err);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Falló la carga del video",
       });
-    } catch (error) {
-      console.error('Error al subir el video:', error);
-      Swal.fire({ icon: 'error', title: 'Error al subir', text: 'Ocurrió un error durante la subida.' });
     }
   };
 
@@ -172,48 +250,19 @@ const CourseVideoAdd = () => {
     <Box sx={{ p: 3 }}>
       <Card sx={{ borderRadius: 3, boxShadow: 3 }}>
         <CardContent>
-          <Typography variant="h5" sx={{ mb: 3, fontWeight: 600 }}>
-            Subir video del curso
-          </Typography>
+          <Typography variant="h5" sx={{ mb: 3, fontWeight: 600 }}>Subir video del curso</Typography>
 
-          {/* 🔹 Mostrar datos solo si no hay video nuevo */}
           {course && !videoPreview && (
             <Typography variant="body1" sx={{ mb: 2, textAlign: 'center' }}>
-              <strong>Nombre:</strong> {course.title || '—'}
-              <br />
-              {/* <strong>Tipo:</strong>{' '}
-              {course.video?.cloudfrontUrl
-                ? course.video.cloudfrontUrl.split('.').pop().toUpperCase()
-                : '—'}
-              <br /> */}
-              <strong>Duración:</strong>{' '}
-              {course.video?.durationSeconds || '—'} segundos
+              <strong>Nombre:</strong> {course.title || '—'}<br />
+              <strong>Duración:</strong> {course.video?.durationSeconds || '—'} segundos
             </Typography>
           )}
 
           {(videoPreview || existingVideoUrl) && (
             <Box sx={{ mb: 3, display: 'flex', justifyContent: 'center' }}>
-              <Box
-                sx={{
-                  width: '100%',
-                  maxWidth: 750,
-                  borderRadius: 2,
-                  overflow: 'hidden',
-                  backgroundColor: '#000',
-                  aspectRatio: '16/9',
-                }}
-              >
-                <video
-                  src={videoPreview || existingVideoUrl}
-                  controls
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    borderRadius: '10px',
-                  }}
-                  id={existingVideoUrl && !videoPreview ? 'existing-video' : undefined}
-                />
+              <Box sx={{ width: '100%', maxWidth: 750, borderRadius: 2, overflow: 'hidden', backgroundColor: '#000', aspectRatio: '16/9' }}>
+                <video src={videoPreview || existingVideoUrl} controls style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '10px' }} id={existingVideoUrl && !videoPreview ? 'existing-video' : undefined} />
               </Box>
             </Box>
           )}
@@ -226,38 +275,17 @@ const CourseVideoAdd = () => {
                   <input type="file" hidden accept="video/*" onChange={handleVideoChange} />
                 </Button>
               </Grid>
-
-              {/* 🔹 Mostrar información del video nuevo */}
               {videoPreview && (
                 <Grid item xs={12}>
-                  <Typography
-                    variant="body1"
-                    color="text.secondary"
-                    sx={{ textAlign: 'center', mt: 1 }}
-                  >
-                    <strong>Nombre:</strong> {videoInfo.name || '—'}
-                    <br />
-                    <strong>Tipo:</strong> {videoInfo.type || '—'}
-                    <br />
-                    {videoDuration && (
-                      <>
-                        <strong>Duración:</strong> {videoDuration} segundos
-                      </>
-                    )}
+                  <Typography variant="body1" color="text.secondary" sx={{ textAlign: 'center', mt: 1 }}>
+                    <strong>Nombre:</strong> {videoInfo.name || '—'}<br />
+                    <strong>Tipo:</strong> {videoInfo.type || '—'}<br />
+                    {videoDuration && <><strong>Duración:</strong> {videoDuration} segundos</>}
                   </Typography>
                 </Grid>
               )}
-
               <Grid item xs={12}>
-                <Button
-                  type="submit"
-                  variant="contained"
-                  color="primary"
-                  fullWidth
-                  sx={{ mt: 2 }}
-                >
-                  Guardar video
-                </Button>
+                <Button type="submit" variant="contained" color="primary" fullWidth sx={{ mt: 2 }}>Guardar video</Button>
               </Grid>
             </Grid>
           </form>
