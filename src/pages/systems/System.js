@@ -79,7 +79,7 @@ const System = () => {
               <TextField
                 variant="outlined"
                 size="small"
-                placeholder="Buscar academia..."
+                placeholder="Buscar secreto..."
                 value={state.searchTerm}
                 onChange={(e) => dispatch({ searchTerm: e.target.value })}
                 sx={{
@@ -178,12 +178,7 @@ const System = () => {
                         }}
                       >
                         <Box
-                          component="img"
-                          src={
-                            system.icon ||
-                            "https://via.placeholder.com/300x190?text=Sistema"
-                          }
-                          alt={system.name}
+                        
                           sx={{
                             width: "100%",
                             height: "100%",
@@ -193,6 +188,17 @@ const System = () => {
                             borderTopRightRadius: 4,
                             transition: "transform 0.3s ease",
                           }}
+                        />
+                        <video
+                          src={system.icon}
+                          controls
+                          style={{
+                            width: '100%',
+                            height: '125%',
+                            objectFit: 'cover',
+                            borderRadius: '10px',
+                          }}
+                          // id={existingVideoUrl && !videoPreview ? 'existing-video' : undefined}
                         />
                         {/* <Chip
                           label="Activo"
@@ -210,7 +216,7 @@ const System = () => {
 
                       {/* Contenido */}
                       <Box sx={{ p: 2 }}>
-                        <Typography variant="h6" fontWeight={600} gutterBottom>
+                        <Typography variant="h6" fontWeight={600} gutterBottom style={{ fontWeight: 'bold' }}>
                           {system.name}
                         </Typography>
                         <Typography
@@ -226,9 +232,9 @@ const System = () => {
                         >
                           {system.description || "Sin descripción"}
                         </Typography>
-                        <Typography variant="body2" color="text.secondary">
+                        {/* <Typography variant="body2" color="text.secondary">
                           ID: {system.id}
-                        </Typography>
+                        </Typography> */}
                       </Box>
                     </Card>
                   </Card>

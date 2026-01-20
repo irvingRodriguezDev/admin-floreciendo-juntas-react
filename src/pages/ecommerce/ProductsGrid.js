@@ -134,7 +134,7 @@ const Product = () => {
             <Box display="flex" flexWrap="wrap" alignItems="center" gap={2}>
               {/* Sistema */}
               <FormControl variant="outlined" size="small" sx={{ minWidth: 160 }}>
-                <InputLabel>Sistema</InputLabel>
+                <InputLabel>Secreto</InputLabel>
                 <Select
                   value={state.valueSystem}
                   onChange={(e) => dispatch({ valueSystem: e.target.value })}
