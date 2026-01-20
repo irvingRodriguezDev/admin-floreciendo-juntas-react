@@ -10,7 +10,7 @@ import EventState from "./context/EventContext/EventState";
 import ProductState from "./context/ProductContext/ProdcutState";
 import OrdersState from "./context/OrdersContext/OrdersState";
 import LiveState from "./context/LiveContext/LiveState";
-import SecretsState from "./context/SecretsContext/SecretsState";
+// import SecretsState from "./context/SecretsContext/SecretsState";
 
 const App = () => {
   return (
@@ -23,11 +23,11 @@ const App = () => {
            <ProductState>
             <OrdersState>
              <LiveState>
-              <SecretsState>
+              {/* <SecretsState> */}
                <Router>
                  <AppRouter />
                </Router>
-              </SecretsState>
+              {/* </SecretsState> */}
              </LiveState>
             </OrdersState>
            </ProductState>
