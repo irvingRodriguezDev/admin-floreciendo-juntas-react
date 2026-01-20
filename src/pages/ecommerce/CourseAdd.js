@@ -316,7 +316,7 @@ const CourseAdd = ({ onCancel }) => {
               <Grid item xs={12} sm={6}>
                 <TextField
                   select
-                  label="Sistema"
+                  label="Secreto"
                   name="system_id"
                   fullWidth
                   required
