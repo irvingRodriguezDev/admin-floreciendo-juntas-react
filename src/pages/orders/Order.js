@@ -86,7 +86,7 @@ const Order = () => {
         actualizarCostoEnvio,
         actualizarGuiaEnvio,
         marcarComoEnviado,
-        obtenerOrderPorId  // 🔹 Agregada esta función
+        obtenerOrderPorId
     } = useContext(OrdersContext);
 
     const [activeTab, setActiveTab] = useState(0);
@@ -98,14 +98,18 @@ const Order = () => {
     const [sendModalOpen, setSendModalOpen] = useState(false);
     const [detailModalOpen, setDetailModalOpen] = useState(false);
     const [selectedOrder, setSelectedOrder] = useState(null);
-    const [orderDetail, setOrderDetail] = useState(null); // 🔹 Nuevo estado para detalles
-    const [detailLoading, setDetailLoading] = useState(false); // 🔹 Estado de carga para detalles
+    const [orderDetail, setOrderDetail] = useState(null);
+    const [detailLoading, setDetailLoading] = useState(false);
     const [shippingCostInput, setShippingCostInput] = useState('');
-
-    // 🔹 Estados actualizados para el modal de guía
     const [trackingNumberInput, setTrackingNumberInput] = useState('');
     const [carrierInput, setCarrierInput] = useState('');
-    // const [trackingUrlInput, setTrackingUrlInput] = useState('');
+    const [initialLoad, setInitialLoad] = useState(false);
+    const [loadingTabs, setLoadingTabs] = useState({
+        0: false,
+        1: false,
+        2: false,
+        3: false
+    });
 
     const [rowsState, setRowsState] = useState({
         page: 0,
@@ -117,36 +121,60 @@ const Order = () => {
         { value: 'DHL', label: 'DHL' },
         { value: 'Estafeta', label: 'Estafeta' },
         { value: 'Fedex', label: 'Fedex' },
-        // { value: 'Correos de México', label: 'Correos de México' },
-        // { value: 'UPS', label: 'UPS' },
-        // { value: 'Redpack', label: 'Redpack' },
-        // { value: 'otro', label: 'Otra paquetería' },
     ];
 
-    // Cargar datos iniciales
+    // Cargar TODOS los datos al montar el componente
     useEffect(() => {
-        cargarOrdenesActivas();
+        const cargarTodosLosDatos = async () => {
+            try {
+                setLoadingTabs(prev => ({ ...prev, 0: true, 1: true, 2: true, 3: true }));
+
+                // Cargar todas las categorías en paralelo
+                await Promise.all([
+                    cargarOrdenesActivas(),
+                    cargarOrdenesLiquidadas(),
+                    cargarEnviosPagados(),
+                    cargarOrdenesEnviadas()
+                ]);
+
+                setInitialLoad(true);
+            } catch (error) {
+                console.error('Error al cargar los datos iniciales:', error);
+            } finally {
+                setLoadingTabs(prev => ({ ...prev, 0: false, 1: false, 2: false, 3: false }));
+            }
+        };
+
+        cargarTodosLosDatos();
     }, []);
 
-    // Función para cambiar de tab y cargar los datos correspondientes
+    // Función para cambiar de tab
     const handleTabChange = async (event, newValue) => {
         setActiveTab(newValue);
         setRowsState((prev) => ({ ...prev, page: 0 }));
         setSearchTerm('');
 
-        switch (newValue) {
-            case 0: // Activas
-                await cargarOrdenesActivas();
-                break;
-            case 1: // Liquidadas
-                await cargarOrdenesLiquidadas();
-                break;
-            case 2: // Envios pagados
-                await cargarEnviosPagados();
-                break;
-            case 3: // Enviados
-                await cargarOrdenesEnviadas();
-                break;
+        // Solo recargar si no se ha cargado previamente
+        if (!initialLoad) {
+            setLoadingTabs(prev => ({ ...prev, [newValue]: true }));
+            try {
+                switch (newValue) {
+                    case 0:
+                        await cargarOrdenesActivas();
+                        break;
+                    case 1:
+                        await cargarOrdenesLiquidadas();
+                        break;
+                    case 2:
+                        await cargarEnviosPagados();
+                        break;
+                    case 3:
+                        await cargarOrdenesEnviadas();
+                        break;
+                }
+            } finally {
+                setLoadingTabs(prev => ({ ...prev, [newValue]: false }));
+            }
         }
     };
 
@@ -174,9 +202,6 @@ const Order = () => {
         }
     };
 
-    console.log(obtenerOrdenesEnviadas);
-    
-
     const filters = [
         { label: 'Número de Orden', title: 'orderNumber' },
         { label: 'Cliente', title: 'customerName' },
@@ -189,7 +214,7 @@ const Order = () => {
         delivered: 'Entregado',
         cancelled: 'Cancelado',
         pagado: 'Pagado',
-        activo: 'Activo', // 🔹 Agregado este estado
+        activo: 'Activo',
     };
 
     const statusColors = {
@@ -197,12 +222,11 @@ const Order = () => {
         shipped: { bg: 'linear-gradient(135deg, #42A5F5 0%, #1E88E5 100%)', color: '#fff' },
         delivered: { bg: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: '#fff' },
         cancelled: { bg: 'linear-gradient(135deg, #EF5350 0%, #E53935 100%)', color: '#fff' },
-        pagado: { bg: 'linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%)', color: '#fff' },
-        activo: { bg: 'linear-gradient(135deg, #FF5C93 0%, #FF5C93 100%)', color: '#fff' }, // 🔹 Color para activo
+        pagado: { bg: 'linear-gradient(135deg, #45a049 0%, #45a049 100%)', color: '#fff' },
+        activo: { bg: 'linear-gradient(135deg, #FF5C93 0%, #FF5C93 100%)', color: '#fff' },
     };
 
     // Obtener las órdenes según el tab activo
-    // Obtener las órdenes a mostrar según el tab
     const getOrdersToDisplay = () => {
         let orders = [];
         switch (activeTab) {
@@ -216,7 +240,7 @@ const Order = () => {
                 orders = enviosPagados || [];
                 break;
             case 3:
-                orders = ordenesEnviadas || []; // Usa directamente del contexto
+                orders = ordenesEnviadas || [];
                 break;
             default:
                 orders = [];
@@ -224,17 +248,9 @@ const Order = () => {
         return orders;
     };
 
-    // También puedes simplificar getCurrentOrders:
     const getCurrentOrders = () => {
         return getOrdersToDisplay();
     };
-
-    // Función para obtener órdenes enviadas (filtra de todas las órdenes)
-    // const getOrdenesEnviadas = () => {
-    //     return (enviosPagados || []).filter(order =>
-    //         order.trackingNumber && order.trackingNumber.trim() !== ''
-    //     );
-    // };
 
     // Función para formatear montos de string a número
     const formatCurrency = (value) => {
@@ -249,26 +265,10 @@ const Order = () => {
         return shippingCost !== null && shippingCost !== undefined && shippingCost !== "0.00" && parseFloat(shippingCost) > 0;
     };
 
-    // Función para verificar si el envío está pagado
-    const isShippingPaid = (order) => {
-        return order.shippingPaid === true;
-    };
-
     // Función para verificar si tiene número de guía
     const hasTrackingNumber = (order) => {
         return order.trackingNumber && order.trackingNumber.trim() !== '';
     };
-
-    // Obtener las órdenes a mostrar según el tab
-    // const getOrdersToDisplay = () => {
-    //     let orders = [];
-    //     if (activeTab === 3) {
-    //         orders = getOrdenesEnviadas();
-    //     } else {
-    //         orders = getCurrentOrders();
-    //     }
-    //     return orders;
-    // };
 
     // Filtrado de órdenes con búsqueda
     const displayRows = useMemo(() => {
@@ -336,19 +336,17 @@ const Order = () => {
 
     const deleteFilter = (id) => setFilterItems(filterItems.filter((item) => item.id !== id));
 
-    // 🔹 Modal para ver detalle de venta - AHORA CON LLAMADA AL API
+    // Modal para ver detalle de venta
     const openDetailModal = async (order) => {
         setSelectedOrder(order);
         setDetailLoading(true);
         setDetailModalOpen(true);
 
         try {
-            // Llamar a la API para obtener los detalles completos
             const response = await obtenerOrderPorId(order.id);
-            setOrderDetail(response.order); // 🔹 Ahora accedemos a response.order
+            setOrderDetail(response.order);
         } catch (error) {
             console.error('Error al obtener detalles de la orden:', error);
-            // Si hay error, usar la orden básica que ya tenemos
             setOrderDetail(order);
         } finally {
             setDetailLoading(false);
@@ -384,21 +382,23 @@ const Order = () => {
                 try {
                     await actualizarCostoEnvio(selectedOrder.id, cost);
                     closeShippingModal();
-                    // Recargar las órdenes liquidadas después de actualizar
+                    // Recargar las órdenes liquidadas
+                    setLoadingTabs(prev => ({ ...prev, 1: true }));
                     await cargarOrdenesLiquidadas();
+                    setLoadingTabs(prev => ({ ...prev, 1: false }));
                 } catch (error) {
                     console.error('Error al actualizar costo de envío:', error);
+                    setLoadingTabs(prev => ({ ...prev, 1: false }));
                 }
             }
         }
     };
 
-    // 🔹 Modal para agregar número de guía - ACTUALIZADO CON NUEVOS CAMPOS
+    // Modal para agregar número de guía
     const openTrackingModal = (order) => {
         setSelectedOrder(order);
         setTrackingNumberInput(order.trackingNumber || '');
         setCarrierInput(order.carrier || '');
-        // setTrackingUrlInput(order.trackingUrl || '');
         setTrackingModalOpen(true);
     };
 
@@ -407,10 +407,8 @@ const Order = () => {
         setSelectedOrder(null);
         setTrackingNumberInput('');
         setCarrierInput('');
-        // setTrackingUrlInput('');
     };
 
-    // 🔹 Función actualizada para guardar la guía con todos los campos
     const handleSaveTrackingNumber = async () => {
         if (selectedOrder && trackingNumberInput.trim() && carrierInput.trim()) {
             try {
@@ -418,13 +416,15 @@ const Order = () => {
                     selectedOrder.id,
                     trackingNumberInput.trim(),
                     carrierInput.trim(),
-                    // trackingUrlInput.trim() || null
                 );
                 closeTrackingModal();
-                // Recargar las órdenes después de actualizar
+                // Recargar las órdenes
+                setLoadingTabs(prev => ({ ...prev, 2: true }));
                 await cargarEnviosPagados();
+                setLoadingTabs(prev => ({ ...prev, 2: false }));
             } catch (error) {
                 console.error('Error al actualizar número de guía:', error);
+                setLoadingTabs(prev => ({ ...prev, 2: false }));
             }
         }
     };
@@ -443,12 +443,18 @@ const Order = () => {
     const handleMarkAsSent = async () => {
         if (selectedOrder) {
             try {
+                setLoadingTabs(prev => ({ ...prev, 2: true, 3: true }));
                 await marcarComoEnviado(selectedOrder.id);
                 closeSendModal();
-                // Recargar las órdenes después de actualizar
-                await cargarEnviosPagados();
+                // Recargar ambas pestañas afectadas
+                await Promise.all([
+                    cargarEnviosPagados(),
+                    cargarOrdenesEnviadas()
+                ]);
             } catch (error) {
                 console.error('Error al marcar como enviado:', error);
+            } finally {
+                setLoadingTabs(prev => ({ ...prev, 2: false, 3: false }));
             }
         }
     };
@@ -464,12 +470,12 @@ const Order = () => {
         >
             <SearchIcon sx={{ fontSize: 48, color: '#FFB3DC' }} />
             <Typography variant="body1" color="text.secondary">
-                No se encontraron órdenes en esta categoría
+                {loadingTabs[activeTab] ? 'Cargando órdenes...' : 'No se encontraron órdenes en esta categoría'}
             </Typography>
         </Box>
     );
 
-    // 🔹 Componente para los detalles de los productos - ACTUALIZADO PARA USAR ITEMS
+    // 🔹 Componente para los detalles de los productos
     const OrderProductsDetail = ({ order }) => {
         if (!order || !order.items || order.items.length === 0) {
             return <Typography>No hay productos en esta orden</Typography>;
@@ -497,11 +503,6 @@ const Order = () => {
                                         <Typography fontWeight="medium">
                                             {item.product?.name || 'Producto sin nombre'}
                                         </Typography>
-                                        {/* {item.product?.description && (
-                                            <Typography variant="caption" color="text.secondary">
-                                                {item.product.description}
-                                            </Typography>
-                                        )} */}
                                     </TableCell>
                                     <TableCell align="center">
                                         {item.quantity}
@@ -574,15 +575,38 @@ const Order = () => {
                                     </TableCell>
                                     <TableCell align="center">
                                         <Chip
-                                            label={payment.type === 'initial' ? 'Inicial' : payment.type || 'Regular'}
+                                            label={
+                                                payment.type === 'initial'
+                                                    ? 'Inicial'
+                                                    : payment.type === 'partial'
+                                                        ? 'Parcial'
+                                                        : payment.type === 'shipping'
+                                                            ? 'Envío'
+                                                            : payment.type || 'Regular'
+                                            }
                                             size="small"
                                             sx={{
-                                                backgroundColor: payment.type === 'initial' ? '#FFF3E0' : '#F3E5F5',
-                                                color: payment.type === 'initial' ? '#EF6C00' : '#7B1FA2',
+                                                backgroundColor:
+                                                    payment.type === 'initial'
+                                                        ? '#FFF3E0'
+                                                        : payment.type === 'partial'
+                                                            ? '#E3F2FD'
+                                                            : payment.type === 'shipping'
+                                                                ? '#E8F5E9'
+                                                                : '#F3E5F5',
+                                                color:
+                                                    payment.type === 'initial'
+                                                        ? '#EF6C00'
+                                                        : payment.type === 'partial'
+                                                            ? '#1565C0'
+                                                            : payment.type === 'shipping'
+                                                                ? '#2E7D32'
+                                                                : '#7B1FA2',
                                                 fontWeight: '500'
                                             }}
                                         />
                                     </TableCell>
+
                                     <TableCell align="center">
                                         <Chip
                                             label={payment.status === 'completado' ? 'Completado' : payment.status || 'Pendiente'}
@@ -669,8 +693,8 @@ const Order = () => {
         );
     };
 
-    // Obtener órdenes enviadas para mostrar en el tab
-    // const ordenesEnviadas = getOrdenesEnviadas();
+    // Determinar si se debe mostrar el loader principal o el de cada tab
+    const isLoading = cargando || loadingTabs[activeTab];
 
     return (
         <Box>
@@ -868,7 +892,7 @@ const Order = () => {
                     />
                 </Box>
 
-                {/* TABS DE ESTADOS - AHORA DENTRO DE LA TABLA */}
+                {/* TABS DE ESTADOS */}
                 <Box sx={{
                     bgcolor: '#FFF5FA',
                     borderBottom: '1px solid #FFE6F0',
@@ -885,6 +909,7 @@ const Order = () => {
                                 fontSize: '0.95rem',
                                 color: '#666',
                                 minHeight: 48,
+                                opacity: loadingTabs[activeTab] ? 0.7 : 1,
                                 '&.Mui-selected': {
                                     color: '#FF69B4',
                                 },
@@ -899,21 +924,25 @@ const Order = () => {
                             icon={<AssignmentIcon sx={{ fontSize: 20 }} />}
                             iconPosition="start"
                             label={`Activas (${ordenesActivas?.length || 0})`}
+                            disabled={loadingTabs[0]}
                         />
                         <Tab
                             icon={<LocalShippingIcon sx={{ fontSize: 20 }} />}
                             iconPosition="start"
                             label={`Liquidadas (${ordenesLiquidadas?.length || 0})`}
+                            disabled={loadingTabs[1]}
                         />
                         <Tab
                             icon={<LockIcon sx={{ fontSize: 20 }} />}
                             iconPosition="start"
                             label={`Envios Pagados (${enviosPagados?.length || 0})`}
+                            disabled={loadingTabs[2]}
                         />
                         <Tab
                             icon={<SendIcon sx={{ fontSize: 20 }} />}
                             iconPosition="start"
-                            label={`Enviados (${ordenesEnviadas?.length || 0})`} // Usa directamente ordenesEnviadas
+                            label={`Enviados (${ordenesEnviadas?.length || 0})`}
+                            disabled={loadingTabs[3]}
                         />
                     </Tabs>
                 </Box>
@@ -928,7 +957,7 @@ const Order = () => {
                 )}
 
                 {/* CONTENIDO DE LA TABLA */}
-                {cargando ? (
+                {isLoading ? (
                     <Box sx={{ p: 4 }}>
                         <LinearProgress sx={{
                             backgroundColor: '#FFE6F0',
@@ -1010,15 +1039,12 @@ const Order = () => {
                                                         <Typography variant="body2" fontWeight="bold">
                                                             Calle: {order.address.street} {order.address.number}
                                                         </Typography>
-
                                                         <Typography variant="body2" color="text.secondary">
                                                             Estado y Ciudad: {order.address.city}, {order.address.state}
                                                         </Typography>
-
                                                         <Typography variant="body2" color="text.secondary">
                                                             CP: {order.address.zipCode}
                                                         </Typography>
-
                                                         {order.address.instructions && (
                                                             <Typography variant="body2" color="text.secondary" fontStyle="italic">
                                                                 Referencia: {order.address.instructions}
@@ -1031,8 +1057,6 @@ const Order = () => {
                                                     </Typography>
                                                 )}
                                             </TableCell>
-
-
                                             <TableCell align="center">
                                                 <Typography fontWeight="600" color="text.primary">
                                                     ${formatCurrency(order.totalAmount)}
@@ -1134,7 +1158,6 @@ const Order = () => {
 
                                                 {activeTab === 3 && (
                                                     <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
-                                                        {/* Botón para ver detalle en Enviados */}
                                                         <Tooltip title="Ver detalle de venta" arrow>
                                                             <IconButton
                                                                 onClick={() => openDetailModal(order)}
@@ -1151,26 +1174,6 @@ const Order = () => {
                                                                 <VisibilityIcon />
                                                             </IconButton>
                                                         </Tooltip>
-
-                                                        {/* Botón para marcar como enviado (si aún no lo está) */}
-                                                        {/* {order.status !== 'shipped' && order.status !== 'enviado' && (
-                                                            <Tooltip title="Marcar como enviado" arrow>
-                                                                <IconButton
-                                                                    onClick={() => openSendModal(order)}
-                                                                    sx={{
-                                                                        color: '#4CAF50',
-                                                                        backgroundColor: '#E8F5E9',
-                                                                        '&:hover': {
-                                                                            backgroundColor: '#C8E6C9',
-                                                                            transform: 'scale(1.05)',
-                                                                        },
-                                                                        transition: 'all 0.2s',
-                                                                    }}
-                                                                >
-                                                                    <CheckCircleIcon />
-                                                                </IconButton>
-                                                            </Tooltip>
-                                                        )} */}
                                                     </Box>
                                                 )}
                                             </TableCell>
@@ -1182,7 +1185,7 @@ const Order = () => {
                 )}
 
                 {/* PAGINACIÓN MANUAL */}
-                {!cargando && displayRows.length > 0 && (
+                {!isLoading && displayRows.length > 0 && (
                     <Box
                         sx={{
                             display: 'flex',
@@ -1231,7 +1234,7 @@ const Order = () => {
                 )}
             </Paper>
 
-            {/* 🔹 MODAL PARA VER DETALLE DE VENTA - ACTUALIZADO CON LA NUEVA ESTRUCTURA */}
+            {/* 🔹 MODAL PARA VER DETALLE DE VENTA */}
             <Dialog
                 open={detailModalOpen}
                 onClose={closeDetailModal}
@@ -1451,7 +1454,7 @@ const Order = () => {
                 fullWidth
             >
                 <DialogTitle sx={{
-                    background: 'linear-gradient(135deg, #FF6B9D 0%, #C969E0 100%)',
+                    background: 'linear-gradient(135deg, #FF6B9D 0%, #FF6B9D 100%)',
                     color: '#fff',
                     display: 'flex',
                     alignItems: 'center',
@@ -1516,7 +1519,7 @@ const Order = () => {
                         disabled={!shippingCostInput || parseFloat(shippingCostInput) < 0}
                         variant="contained"
                         sx={{
-                            background: 'linear-gradient(135deg, #FF6B9D 0%, #C969E0 100%)',
+                            background: 'linear-gradient(135deg, #FF6B9D 0%, #FF6B9D 100%)',
                             color: '#fff',
                             '&:disabled': {
                                 background: '#e0e0e0',
@@ -1529,7 +1532,7 @@ const Order = () => {
                 </DialogActions>
             </Dialog>
 
-            {/* 🔹 MODAL PARA AGREGAR INFORMACIÓN DE ENVÍO - ACTUALIZADO CON NUEVOS CAMPOS */}
+            {/* 🔹 MODAL PARA AGREGAR INFORMACIÓN DE ENVÍO */}
             <Dialog
                 open={trackingModalOpen}
                 onClose={closeTrackingModal}
@@ -1537,7 +1540,7 @@ const Order = () => {
                 fullWidth
             >
                 <DialogTitle sx={{
-                    background: 'linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%)',
+                    background: 'linear-gradient(135deg, #FF6B9D 0%, #FF6B9D 100%)',
                     color: '#fff',
                     display: 'flex',
                     alignItems: 'center',
@@ -1604,21 +1607,6 @@ const Order = () => {
                                         </Typography>
                                     </FormControl>
                                 </Grid>
-
-                                {/* <Grid item xs={12}>
-                                    <TextField
-                                        label="URL de Seguimiento (Opcional)"
-                                        value={trackingUrlInput}
-                                        onChange={(e) => setTrackingUrlInput(e.target.value)}
-                                        fullWidth
-                                        margin="normal"
-                                        placeholder="https://rastreo.paqueteria.com/ABC123456789"
-                                        helperText="Enlace para rastrear el paquete en línea"
-                                        InputProps={{
-                                            startAdornment: <LinkIcon sx={{ color: '#9C27B0', mr: 1 }} />,
-                                        }}
-                                    />
-                                </Grid> */}
                             </Grid>
                         </>
                     )}
