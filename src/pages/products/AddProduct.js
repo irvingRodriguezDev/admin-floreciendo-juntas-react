@@ -41,7 +41,8 @@ const AddProduct = ({ onCancel }) => {
 
             setLoading(true);
             try {
-                const product = await obtenerProductPorId(id);
+                const response = await obtenerProductPorId(id);
+                const product = response.product;
                 if (!product) {
                     Swal.fire({ icon: "error", title: "Producto no encontrado" });
                     history.push("/products");
@@ -49,14 +50,14 @@ const AddProduct = ({ onCancel }) => {
                 }
 
                 setForm({
-                    name: product.name || "",
-                    description: product.description || "",
-                    price: product.price || "",
-                    stock: product.stock || "",
+                    name: product.name ?? "",
+                    description: product.description ?? "",
+                    price: product.price ?? "",
+                    stock: product.stock ?? "",
                     image: null,
                 });
 
-                setPreview(product.image || null);
+                setPreview(product.image ?? null);
             } catch (error) {
                 console.error("Error al obtener producto:", error);
             } finally {
@@ -119,12 +120,14 @@ const AddProduct = ({ onCancel }) => {
         }
     };
 
-    if (loading && id)
-        return (
-            <Box sx={{ display: "flex", justifyContent: "center", mt: 5 }}>
+    {
+        loading && (
+            <Box sx={{ display: "flex", justifyContent: "center", mb: 3 }}>
                 <CircularProgress />
             </Box>
-        );
+        )
+    }
+
 
     return (
         <Box sx={{ p: 4, maxWidth: 1000, mx: "auto" }}>
