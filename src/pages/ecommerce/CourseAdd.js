@@ -309,16 +309,56 @@ const CourseAdd = ({ onCancel }) => {
               <Grid item xs={12} sm={6}>
                 <Button component="label" variant="contained" fullWidth>
                   Subir portada
-                  <input hidden type="file" accept="image/*" onChange={handleImageChange} />
+                  <input
+                    hidden
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                  />
                 </Button>
+
+                {preview && (
+                  <Box
+                    sx={{
+                      width: '100%',
+                      height: 400,
+                      mt: 2,
+                      borderRadius: 2,
+                      overflow: 'hidden',
+                      display: 'flex',
+                      justifyContent: 'center', // 👈 centro horizontal
+                      alignItems: 'center',     // 👈 centro vertical
+                    }}
+                  >
+                    <Box
+                      component="img"
+                      src={preview}
+                      alt="Vista previa"
+                      sx={{
+                        maxWidth: '100%',
+                        maxHeight: '100%',
+                        objectFit: 'contain',
+                      }}
+                    />
+                  </Box>
+                )}
               </Grid>
+
 
               {form.hasCertificate && (
                 <Grid item xs={12} sm={6}>
-                  <Button component="label" variant="contained" fullWidth>
+                  <Button variant="contained" component="label" fullWidth>
                     Subir certificado (PDF)
-                    <input hidden type="file" accept="application/pdf" onChange={handleCertificateChange} />
+                    <input type="file" hidden accept="application/pdf" onChange={handleCertificateChange} />
                   </Button>
+
+                  {(certificatePreview || form.certificate) && (
+                    <Box sx={{ mt: 1, width: '100%', height: 400, border: '1px solid #ccc', borderRadius: 2, overflow: 'hidden' }}>
+                      <object data={`${certificatePreview}#zoom=44`} type="application/pdf" width="100%" height="100%">
+                        <Typography variant="body2" sx={{ p: 1 }}>Tu navegador no soporta previsualizar PDFs.</Typography>
+                      </object>
+                    </Box>
+                  )}
                 </Grid>
               )}
 
