@@ -84,11 +84,25 @@ const CourseAdd = ({ onCancel }) => {
   }, []);
 
   /* =========================
-      CARGAR CURSO (EDITAR)
-  ========================== */
+    CARGAR CURSO (EDITAR / CREAR)
+========================== */
   useEffect(() => {
     const fetchCurso = async () => {
-      if (!id) return;
+      if (!id) {
+        // Limpiar formulario y vistas previas al cambiar a "crear"
+        setForm({
+          title: '',
+          description: '',
+          level: '',
+          hasCertificate: true,
+          coverImage: null,
+          certificate: null,
+          system_id: '',
+        });
+        setPreview(null);
+        setCertificatePreview(null);
+        return;
+      }
 
       setLoading(true);
       try {
@@ -116,13 +130,16 @@ const CourseAdd = ({ onCancel }) => {
     fetchCurso();
   }, [id]);
 
+
   /* =========================
       HANDLERS
   ========================== */
   const handleChange = (e) => {
     const { name, value } = e.target;
+    console.log('Campo:', name, 'Valor:', value);
     setForm((prev) => ({ ...prev, [name]: value }));
   };
+
 
   const handleDescriptionChange = (content) => {
     setForm((prev) => ({ ...prev, description: content }));
@@ -204,10 +221,11 @@ const CourseAdd = ({ onCancel }) => {
 
     try {
       if (id) {
-        await actualizarCurso(id, formData);
+        await actualizarCurso(id, form); // <-- enviar form, no formData
       } else {
-        await crearCurso(formData);
+        await crearCurso(form);
       }
+
 
       Swal.fire('Éxito', 'Curso guardado correctamente', 'success');
       onCancel ? onCancel() : history.push('/ecommerce/gridproducts');

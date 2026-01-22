@@ -44,7 +44,27 @@ const CoursesState = (props) => {
   // Crear un nuevo curso
   const crearCurso = async (datos) => {
     try {
-      const { data } = await MethodPost('/courses', datos);
+      const formData = new FormData();
+      formData.append('title', datos.title);
+      formData.append('description', datos.description);
+      formData.append('level', datos.level);
+      formData.append('system_id', datos.system_id);
+      formData.append('has_certificate', datos.hasCertificate ? true : false);
+
+      if (datos.coverImage instanceof File) {
+        formData.append('coverImage', datos.coverImage);
+      }
+
+      if (datos.certificate instanceof File) {
+        formData.append('certificate', datos.certificate);
+      }
+
+      for (let pair of formData.entries()) {
+        console.log(pair[0], pair[1]); // Verifica lo que se envía
+      }
+
+      await MethodPost('/courses', formData);
+
       Swal.fire({
         title: 'Éxito',
         text: 'Curso creado correctamente',
@@ -52,39 +72,36 @@ const CoursesState = (props) => {
         timer: 1500,
         showConfirmButton: false,
       });
-      dispatch({
-        type: AGREGAR_COURSE,
-        payload: data,
-      });
     } catch (error) {
       Swal.fire({
         title: 'Error',
         text: error.response?.data?.message || 'No se pudo crear el curso',
         icon: 'error',
       });
-      dispatch({ type: SHOW_ERRORS_API });
     }
   };
+
 
   const actualizarCurso = async (id, datos) => {
     try {
       const formData = new FormData();
 
-      // Campos principales
       formData.append('title', datos.title);
       formData.append('description', datos.description);
       formData.append('level', datos.level);
       formData.append('system_id', datos.system_id);
-      formData.append('hasCertificate', datos.hasCertificate ? 1 : 0);
+      formData.append('has_certificate', datos.hasCertificate ? true : false);
 
-      // Imagen de portada (si es nueva)
       if (datos.coverImage instanceof File) {
         formData.append('coverImage', datos.coverImage);
       }
 
-      // Certificado PDF (si se seleccionó uno nuevo)
       if (datos.certificate instanceof File) {
         formData.append('certificate', datos.certificate);
+      }
+
+      for (let pair of formData.entries()) {
+        console.log(pair[0], pair[1]); // Log de verificación
       }
 
       await MethodPut(`/courses/${id}`, formData);
@@ -105,6 +122,7 @@ const CoursesState = (props) => {
       });
     }
   };
+
 
 
 
