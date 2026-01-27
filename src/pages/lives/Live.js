@@ -899,9 +899,9 @@ const Live = () => {
                                     <TableCell align="center" sx={{ fontWeight: '700', color: '#FF69B4' }}>
                                         Título
                                     </TableCell>
-                                    <TableCell align="center" sx={{ fontWeight: '700', color: '#FF69B4' }}>
+                                    {/* <TableCell align="center" sx={{ fontWeight: '700', color: '#FF69B4' }}>
                                         Descripción
-                                    </TableCell>
+                                    </TableCell> */}
                                     <TableCell align="center" sx={{ fontWeight: '700', color: '#FF69B4' }}>
                                         Fecha
                                     </TableCell>
@@ -937,7 +937,7 @@ const Live = () => {
                                                 </Box>
                                             </TableCell>
 
-                                            <TableCell>
+                                            {/* <TableCell>
                                                 <Typography
                                                     variant="body2"
                                                     color="text.secondary"
@@ -952,7 +952,7 @@ const Live = () => {
                                                 >
                                                     {l.description || "Sin descripción"}
                                                 </Typography>
-                                            </TableCell>
+                                            </TableCell> */}
 
                                             <TableCell align="center">
                                                 <Typography variant="caption" color="text.secondary">
