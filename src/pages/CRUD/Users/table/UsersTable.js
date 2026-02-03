@@ -24,6 +24,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Tooltip,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import ClearAllIcon from '@mui/icons-material/ClearAll';
@@ -33,6 +34,7 @@ import Widget from 'components/Widget';
 import Actions from 'components/Table/Actions';
 import Dialog from 'components/Dialog';
 import UserContext from '../../../../context/UserContext/UserContext';
+import { VerifiedIcon } from 'lucide-react';
 
 const useStyles = makeStyles(() => ({
   actions: {
@@ -466,9 +468,19 @@ const UsersTable = () => {
                           </Box>
                         </TableCell>
                         <TableCell>
-                          <Typography fontWeight="600" color="text.primary">
-                            {user.name}
-                          </Typography>
+                          <Box display="flex" alignItems="center" gap={1}>
+                            <Typography fontWeight="600" color="text.primary">
+                              {user.name}
+                            </Typography>
+                            {user.roleId === 1 && (
+                              <Tooltip title="Administrador" arrow>
+                                <VerifiedIcon
+                                  style={{ color: '#FF69B4', fontSize: 20 }}
+                                />
+
+                              </Tooltip>
+                            )}
+                          </Box>
                         </TableCell>
                         <TableCell>
                           <Typography variant="body2" color="text.secondary">

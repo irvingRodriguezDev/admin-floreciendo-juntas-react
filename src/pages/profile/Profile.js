@@ -1,5 +1,5 @@
 import React, { useContext } from "react";
-import { Avatar, Grid, Typography } from "@mui/material";
+import { Avatar, Box, Grid, Tooltip, Typography } from "@mui/material";
 import { useTheme } from "@mui/styles";
 import { Chip } from '../../components/Wrappers';
 import Widget from "../../components/Widget/Widget";
@@ -7,6 +7,7 @@ import AuthContext from "../../context/AuthContext/AuthContext";
 import { deepOrange } from '@mui/material/colors';
 import { useHistory } from "react-router-dom";
 import useStyles from "./styles";
+import { VerifiedIcon } from "lucide-react";
 
 function Profile() {
   const classes = useStyles();
@@ -65,10 +66,19 @@ function Profile() {
             {/* Información del usuario */}
             <Grid item xs={12} sm={7}>
               <div className={classes.profileDescription}>
+                <Box display="flex" alignItems="center" gap={1}>
                 <Typography variant="h3" className={classes.profileTitle}>
                   {usuario?.user?.name || "Administrador"}
                 </Typography>
+                {usuario?.user?.roleId === 1 && (
+                  <Tooltip title="Administrador" arrow>
+                    <VerifiedIcon
+                      style={{ color: '#FF69B4', fontSize: 20 }}
+                    />
 
+                  </Tooltip>
+                )}
+                </Box>
                 <span className={classes.profileSubtitle}>
                   Correo: {usuario?.user?.email || "admin@floreciendojuntas.com"}
                 </span>
