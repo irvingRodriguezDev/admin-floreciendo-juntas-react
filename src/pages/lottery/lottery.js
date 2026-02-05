@@ -679,8 +679,13 @@ const Lottery = () => {
                 // FIN DE LA ANIMACIÓN DESPUÉS DE 5 SEGUNDOS
                 setSpinning(false);
 
+                // Normalizar la rotación final para el próximo giro
+                // Esto mantiene la posición visual pero resetea el valor para que el próximo giro sea rápido
+                const normalizedRotation = currentRotation % (2 * Math.PI);
+                setRotation(normalizedRotation);
+
                 // console.log('🎡 GIRO COMPLETADO - 5 SEGUNDOS');
-                // console.log('🎡 Ganador actual:', winner);
+                // console.log('🎡 Rotación normalizada:', normalizedRotation);
 
                 // Agregar ganador a la lista de ganadores actuales
                 if (winner && selectedPrize) {
