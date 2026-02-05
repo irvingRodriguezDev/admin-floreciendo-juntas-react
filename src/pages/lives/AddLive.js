@@ -10,6 +10,7 @@ import {
     Paper,
     Avatar,
     Checkbox,
+    Stack,
 } from "@mui/material";
 import { useHistory, useParams } from "react-router-dom";
 import ReactQuill from "react-quill-new";
@@ -21,7 +22,7 @@ import { Typography as MuiTypography } from "@mui/material";
 import Swal from "sweetalert2";
 import LiveContext from "../../context/LiveContext/LiveContext";
 
-const AddLive = () => {
+const AddLive = ({ onCancel }) => {
     const initialFormData = {
         title: "",
         description: "",
@@ -332,13 +333,9 @@ const AddLive = () => {
                                 </Card>
                             </Grid>
 
-                            {/* IMAGEN */}
+                            {/* Imagen */}
                             <Grid item xs={12}>
                                 <Card sx={{ p: 3 }}>
-                                    <MuiTypography variant="h6" mb={2}>
-                                        Imagen de portada {isEditMode && "(Opcional)"}
-                                    </MuiTypography>
-
                                     {!previewUrl ? (
                                         <Box
                                             sx={{
@@ -350,63 +347,48 @@ const AddLive = () => {
                                             onClick={() => document.getElementById("file-input").click()}
                                         >
                                             <CloudUploadIcon sx={{ fontSize: 60, mb: 2 }} />
-                                            <MuiTypography fontWeight={600}>
-                                                Haz clic para subir una imagen
-                                            </MuiTypography>
-                                            <MuiTypography variant="caption">
-                                                PNG, JPG o JPEG (máx. 5MB)
-                                            </MuiTypography>
-
-                                            <input
-                                                id="file-input"
-                                                type="file"
-                                                accept="image/*"
-                                                onChange={handleFileChange}
-                                                style={{ display: "none" }}
-                                            />
+                                            <Typography fontWeight={600}>Haz clic para subir una imagen</Typography>
+                                            <Typography variant="caption">PNG, JPG o JPEG (máx. 5MB)</Typography>
                                         </Box>
                                     ) : (
-                                        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                                            <Avatar src={previewUrl} variant="rounded" sx={{ width: 100, height: 100 }} />
-                                            <Box flex={1}>
-                                                <MuiTypography fontWeight={600}>
-                                                    {file ? file.name : "Imagen actual"}
-                                                </MuiTypography>
-                                            </Box>
-
-                                            <Button
-                                                variant="outlined"
-                                                color="error"
-                                                size="small"
-                                                onClick={handleRemoveFile}
-                                            >
-                                                {file ? "Eliminar" : "Quitar"}
-                                            </Button>
-
-                                            <Button
-                                                variant="outlined"
-                                                size="small"
-                                                onClick={() => document.getElementById("file-input").click()}
-                                            >
-                                                Cambiar imagen
-                                            </Button>
-
-                                            <input
-                                                id="file-input"
-                                                type="file"
-                                                accept="image/*"
-                                                onChange={handleFileChange}
-                                                style={{ display: "none" }}
+                                        <Stack direction={{ xs: "column", sm: "row" }} spacing={2} alignItems="center">
+                                            <Avatar
+                                                src={previewUrl}
+                                                variant="rounded"
+                                                sx={{ width: { xs: "100%", sm: 100 }, height: { xs: 270, sm: 100 } }}
                                             />
-                                        </Box>
+                                            <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+                                                <Button variant="outlined" color="error" size="small" onClick={handleRemoveFile}>
+                                                    {file ? "Eliminar" : "Quitar"}
+                                                </Button>
+                                                <Button
+                                                    variant="outlined"
+                                                    size="small"
+                                                    onClick={() => document.getElementById("file-input").click()}
+                                                >
+                                                    Cambiar imagen
+                                                </Button>
+                                            </Stack>
+                                        </Stack>
                                     )}
+
+                                    <input
+                                        id="file-input"
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleFileChange}
+                                        style={{ display: "none" }}
+                                    />
                                 </Card>
                             </Grid>
 
                             {/* BOTONES */}
                             <Grid item xs={12}>
                                 <Box display="flex" justifyContent="flex-end" gap={2}>
-                                    <Button variant="outlined" onClick={() => history.goBack()}>
+                                    <Button 
+                                    variant="outlined" 
+                                    onClick={() => (onCancel ? onCancel() : history.push("/lives/live_playlist"))}
+                                    >
                                         Cancelar
                                     </Button>
 
