@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useReducer, useState, useMemo } from "react";
+import React, { useContext, useEffect, useReducer, useState, useMemo, useRef } from "react";
 import {
     Grid,
     Box,
@@ -33,6 +33,10 @@ import {
     ListItemAvatar,
     Divider,
     Badge,
+    Fade,
+    Slide,
+    Grow,
+    Zoom,
 } from "@mui/material";
 import {
     PlayCircleOutline,
@@ -49,6 +53,7 @@ import {
     PersonOutline as PersonIcon,
     Block as BlockIcon,
     LiveTv as LiveTvIcon,
+    Fullscreen as FullscreenIcon,
 } from "@mui/icons-material";
 import { useHistory } from "react-router-dom";
 import { makeStyles } from '@mui/styles';
@@ -56,8 +61,6 @@ import Swal from "sweetalert2";
 import LiveContext from "../../context/LiveContext/LiveContext";
 import io from "socket.io-client";
 import useLiveComments from "./useLiveComments";
-
-
 
 const useStyles = makeStyles(() => ({
     filterContainer: {
@@ -80,9 +83,11 @@ const Live = () => {
     const classes = useStyles();
     const history = useHistory();
 
-    const VISIBLE_COMMENTS = 30;
-
-
+    const VISIBLE_COMMENTS = 5;
+    const videoContainerRef = useRef(null);
+    const commentsContainerRef = useRef(null);
+    const fullscreenCommentsRef = useRef(null);
+    const previousCommentsLength = useRef(0);
 
     // CONTEXTO
     const {
@@ -96,25 +101,18 @@ const Live = () => {
     const [openAdminModal, setOpenAdminModal] = useState(false);
     const [selectedLive, setSelectedLive] = useState(null);
 
-    // SIMULACIÓN DE COMENTARIOS EN TIEMPO REAL
-    // const [comments, setComments] = useState([
-    //     { id: 1, user: "María González", avatar: "M", text: "¡Excelente transmisión! 🎉", time: "Hace 2 min", color: "#FF6B9D" },
-    //     { id: 2, user: "Carlos Ruiz", avatar: "C", text: "Me encanta el contenido", time: "Hace 5 min", color: "#4CAF50" },
-    //     { id: 3, user: "Ana Martínez", avatar: "A", text: "Muy interesante todo", time: "Hace 8 min", color: "#FF9800" },
-    //     { id: 4, user: "Luis Pérez", avatar: "L", text: "¿Cuándo será el próximo live?", time: "Hace 10 min", color: "#2196F3" },
-    // ]);
+    // ESTADO DE FULLSCREEN
+    const [isFullscreen, setIsFullscreen] = useState(false);
+    const [showCommentsInFullscreen, setShowCommentsInFullscreen] = useState(true);
 
     const { comments, sendComment, deleteComment } =
         useLiveComments(selectedLive?.id);
-
-    // console.log(comments);
 
     const [commentText, setCommentText] = useState("");
 
     const liveStats = useMemo(() => ({
         comments: comments.length,
     }), [comments]);
-
 
     // ESTADOS DEL FILTRO
     const [state, dispatch] = useReducer(
@@ -136,19 +134,59 @@ const Live = () => {
         obtenerLives();
     }, []);
 
-    // SIMULACIÓN DE ACTUALIZACIÓN DE ESTADÍSTICAS EN TIEMPO REAL
-    // useEffect(() => {
-    //     if (openAdminModal && selectedLive?.status === 'live') {
-    //         const interval = setInterval(() => {
-    //             setLiveStats(prev => ({
-    //                 viewers: prev.viewers + Math.floor(Math.random() * 10) - 3,
-    //                 likes: prev.likes + Math.floor(Math.random() * 3),
-    //                 comments: prev.comments + Math.floor(Math.random() * 2),
-    //             }));
-    //         }, 5000);
-    //         return () => clearInterval(interval);
-    //     }
-    // }, [openAdminModal, selectedLive]);
+    // SCROLL AUTOMÁTICO PARA NUEVOS COMENTARIOS
+    useEffect(() => {
+        // Solo hacer scroll si hay un nuevo comentario
+        if (comments.length > previousCommentsLength.current) {
+            // Para el chat normal
+            if (commentsContainerRef.current) {
+                // En column-reverse, el top es donde están los nuevos comentarios
+                commentsContainerRef.current.scrollTop = 0;
+            }
+
+            // Para el chat en pantalla completa
+            if (fullscreenCommentsRef.current && showCommentsInFullscreen) {
+                fullscreenCommentsRef.current.scrollTop = 0;
+            }
+        }
+
+        // Actualizar el contador de comentarios previos
+        previousCommentsLength.current = comments.length;
+    }, [comments, showCommentsInFullscreen]);
+
+    // DETECTAR CAMBIOS DE FULLSCREEN
+    useEffect(() => {
+        const handleFullscreenChange = () => {
+            setIsFullscreen(!!document.fullscreenElement);
+        };
+
+        const handleFullscreenError = (event) => {
+            console.log('Fullscreen error event:', event);
+            setIsFullscreen(false);
+        };
+
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+        document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+        document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+
+        document.addEventListener('fullscreenerror', handleFullscreenError);
+        document.addEventListener('webkitfullscreenerror', handleFullscreenError);
+        document.addEventListener('mozfullscreenerror', handleFullscreenError);
+        document.addEventListener('MSFullscreenError', handleFullscreenError);
+
+        return () => {
+            document.removeEventListener('fullscreenchange', handleFullscreenChange);
+            document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+            document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+            document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+
+            document.removeEventListener('fullscreenerror', handleFullscreenError);
+            document.removeEventListener('webkitfullscreenerror', handleFullscreenError);
+            document.removeEventListener('mozfullscreenerror', handleFullscreenError);
+            document.removeEventListener('MSFullscreenError', handleFullscreenError);
+        };
+    }, []);
 
     const filters = [
         { label: 'Título', title: 'title' },
@@ -173,13 +211,14 @@ const Live = () => {
         console.log("LIVE ABIERTO:", live.id);
         setSelectedLive(live);
         setOpenAdminModal(true);
+        previousCommentsLength.current = 0; // Resetear contador
     };
-
 
     // CERRAR MODAL
     const handleCloseAdminModal = () => {
         setOpenAdminModal(false);
         setSelectedLive(null);
+        previousCommentsLength.current = 0;
     };
 
     // ELIMINAR COMENTARIO
@@ -188,17 +227,11 @@ const Live = () => {
         deleteComment(commentId);
     };
 
-    
-
-
-
     const handleSendComment = () => {
         if (!commentText.trim()) return;
         sendComment(commentText);
         setCommentText("");
     };
-    // console.log(commentText);
-
 
     // FINALIZAR LIVE
     const handleEndLive = () => {
@@ -344,6 +377,20 @@ const Live = () => {
         </Box>
     );
 
+    // Obtener los últimos comentarios (los más nuevos primero)
+    const getLatestComments = () => {
+        return [...comments]
+            .slice(-VISIBLE_COMMENTS) // Tomar los últimos N comentarios
+            .reverse();
+    };
+
+    // Obtener los últimos comentarios para pantalla completa
+    const getLatestFullscreenComments = () => {
+        return [...comments]
+            .slice(-VISIBLE_COMMENTS) // Tomar los últimos 20 comentarios
+            // .reverse();
+    };
+
     return (
         <Box>
             {/* MODAL DE ADMINISTRACIÓN DE LIVE */}
@@ -387,54 +434,441 @@ const Live = () => {
                     <Grid container sx={{ height: '70vh' }}>
                         {/* COLUMNA IZQUIERDA - VIDEO */}
                         <Grid item xs={12} md={8} sx={{ bgcolor: '#000', position: 'relative' }}>
-                            {/* Video Player */}
-                            <Box sx={{
-                                width: '100%',
-                                height: '100%',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                position: 'relative',
-                            }}>
+                            {/* Video Container con Overlay de Comentarios */}
+                            <Box
+                                ref={videoContainerRef}
+                                sx={{
+                                    width: '100%',
+                                    height: '100%',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    position: 'relative',
+                                    bgcolor: '#000',
+                                }}
+                            >
                                 {selectedLive?.aws_playback_url ? (
-                                    <video
-                                        controls
-                                        autoPlay
-                                        style={{
-                                            width: '100%',
-                                            height: '100%',
-                                            objectFit: 'contain',
-                                        }}
-                                        src={selectedLive.aws_playback_url}
-                                    >
-                                        Tu navegador no soporta el elemento de video.
-                                    </video>
+                                    <>
+                                        <video
+                                            autoPlay
+                                            disablePictureInPicture
+                                            style={{
+                                                width: '100%',
+                                                height: '100%',
+                                                objectFit: 'contain',
+                                            }}
+                                            src={selectedLive.aws_playback_url}
+                                        >
+                                            Tu navegador no soporta el elemento de video.
+                                        </video>
+
+
+                                        {/* Botón de fullscreen personalizado - solo visible cuando NO está en fullscreen */}
+                                        {!isFullscreen && (
+                                            <Tooltip title="Pantalla completa" arrow>
+                                                <IconButton
+                                                    onClick={async () => {
+                                                        if (!videoContainerRef.current) {
+                                                            console.log('No hay referencia al contenedor');
+                                                            return;
+                                                        }
+
+                                                        try {
+                                                            // Verificar si fullscreen está disponible
+                                                            if (!document.fullscreenEnabled &&
+                                                                !document.webkitFullscreenEnabled &&
+                                                                !document.mozFullScreenEnabled &&
+                                                                !document.msFullscreenEnabled) {
+                                                                alert('Tu navegador no soporta pantalla completa');
+                                                                return;
+                                                            }
+
+                                                            const element = videoContainerRef.current;
+
+                                                            // Intentar con diferentes APIs según el navegador
+                                                            if (element.requestFullscreen) {
+                                                                await element.requestFullscreen();
+                                                            } else if (element.webkitRequestFullscreen) {
+                                                                await element.webkitRequestFullscreen();
+                                                            } else if (element.mozRequestFullScreen) {
+                                                                await element.mozRequestFullScreen();
+                                                            } else if (element.msRequestFullscreen) {
+                                                                await element.msRequestFullscreen();
+                                                            }
+                                                        } catch (err) {
+                                                            console.error('Error al entrar en fullscreen:', err);
+                                                            // No mostrar alert, solo log
+                                                        }
+                                                    }}
+                                                    sx={{
+                                                        position: 'absolute',
+                                                        bottom: 70,
+                                                        right: 16,
+                                                        color: '#fff',
+                                                        bgcolor: 'rgba(0, 0, 0, 0.7)',
+                                                        backdropFilter: 'blur(10px)',
+                                                        border: '2px solid rgba(255, 255, 255, 0.3)',
+                                                        '&:hover': {
+                                                            bgcolor: 'rgba(255, 105, 180, 0.8)',
+                                                            borderColor: '#FF69B4',
+                                                            transform: 'scale(1.1)',
+                                                        },
+                                                        transition: 'all 0.2s',
+                                                        zIndex: 100,
+                                                    }}
+                                                >
+                                                    <FullscreenIcon />
+                                                </IconButton>
+                                            </Tooltip>
+                                        )}
+
+                                        {/* Botón para salir de fullscreen - solo visible EN fullscreen */}
+                                        {isFullscreen && (
+                                            <>
+                                                <Tooltip title="Salir de pantalla completa" arrow>
+                                                    <IconButton
+                                                        onClick={() => {
+                                                            try {
+                                                                if (document.exitFullscreen) {
+                                                                    document.exitFullscreen();
+                                                                } else if (document.webkitExitFullscreen) {
+                                                                    document.webkitExitFullscreen();
+                                                                } else if (document.mozCancelFullScreen) {
+                                                                    document.mozCancelFullScreen();
+                                                                } else if (document.msExitFullscreen) {
+                                                                    document.msExitFullscreen();
+                                                                }
+                                                            } catch (err) {
+                                                                console.error('Error al salir de fullscreen:', err);
+                                                            }
+                                                        }}
+                                                        sx={{
+                                                            position: 'absolute',
+                                                            top: 16,
+                                                            right: 16,
+                                                            color: '#fff',
+                                                            bgcolor: 'rgba(0, 0, 0, 0.7)',
+                                                            backdropFilter: 'blur(10px)',
+                                                            border: '2px solid rgba(255, 255, 255, 0.3)',
+                                                            '&:hover': {
+                                                                bgcolor: 'rgba(239, 83, 80, 0.8)',
+                                                                borderColor: '#EF5350',
+                                                                transform: 'scale(1.1)',
+                                                            },
+                                                            transition: 'all 0.2s',
+                                                            zIndex: 10000,
+                                                        }}
+                                                    >
+                                                        <CloseIcon />
+                                                    </IconButton>
+                                                </Tooltip>
+
+                                                <Tooltip title={showCommentsInFullscreen ? "Ocultar comentarios" : "Mostrar comentarios"} arrow>
+                                                    <IconButton
+                                                        onClick={() => setShowCommentsInFullscreen(!showCommentsInFullscreen)}
+                                                        sx={{
+                                                            position: 'absolute',
+                                                            top: 16,
+                                                            right: 76,
+                                                            color: '#fff',
+                                                            bgcolor: showCommentsInFullscreen
+                                                                ? 'rgba(255, 105, 180, 0.8)'
+                                                                : 'rgba(0, 0, 0, 0.7)',
+                                                            backdropFilter: 'blur(10px)',
+                                                            border: '2px solid rgba(255, 255, 255, 0.3)',
+                                                            '&:hover': {
+                                                                bgcolor: 'rgba(255, 105, 180, 0.9)',
+                                                                borderColor: '#FF69B4',
+                                                                transform: 'scale(1.1)',
+                                                            },
+                                                            transition: 'all 0.2s',
+                                                            zIndex: 10000,
+                                                        }}
+                                                    >
+                                                        <ChatIcon />
+                                                    </IconButton>
+                                                </Tooltip>
+                                            </>
+                                        )}
+                                    </>
                                 ) : (
                                     <Box textAlign="center" color="#fff">
                                         <LiveTvIcon sx={{ fontSize: 80, opacity: 0.3, mb: 2 }} />
                                         <Typography variant="h6">Sin transmisión disponible</Typography>
                                     </Box>
                                 )}
+
+                                {/* OVERLAY DE COMENTARIOS EN PANTALLA COMPLETA */}
+                                {isFullscreen && showCommentsInFullscreen && (
+                                    <Box
+                                        sx={{
+                                            position: 'absolute',
+                                            right: 0,
+                                            top: 0,
+                                            bottom: 0,
+                                            width: '350px',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            pointerEvents: 'none',
+                                            zIndex: 9999,
+                                            p: 2,
+                                            animation: 'slideInRight 0.3s ease-out',
+                                            '@keyframes slideInRight': {
+                                                from: {
+                                                    transform: 'translateX(100%)',
+                                                    opacity: 0,
+                                                },
+                                                to: {
+                                                    transform: 'translateX(0)',
+                                                    opacity: 1,
+                                                },
+                                            },
+                                        }}
+                                    >
+                                        {/* Header del chat */}
+                                        <Box
+                                            sx={{
+                                                bgcolor: 'rgba(0, 0, 0, 0.7)',
+                                                backdropFilter: 'blur(10px)',
+                                                borderRadius: 2,
+                                                p: 1.5,
+                                                mb: 1,
+                                                pointerEvents: 'auto',
+                                            }}
+                                        >
+                                            <Typography
+                                                variant="subtitle2"
+                                                fontWeight="700"
+                                                color="#fff"
+                                                sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+                                            >
+                                                <ChatIcon fontSize="small" />
+                                                Chat en vivo
+                                                <Chip
+                                                    label={comments.length}
+                                                    size="small"
+                                                    sx={{
+                                                        bgcolor: '#FF69B4',
+                                                        color: '#fff',
+                                                        fontWeight: '600',
+                                                        height: 20,
+                                                        ml: 'auto',
+                                                    }}
+                                                />
+                                            </Typography>
+                                        </Box>
+
+                                        {/* Área de comentarios scrollable - MOSTRAR NUEVOS ARRIBA */}
+                                        <Box
+                                            ref={fullscreenCommentsRef}
+                                            sx={{
+                                                flexGrow: 1,
+                                                overflowY: 'auto',
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                gap: 1,
+                                                pointerEvents: 'auto',
+                                                '&::-webkit-scrollbar': {
+                                                    width: '6px',
+                                                },
+                                                '&::-webkit-scrollbar-track': {
+                                                    background: 'rgba(255, 255, 255, 0.1)',
+                                                    borderRadius: 3,
+                                                },
+                                                '&::-webkit-scrollbar-thumb': {
+                                                    background: 'rgba(255, 105, 180, 0.5)',
+                                                    borderRadius: 3,
+                                                },
+                                            }}
+                                        >
+                                            {comments.length === 0 ? (
+                                                <Box
+                                                    sx={{
+                                                        textAlign: 'center',
+                                                        py: 4,
+                                                        bgcolor: 'rgba(0, 0, 0, 0.7)',
+                                                        borderRadius: 2,
+                                                    }}
+                                                >
+                                                    <ChatIcon sx={{ fontSize: 40, opacity: 0.5, color: '#fff' }} />
+                                                    <Typography variant="body2" color="#fff" sx={{ opacity: 0.7, mt: 1 }}>
+                                                        No hay comentarios
+                                                    </Typography>
+                                                </Box>
+                                            ) : (
+                                                getLatestFullscreenComments().map((comment, index) => (
+                                                    <Grow
+                                                        in={true}
+                                                        key={comment.id}
+                                                        timeout={400}
+                                                        style={{
+                                                            transformOrigin: '0 0',
+                                                            animationDelay: `${index * 50}ms`
+                                                        }}
+                                                    >
+                                                        <Box
+                                                            sx={{
+                                                                bgcolor: 'rgba(0, 0, 0, 0.44)',
+                                                                backdropFilter: 'blur(10px)',
+                                                                borderRadius: 2,
+                                                                p: 1.5,
+                                                                border: '1px solid rgba(255, 255, 255, 0.04)',
+                                                                transition: 'all 0.3s ease-out',
+                                                                '&:hover': {
+                                                                    bgcolor: 'rgba(0, 0, 0, 0.85)',
+                                                                    borderColor: 'rgba(255, 105, 180, 0.5)',
+                                                                },
+                                                                // animation: 'slideInUp 0.4s ease-out',
+                                                                // '@keyframes slideInUp': {
+                                                                //     from: {
+                                                                //         opacity: 0,
+                                                                //         transform: 'translateY(20px)',
+                                                                //     },
+                                                                //     to: {
+                                                                //         opacity: 1,
+                                                                //         transform: 'translateY(0)',
+                                                                //     },
+                                                                // },
+                                                            }}
+                                                        >
+                                                            <Box display="flex" alignItems="flex-start" gap={1}>
+                                                                <Avatar
+                                                                    sx={{
+                                                                        bgcolor: '#FF69B4',
+                                                                        width: 28,
+                                                                        height: 28,
+                                                                        fontSize: '0.75rem',
+                                                                    }}
+                                                                >
+                                                                    {comment.user_name?.charAt(0) || "U"}
+                                                                </Avatar>
+
+                                                                <Box flexGrow={1}>
+                                                                    <Typography
+                                                                        variant="caption"
+                                                                        fontWeight={700}
+                                                                        sx={{ color: '#f27db8' }}
+                                                                    >
+                                                                        {comment.user_name || "Usuario"}
+                                                                    </Typography>
+                                                                    <Typography
+                                                                        variant="body2"
+                                                                        sx={{
+                                                                            color: '#fff',
+                                                                            fontSize: '0.85rem',
+                                                                            wordBreak: 'break-word',
+                                                                        }}
+                                                                    >
+                                                                        {comment.message}
+                                                                    </Typography>
+                                                                </Box>
+
+                                                                <IconButton
+                                                                    size="small"
+                                                                    onClick={() => handleDeleteComment(comment.id)}
+                                                                    sx={{
+                                                                        color: '#EF5350',
+                                                                        width: 24,
+                                                                        height: 24,
+                                                                        '&:hover': {
+                                                                            bgcolor: 'rgba(239, 83, 80, 0.2)',
+                                                                        },
+                                                                    }}
+                                                                >
+                                                                    <DeleteIcon sx={{ fontSize: 16 }} />
+                                                                </IconButton>
+                                                            </Box>
+                                                        </Box>
+                                                    </Grow>
+                                                ))
+                                            )}
+
+                                        {/* Input para enviar comentarios */}
+                                        <Box
+                                            sx={{
+                                                mt: 1,
+                                                pointerEvents: 'auto',
+                                            }}
+                                        >
+                                            <Box
+                                                sx={{
+                                                    bgcolor: 'rgba(0, 0, 0, 0.7)',
+                                                    backdropFilter: 'blur(10px)',
+                                                    borderRadius: 2,
+                                                    p: 1,
+                                                    display: 'flex',
+                                                    gap: 1,
+                                                }}
+                                            >
+                                                <TextField
+                                                    fullWidth
+                                                    size="small"
+                                                    placeholder="Comentar..."
+                                                    value={commentText}
+                                                    onChange={(e) => setCommentText(e.target.value)}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === "Enter") {
+                                                            handleSendComment();
+                                                        }
+                                                    }}
+                                                    sx={{
+                                                        '& .MuiOutlinedInput-root': {
+                                                            borderRadius: 2,
+                                                            bgcolor: 'rgba(255, 255, 255, 0.1)',
+                                                            color: '#fff',
+                                                            '& fieldset': {
+                                                                borderColor: 'rgba(255, 255, 255, 0.2)',
+                                                            },
+                                                            '&:hover fieldset': {
+                                                                borderColor: 'rgba(255, 105, 180, 0.5)',
+                                                            },
+                                                            '&.Mui-focused fieldset': {
+                                                                borderColor: '#FF69B4',
+                                                            },
+                                                        },
+                                                        '& .MuiInputBase-input': {
+                                                            color: '#fff',
+                                                            '&::placeholder': {
+                                                                color: 'rgba(255, 255, 255, 0.5)',
+                                                            },
+                                                        },
+                                                    }}
+                                                />
+                                                <Button
+                                                    variant="contained"
+                                                    onClick={handleSendComment}
+                                                    disabled={!commentText.trim()}
+                                                    sx={{
+                                                        background: 'linear-gradient(135deg, #FF5C93 0%, #FF69B4 100%)',
+                                                        fontWeight: 700,
+                                                        borderRadius: 2,
+                                                        minWidth: 60,
+                                                        '&:hover': {
+                                                            background: 'linear-gradient(135deg, #FF4081 0%, #FF5FA2 100%)',
+                                                        },
+                                                        '&:disabled': {
+                                                            background: 'rgba(255, 255, 255, 0.1)',
+                                                        },
+                                                    }}
+                                                >
+                                                    <ChatIcon fontSize="small" />
+                                                </Button>
+                                            </Box>
+                                        </Box>
+                                      </Box>
+                                    </Box>
+                                )}
                             </Box>
 
-                            {/* Estadísticas en tiempo real */}
+                            {/* Estado en vivo */}
                             <Box sx={{
                                 position: 'absolute',
                                 top: 16,
                                 left: 16,
                                 display: 'flex',
                                 gap: 2,
+                                zIndex: isFullscreen ? 9998 : 1,
                             }}>
-                                {/* <Chip
-                                    icon={<VisibilityIcon />}
-                                    label={`${liveStats.viewers.toLocaleString()} viendo`}
-                                    sx={{
-                                        bgcolor: 'rgba(0,0,0,0.7)',
-                                        color: '#fff',
-                                        fontWeight: '600',
-                                        backdropFilter: 'blur(10px)',
-                                    }}
-                                /> */}
                                 {selectedLive?.status === 'live' && (
                                     <Chip
                                         label="EN VIVO"
@@ -461,108 +895,143 @@ const Live = () => {
                                     📊 Estadísticas del Live
                                 </Typography>
                                 <Grid container spacing={2} sx={{ mt: 1 }}>
-                                    {/* <Grid item xs={4}>
-                                        <Box textAlign="center">
-                                            <Typography variant="h6" fontWeight="700" color="#FF69B4">
-                                                {liveStats.viewers}
-                                            </Typography>
-                                            <Typography variant="caption" color="text.secondary">
-                                                Espectadores
-                                            </Typography>
-                                        </Box>
-                                    </Grid>
-                                    <Grid item xs={4}>
-                                        <Box textAlign="center">
-                                            <Typography variant="h6" fontWeight="700" color="#4CAF50">
-                                                {liveStats.likes}
-                                            </Typography>
-                                            <Typography variant="caption" color="text.secondary">
-                                                Me gusta
-                                            </Typography>
-                                        </Box>
-                                    </Grid> */}
-                                    <Grid item xs={4}>
+                                    <Grid item xs={12}>
                                         <Box textAlign="center">
                                             <Typography variant="h6" fontWeight="700" color="#ff66ad">
-                                                {liveStats.comments}
+                                                {/* {liveStats.comments} */} 5
                                             </Typography>
                                             <Typography variant="caption" color="text.secondary">
                                                 Comentarios
                                             </Typography>
                                         </Box>
                                     </Grid>
-
                                 </Grid>
                             </Box>
 
-                            {/* Chat de comentarios */}
+                            {/* Chat de comentarios - MOSTRAR NUEVOS ARRIBA */}
                             <Box sx={{
                                 flexGrow: 1,
                                 overflowY: 'auto',
                                 p: 2,
                             }}>
-                                <Typography variant="subtitle2" fontWeight="700" color="#FF69B4" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                                    <ChatIcon fontSize="small" />
-                                    Comentarios en vivo
-                                </Typography>
+                                <Box sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    mb: 2
+                                }}>
+                                    <Typography variant="subtitle2" fontWeight="700" color="#FF69B4" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <ChatIcon fontSize="small" />
+                                        Comentarios en vivo
+                                    </Typography>
+                                </Box>
 
-                                <List
+                                {/* Lista de comentarios con scroll automático */}
+                                <Box
+                                    ref={commentsContainerRef}
                                     sx={{
-                                        p: 0,
                                         maxHeight: "300px",
                                         overflowY: "auto",
                                         display: "flex",
-                                        flexDirection: "column",
+                                        flexDirection: "column-reverse", // NUEVOS ARRIBA
+                                        gap: 1,
+                                        p: 1,
+                                        '&::-webkit-scrollbar': {
+                                            width: '6px',
+                                        },
+                                        '&::-webkit-scrollbar-track': {
+                                            background: '#FFE6F0',
+                                            borderRadius: 3,
+                                        },
+                                        '&::-webkit-scrollbar-thumb': {
+                                            background: '#FF69B4',
+                                            borderRadius: 3,
+                                        },
                                     }}
                                 >
-                                    {comments
-                                        .slice(-VISIBLE_COMMENTS)
-                                        .map((comment) => (
-                                            <ListItem
+                                    {comments.length === 0 ? (
+                                        <Box textAlign="center" py={4}>
+                                            <ChatIcon sx={{ fontSize: 48, opacity: 0.3 }} />
+                                            <Typography variant="body2">
+                                                No hay comentarios aún
+                                            </Typography>
+                                        </Box>
+                                    ) : (
+                                        getLatestComments().map((comment, index) => (
+                                            <Zoom
+                                                in={true}
                                                 key={comment.id}
-                                                sx={{
-                                                    bgcolor: "#fff",
-                                                    borderRadius: 2,
-                                                    mb: 1,
+                                                timeout={400}
+                                                style={{
+                                                    transitionDelay: `${index * 50}ms`,
+                                                    animation: 'slideInUp 0.4s ease-out',
+                                                    '@keyframes slideInUp': {
+                                                        from: {
+                                                            opacity: 0,
+                                                            transform: 'translateY(20px)',
+                                                        },
+                                                        to: {
+                                                            opacity: 1,
+                                                            transform: 'translateY(0)',
+                                                        },
+                                                    },
                                                 }}
-                                                secondaryAction={
-                                                    <IconButton
-                                                        size="small"
-                                                        onClick={() => handleDeleteComment(comment.id)}
-                                                        sx={{ color: "#EF5350" }}
-                                                    >
-                                                        <DeleteIcon fontSize="small" />
-                                                    </IconButton>
-                                                }
                                             >
-                                                <ListItemAvatar>
-                                                    <Avatar sx={{ bgcolor: "#FF69B4" }}>
-                                                        {comment.user_name?.charAt(0) || "U"}
-                                                    </Avatar>
-                                                </ListItemAvatar>
-
-                                                <ListItemText
-                                                    primary={
-                                                        <Typography fontWeight={600}>
-                                                            {comment.user_name || "Usuario"}
-                                                        </Typography>
-                                                    }
-                                                    secondary={comment.message}
-                                                />
-                                            </ListItem>
-                                        ))}
-                                </List>
-
-                                {comments.length === 0 && (
-                                    <Box textAlign="center" py={4}>
-                                        <ChatIcon sx={{ fontSize: 48, opacity: 0.3 }} />
-                                        <Typography variant="body2">
-                                            No hay comentarios aún
-                                        </Typography>
-                                    </Box>
-                                )}
-
+                                                <Paper
+                                                    elevation={0}
+                                                    sx={{
+                                                        p: 2,
+                                                        bgcolor: "#fff",
+                                                        borderRadius: 2,
+                                                        border: "1px solid #FFE6F0",
+                                                        transition: 'all 0.3s ease-out',
+                                                        '&:hover': {
+                                                            boxShadow: '0 4px 12px rgba(255, 105, 180, 0.15)',
+                                                            transform: 'translateY(-2px)',
+                                                        },
+                                                    }}
+                                                >
+                                                    <Box display="flex" alignItems="flex-start" gap={2}>
+                                                        <Avatar sx={{
+                                                            bgcolor: "#FF69B4",
+                                                            width: 40,
+                                                            height: 40,
+                                                            transition: 'all 0.3s ease-out',
+                                                        }}>
+                                                            {comment.user_name?.charAt(0) || "U"}
+                                                        </Avatar>
+                                                        <Box flexGrow={1}>
+                                                            <Typography fontWeight={600} variant="body2" color="#FF69B4">
+                                                                {comment.user_name || "Usuario"}
+                                                            </Typography>
+                                                            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                                                                {comment.message}
+                                                            </Typography>
+                                                        </Box>
+                                                        <IconButton
+                                                            size="small"
+                                                            onClick={() => handleDeleteComment(comment.id)}
+                                                            sx={{
+                                                                color: "#EF5350",
+                                                                alignSelf: 'flex-start',
+                                                                transition: 'all 0.2s',
+                                                                '&:hover': {
+                                                                    transform: 'scale(1.1)',
+                                                                    bgcolor: 'rgba(239, 83, 80, 0.1)',
+                                                                },
+                                                            }}
+                                                        >
+                                                            <DeleteIcon fontSize="small" />
+                                                        </IconButton>
+                                                    </Box>
+                                                </Paper>
+                                            </Zoom>
+                                        ))
+                                    )}
+                                </Box>
                             </Box>
+
+                            {/* Input para enviar comentarios */}
                             <Box
                                 sx={{
                                     p: 2,
@@ -586,6 +1055,14 @@ const Live = () => {
                                     sx={{
                                         "& .MuiOutlinedInput-root": {
                                             borderRadius: 3,
+                                            transition: 'all 0.3s',
+                                            '&:hover': {
+                                                borderColor: '#FF69B4',
+                                            },
+                                            '&.Mui-focused': {
+                                                borderColor: '#FF69B4',
+                                                boxShadow: '0 0 0 2px rgba(255, 105, 180, 0.2)',
+                                            },
                                         },
                                     }}
                                 />
@@ -599,15 +1076,21 @@ const Live = () => {
                                         fontWeight: 700,
                                         borderRadius: 3,
                                         px: 3,
-                                        "&:hover": {
+                                        transition: 'all 0.3s',
+                                        transform: 'scale(1)',
+                                        '&:hover': {
                                             background: "linear-gradient(135deg, #FF4081 0%, #FF5FA2 100%)",
+                                            transform: 'scale(1.05)',
+                                            boxShadow: '0 6px 20px rgba(255, 105, 180, 0.4)',
+                                        },
+                                        '&:active': {
+                                            transform: 'scale(0.95)',
                                         },
                                     }}
                                 >
                                     Enviar
                                 </Button>
                             </Box>
-
                         </Grid>
                     </Grid>
                 </DialogContent>
@@ -627,28 +1110,6 @@ const Live = () => {
                     >
                         Cerrar
                     </Button>
-
-                    <Box display="flex" gap={2}>
-                        {selectedLive?.status === 'live' && (
-                            <Button
-                                variant="contained"
-                                startIcon={<StopCircleIcon />}
-                                onClick={handleEndLive}
-                                sx={{
-                                    background: 'linear-gradient(135deg, #EF5350 0%, #E53935 100%)',
-                                    color: '#fff',
-                                    fontWeight: '700',
-                                    px: 3,
-                                    boxShadow: '0 4px 12px rgba(239, 83, 80, 0.3)',
-                                    '&:hover': {
-                                        background: 'linear-gradient(135deg, #E53935 0%, #C62828 100%)',
-                                    }
-                                }}
-                            >
-                                Finalizar Live
-                            </Button>
-                        )}
-                    </Box>
                 </DialogActions>
             </Dialog>
 
@@ -865,7 +1326,6 @@ const Live = () => {
                             <MenuItem value="Todos">Todos</MenuItem>
                             <MenuItem value="scheduled">Programado</MenuItem>
                             <MenuItem value="live">En vivo</MenuItem>
-                            {/* <MenuItem value="ended">Finalizado</MenuItem> */}
                         </Select>
                     </FormControl>
                 </Box>
@@ -899,9 +1359,6 @@ const Live = () => {
                                     <TableCell align="center" sx={{ fontWeight: '700', color: '#FF69B4' }}>
                                         Título
                                     </TableCell>
-                                    {/* <TableCell align="center" sx={{ fontWeight: '700', color: '#FF69B4' }}>
-                                        Descripción
-                                    </TableCell> */}
                                     <TableCell align="center" sx={{ fontWeight: '700', color: '#FF69B4' }}>
                                         Fecha
                                     </TableCell>
@@ -936,23 +1393,6 @@ const Live = () => {
                                                     </Typography>
                                                 </Box>
                                             </TableCell>
-
-                                            {/* <TableCell>
-                                                <Typography
-                                                    variant="body2"
-                                                    color="text.secondary"
-                                                    sx={{
-                                                        maxWidth: 350,
-                                                        overflow: "hidden",
-                                                        textOverflow: "ellipsis",
-                                                        whiteSpace: "nowrap",
-                                                        textAlign: "center",
-                                                        mx: "auto",
-                                                    }}
-                                                >
-                                                    {l.description || "Sin descripción"}
-                                                </Typography>
-                                            </TableCell> */}
 
                                             <TableCell align="center">
                                                 <Typography variant="caption" color="text.secondary">
