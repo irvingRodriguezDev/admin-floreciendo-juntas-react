@@ -1037,13 +1037,13 @@ const Lottery = () => {
                                 <span className="stat-value">{prizes.length}</span>
                             </div>
                         </div>
-                        <div className="stat-card">
+                        {/* <div className="stat-card">
                             <span className="stat-icon">🏆</span>
                             <div className="stat-info">
                                 <span className="stat-label">Ganadores</span>
                                 <span className="stat-value">{currentWinners.length}</span>
                             </div>
-                        </div>
+                        </div> */}
                     </div>
                 </div>
             </div>
