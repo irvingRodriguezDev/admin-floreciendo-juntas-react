@@ -267,11 +267,9 @@ const Product = () => {
                     <CardActionArea>
                       <CardMedia
                         component="img"
-                        image={getImageUrl(
-                          c.cover_image_url,
-                          optimalWidth,
-                          imageQuality
-                        )}
+                        image={
+                          c.cover_image_url
+                        }
                         alt={c.title}
                         sx={{
                           width: "100%",
