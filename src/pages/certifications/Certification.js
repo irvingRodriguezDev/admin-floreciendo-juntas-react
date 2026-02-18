@@ -58,8 +58,9 @@ const Certification = () => {
     const formatDate = (dateString) => {
         if (!dateString) return "";
 
-        const date = new Date(dateString + "T00:00:00");
+        const date = new Date(dateString);
         return date.toLocaleDateString("es-ES", {
+            timeZone: "UTC",
             year: "numeric",
             month: "2-digit",
             day: "2-digit",
