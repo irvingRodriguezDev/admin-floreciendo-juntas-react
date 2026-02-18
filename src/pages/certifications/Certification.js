@@ -290,7 +290,7 @@ const Certification = () => {
                                                     display: "flex",
                                                     justifyContent: "space-between",
                                                     alignItems: "center",
-                                                    mt: 6,
+                                                    mt: 4,
                                                     pt: 2,
                                                     borderTop: "1px solid rgba(0,0,0,0.08)",
                                                 }}
