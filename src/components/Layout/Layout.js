@@ -58,7 +58,7 @@ import Order from '../../pages/orders/Order';
 import Lottery from '../../pages/lottery/lottery';
 import Live from '../../pages/lives/Live';
 import AddLive from '../../pages/lives/AddLive';
-import Task from '../../pages/tasks/Task';
+// import Task from '../../pages/tasks/Task';
 import { PrivateRouter } from '../../Routes/PrivateRoute';
 import AuthContext from '../../context/AuthContext/AuthContext';
 import AddCertificate from '../../pages/certifications/AddCertificate';
@@ -98,10 +98,10 @@ function Layout(props) {
       >
         <div className={classes.fakeToolbar} />
         <Switch>
-          <Route 
-            exact 
-            path="/" 
-            render={() => <Redirect to="/dashboard" />} 
+          <Route
+            exact
+            path="/"
+            render={() => <Redirect to="/dashboard" />}
           />
           <Route path='/dashboard' component={Dashboard} />
           <Route path="/profile" component={Profile} />
@@ -153,7 +153,7 @@ function Layout(props) {
 
           {/* Página de lista de secretos */}
           {/* <Route path="/secrets/list" component={Secrets} /> */}
-          
+
           {/* Página para agregar un secreto */}
           {/* <Route path="/secrets/addsecret" component={AddSecret} /> */}
           {/* <Route path="/secrets/editsecret/:id" component={} /> */}
