@@ -56,14 +56,12 @@ const Certification = () => {
     };
 
     const formatDate = (dateString) => {
-        if (!dateString) return "Sin fecha";
-        const date = new Date(dateString);
-        return date.toLocaleDateString("es-ES", {
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-        });
+        if (!dateString) return "";
+
+        const [year, month, day] = dateString.split("-");
+        return `${day}/${month}/${year}`;
     };
+
 
     return (
         <Grid container spacing={3}>
@@ -292,7 +290,7 @@ const Certification = () => {
                                                 }}
                                             >
                                                 <Box>
-                                                    <Typography variant="caption" color="pink.500">
+                                                    <Typography variant="caption" color="secondary">
                                                         Puntaje mínimo
                                                     </Typography>
                                                     <Typography variant="body2" fontWeight={600}>
@@ -300,7 +298,7 @@ const Certification = () => {
                                                     </Typography>
                                                 </Box>
                                                 <Box textAlign="right">
-                                                    <Typography variant="caption" color="pink.500">
+                                                    <Typography variant="caption" color="secondary">
                                                         Puntaje máximo
                                                     </Typography>
                                                     <Typography variant="body2" fontWeight={600}>
