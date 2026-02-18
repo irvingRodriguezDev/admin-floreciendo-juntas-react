@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useContext } from 'react';
 import { Route, Switch, withRouter, Redirect } from 'react-router-dom';
 import classnames from 'classnames';
 
@@ -58,6 +58,12 @@ import Order from '../../pages/orders/Order';
 import Lottery from '../../pages/lottery/lottery';
 import Live from '../../pages/lives/Live';
 import AddLive from '../../pages/lives/AddLive';
+import Task from '../../pages/tasks/Task';
+import { PrivateRouter } from '../../Routes/PrivateRoute';
+import AuthContext from '../../context/AuthContext/AuthContext';
+import AddCertificate from '../../pages/certifications/AddCertificate';
+import Certification from '../../pages/certifications/Certification';
+import AddModules from '../../pages/certifications/AddModules';
 // import Secrets from '../../pages/secretsComponent/secrets';
 // import AddSecret from '../../pages/secretsComponent/Addsecret';
 
@@ -70,6 +76,7 @@ function Layout(props) {
   const classes = useStyles();
   const [anchorEl, setAnchorEl] = React.useState(null);
   const structure = useSidebarStructure();
+  const { autenticado, usuarioAutenticado, cargando } = useContext(AuthContext);
 
   const open = Boolean(anchorEl);
   const id = open ? 'add-section-popover' : undefined;
@@ -100,7 +107,14 @@ function Layout(props) {
           <Route path="/profile" component={Profile} />
           <Route path='/user/edit' component={EditUser} />
 
-          <Route path="/scanner" component={ScannerComponent} />
+          <PrivateRouter
+            path="/scanner"
+            component={ScannerComponent}
+            isAuthenticated={autenticado}
+            allowedRoles={["5"]}
+          />
+
+
 
           <Route
             exact
@@ -108,12 +122,28 @@ function Layout(props) {
             render={() => <Redirect to="/system/list" />}
           />
 
+          {/* <PrivateRouter
+            path="/task"
+            component={Task}
+            isAuthenticated={autenticado}
+            allowedRoles={["3"]}
+          /> */}
+
+
           {/* Página de lista de sistemas */}
           <Route path="/system/list" component={System} />
 
           {/* Página para agregar un sistema */}
           <Route path="/system/addsystem" component={AddSystem} />
           <Route path="/system/editsystem/:id" component={AddSystem} />
+
+          {/* Página de lista de certifiaciones */}
+          <Route path="/certifications/list" component={Certification} />
+
+          {/* Página para agregar una certificacion */}
+          <Route path="/certifications/addcertificate" component={AddCertificate} />
+          <Route path="/certifications/editcertificate/:id" component={AddCertificate} />
+          <Route path="/certifications/:certificationId/modules" component={AddModules} />
 
           <Route
             exact

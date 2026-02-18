@@ -11,6 +11,8 @@ import {
   Store as StoreIcon,
   Spa,
   LiveTv,
+  Task as TaskIcon,
+  DocumentScanner,
 } from '@mui/icons-material';
 import AuthContext from '../../context/AuthContext/AuthContext';
 
@@ -120,6 +122,20 @@ export const useSidebarStructure = () => {
         { label: 'Crear Usuario', link: '/users/useradd' },
       ],
     },
+    { id: 107, label: 'Tareas', link: '/task', icon: <TaskIcon /> },
+    {
+      id: 108,
+      label: 'Certificaciones',
+      link: '/certifications',
+      icon: < DocumentScanner />,
+      children: [
+        { label: 'Lista de certificaciones', link: '/certifications/list' },
+        { label: 'Crea una certificación', link: '/certifications/addcertificate' },
+        // { label: 'Agregar modulo', link: '/certifications/:certificationId/modules' },
+
+        // { label: 'Agregar producto', link: '/product/addproduct' }
+      ]
+    },
   ];
 
   // 🔹 Filtrado según rol
@@ -128,10 +144,19 @@ export const useSidebarStructure = () => {
     return structure.filter(item => item.label === "Escáner");
   }
 
-  if (parseInt(roleId) === 1) {
-    // Mostrar todo excepto Escáner
-    return structure.filter(item => item.label !== "Escáner");
+  // 🔹 Filtrado según rol
+  if (parseInt(roleId) === 3) {
+    // Solo mostrar Tareas
+    return structure.filter(item => item.label === "Tareas");
   }
+
+  if (parseInt(roleId) === 1) {
+    // Mostrar todo excepto Escáner y Tareas
+    return structure.filter(
+      item => item.label !== "Escáner" && item.label !== "Tareas"
+    );
+  }
+
 
   // Otros roles: mostrar todo
   return structure;

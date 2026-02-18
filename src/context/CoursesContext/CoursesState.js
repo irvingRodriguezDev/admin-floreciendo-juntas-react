@@ -59,6 +59,10 @@ const CoursesState = (props) => {
         formData.append('certificate', datos.certificate);
       }
 
+      if (datos.workbook instanceof File) {
+        formData.append('workbook', datos.workbook);
+      }
+
       for (let pair of formData.entries()) {
         console.log(pair[0], pair[1]); // Verifica lo que se envía
       }
@@ -98,6 +102,10 @@ const CoursesState = (props) => {
 
       if (datos.certificate instanceof File) {
         formData.append('certificate', datos.certificate);
+      }
+
+      if (datos.workbook instanceof File) {
+        formData.append('workbook', datos.workbook);
       }
 
       for (let pair of formData.entries()) {

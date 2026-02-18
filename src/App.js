@@ -10,6 +10,7 @@ import EventState from "./context/EventContext/EventState";
 import ProductState from "./context/ProductContext/ProdcutState";
 import OrdersState from "./context/OrdersContext/OrdersState";
 import LiveState from "./context/LiveContext/LiveState";
+import CertificationState from "./context/CertificationContext/CertificationState";
 // import SecretsState from "./context/SecretsContext/SecretsState";
 
 const App = () => {
@@ -23,11 +24,13 @@ const App = () => {
            <ProductState>
             <OrdersState>
              <LiveState>
+              <CertificationState>
               {/* <SecretsState> */}
                <Router>
                  <AppRouter />
                </Router>
               {/* </SecretsState> */}
+              </CertificationState>
              </LiveState>
             </OrdersState>
            </ProductState>

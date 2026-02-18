@@ -11,7 +11,6 @@ import {
   Button,
   FormControlLabel,
   Checkbox,
-  Paper,
   CircularProgress,
 } from '@mui/material';
 import CoursesContext from '../../context/CoursesContext/CoursesContext';
@@ -34,11 +33,13 @@ const CourseAdd = ({ onCancel }) => {
     hasCertificate: true,
     coverImage: null,
     certificate: null,
+    workbook: null,
     system_id: '',
   });
 
   const [preview, setPreview] = useState(null);
   const [certificatePreview, setCertificatePreview] = useState(null);
+  const [workbookPreview, setWorkbookPreview] = useState(null);
   const [systems, setSystems] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -85,11 +86,10 @@ const CourseAdd = ({ onCancel }) => {
 
   /* =========================
     CARGAR CURSO (EDITAR / CREAR)
-========================== */
+  ========================== */
   useEffect(() => {
     const fetchCurso = async () => {
       if (!id) {
-        // Limpiar formulario y vistas previas al cambiar a "crear"
         setForm({
           title: '',
           description: '',
@@ -97,10 +97,12 @@ const CourseAdd = ({ onCancel }) => {
           hasCertificate: true,
           coverImage: null,
           certificate: null,
+          workbook: null,
           system_id: '',
         });
         setPreview(null);
         setCertificatePreview(null);
+        setWorkbookPreview(null);
         return;
       }
 
@@ -115,11 +117,13 @@ const CourseAdd = ({ onCancel }) => {
           hasCertificate: !!curso.certificate_url,
           coverImage: null,
           certificate: null,
+          workbook: null,
           system_id: curso.system_id || '',
         });
 
         setPreview(curso.cover_image_url || null);
         setCertificatePreview(curso.certificate_url || null);
+        setWorkbookPreview(curso.workbook_url || null);
       } catch (error) {
         console.error(error);
       } finally {
@@ -130,7 +134,6 @@ const CourseAdd = ({ onCancel }) => {
     fetchCurso();
   }, [id]);
 
-
   /* =========================
       HANDLERS
   ========================== */
@@ -139,7 +142,6 @@ const CourseAdd = ({ onCancel }) => {
     console.log('Campo:', name, 'Valor:', value);
     setForm((prev) => ({ ...prev, [name]: value }));
   };
-
 
   const handleDescriptionChange = (content) => {
     setForm((prev) => ({ ...prev, description: content }));
@@ -186,6 +188,19 @@ const CourseAdd = ({ onCancel }) => {
     }
   };
 
+  const handleWorkbookChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.type !== 'application/pdf') {
+      Swal.fire('Error', 'Solo se permiten PDFs', 'error');
+      return;
+    }
+
+    setForm((prev) => ({ ...prev, workbook: file }));
+    setWorkbookPreview(URL.createObjectURL(file));
+  };
+
   /* =========================
       SUBMIT
   ========================== */
@@ -193,11 +208,7 @@ const CourseAdd = ({ onCancel }) => {
     e.preventDefault();
     setLoading(true);
 
-    if (
-      form.hasCertificate &&
-      !form.certificate &&
-      !certificatePreview
-    ) {
+    if (form.hasCertificate && !form.certificate && !certificatePreview) {
       Swal.fire(
         'Falta certificado',
         'Debes subir un certificado',
@@ -218,14 +229,14 @@ const CourseAdd = ({ onCancel }) => {
     if (form.hasCertificate && form.certificate) {
       formData.append('certificate', form.certificate);
     }
+    if (form.workbook) formData.append('workbook', form.workbook);
 
     try {
       if (id) {
-        await actualizarCurso(id, form); // <-- enviar form, no formData
+        await actualizarCurso(id, form);
       } else {
         await crearCurso(form);
       }
-
 
       Swal.fire('Éxito', 'Curso guardado correctamente', 'success');
       onCancel ? onCancel() : history.push('/ecommerce/gridproducts');
@@ -324,6 +335,7 @@ const CourseAdd = ({ onCancel }) => {
                 />
               </Grid>
 
+              {/* PORTADA */}
               <Grid item xs={12} sm={6}>
                 <Button component="label" variant="contained" fullWidth>
                   Subir portada
@@ -344,8 +356,8 @@ const CourseAdd = ({ onCancel }) => {
                       borderRadius: 2,
                       overflow: 'hidden',
                       display: 'flex',
-                      justifyContent: 'center', // 👈 centro horizontal
-                      alignItems: 'center',     // 👈 centro vertical
+                      justifyContent: 'center',
+                      alignItems: 'center',
                     }}
                   >
                     <Box
@@ -362,24 +374,83 @@ const CourseAdd = ({ onCancel }) => {
                 )}
               </Grid>
 
-
+              {/* CERTIFICADO */}
               {form.hasCertificate && (
                 <Grid item xs={12} sm={6}>
                   <Button variant="contained" component="label" fullWidth>
                     Subir certificado (PDF)
-                    <input type="file" hidden accept="application/pdf" onChange={handleCertificateChange} />
+                    <input
+                      type="file"
+                      hidden
+                      accept="application/pdf"
+                      onChange={handleCertificateChange}
+                    />
                   </Button>
 
                   {(certificatePreview || form.certificate) && (
-                    <Box sx={{ mt: 1, width: '100%', height: 400, border: '1px solid #ccc', borderRadius: 2, overflow: 'hidden' }}>
-                      <object data={`${certificatePreview}#zoom=44`} type="application/pdf" width="100%" height="100%">
-                        <Typography variant="body2" sx={{ p: 1 }}>Tu navegador no soporta previsualizar PDFs.</Typography>
+                    <Box
+                      sx={{
+                        mt: 1,
+                        width: '100%',
+                        height: 400,
+                        border: '1px solid #ccc',
+                        borderRadius: 2,
+                        overflow: 'hidden',
+                      }}
+                    >
+                      <object
+                        data={`${certificatePreview}#zoom=44`}
+                        type="application/pdf"
+                        width="100%"
+                        height="100%"
+                      >
+                        <Typography variant="body2" sx={{ p: 1 }}>
+                          Tu navegador no soporta previsualizar PDFs.
+                        </Typography>
                       </object>
                     </Box>
                   )}
                 </Grid>
               )}
 
+              {/* WORKBOOK */}
+              <Grid item xs={12} sm={6}>
+                <Button variant="contained" component="label" fullWidth>
+                  Subir workbook (PDF)
+                  <input
+                    type="file"
+                    hidden
+                    accept="application/pdf"
+                    onChange={handleWorkbookChange}
+                  />
+                </Button>
+
+                {(workbookPreview || form.workbook) && (
+                  <Box
+                    sx={{
+                      mt: 1,
+                      width: '100%',
+                      height: 400,
+                      border: '1px solid #ccc',
+                      borderRadius: 2,
+                      overflow: 'hidden',
+                    }}
+                  >
+                    <object
+                      data={`${workbookPreview}#zoom=44`}
+                      type="application/pdf"
+                      width="100%"
+                      height="100%"
+                    >
+                      <Typography variant="body2" sx={{ p: 1 }}>
+                        Tu navegador no soporta previsualizar PDFs.
+                      </Typography>
+                    </object>
+                  </Box>
+                )}
+              </Grid>
+
+              {/* BOTONES */}
               <Grid item xs={12}>
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={6}>
@@ -392,12 +463,24 @@ const CourseAdd = ({ onCancel }) => {
                       sx={{ minHeight: 45 }}
                     >
                       {loading ? (
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <CircularProgress size={22} color="inherit" thickness={5} />
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1,
+                          }}
+                        >
+                          <CircularProgress
+                            size={22}
+                            color="inherit"
+                            thickness={5}
+                          />
                           Guardando...
                         </Box>
+                      ) : id ? (
+                        'Actualizar curso'
                       ) : (
-                        id ? 'Actualizar curso' : 'Guardar curso'
+                        'Guardar curso'
                       )}
                     </Button>
                   </Grid>
@@ -409,7 +492,9 @@ const CourseAdd = ({ onCancel }) => {
                       fullWidth
                       sx={{ minHeight: 45 }}
                       onClick={() =>
-                        onCancel ? onCancel() : history.push('/ecommerce/gridproducts')
+                        onCancel
+                          ? onCancel()
+                          : history.push('/ecommerce/gridproducts')
                       }
                     >
                       Cancelar
@@ -417,7 +502,6 @@ const CourseAdd = ({ onCancel }) => {
                   </Grid>
                 </Grid>
               </Grid>
-
             </Grid>
           </form>
         </CardContent>
