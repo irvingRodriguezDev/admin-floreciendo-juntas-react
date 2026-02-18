@@ -58,9 +58,14 @@ const Certification = () => {
     const formatDate = (dateString) => {
         if (!dateString) return "";
 
-        const [year, month, day] = dateString.split("-");
-        return `${day}/${month}/${year}`;
+        const date = new Date(dateString + "T00:00:00");
+        return date.toLocaleDateString("es-ES", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+        });
     };
+
 
 
     return (
