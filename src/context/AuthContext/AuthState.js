@@ -63,7 +63,7 @@ const AuthState = (props) => {
       const roleId = res.data.user?.roleId;
 
       // Solo permitir acceso a roles 1 y 5
-      if (roleId !== 1 && roleId !== 5) {
+      if (roleId !== 1 && roleId !== 5 && roleId !== 3) {
         Swal.fire(
           "Acceso denegado",
           "No tienes permisos para ingresar",

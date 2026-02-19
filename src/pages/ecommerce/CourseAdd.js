@@ -123,7 +123,7 @@ const CourseAdd = ({ onCancel }) => {
 
         setPreview(curso.cover_image_url || null);
         setCertificatePreview(curso.certificate_url || null);
-        setWorkbookPreview(curso.workbook_url || null);
+        setWorkbookPreview(curso.workbookUrl || null);
       } catch (error) {
         console.error(error);
       } finally {

@@ -1,4 +1,4 @@
-import React, { useEffect, useReducer, useState, useContext } from "react";
+import React, { useEffect, useReducer, useState, useContext, useMemo } from "react";
 import {
     Grid,
     Box,
@@ -66,7 +66,7 @@ const reducer = (s, a) => ({ ...s, ...a });
 // ─────────────────────────────────────────────────────────────────────────────
 
 const AddModules = () => {
-    const { certificationId } = useParams(); // Asume ruta: /certifications/:certificationId/modules
+    const { certificationId } = useParams();
     const history = useHistory();
     const [state, dispatch] = useReducer(reducer, initialState);
     const { certifications } = useContext(CertificationContext);
@@ -76,7 +76,33 @@ const AddModules = () => {
         fetchModules();
     }, [certificationId]);
 
-    const certification = certifications.find((c) => c.id === Number(certificationId));
+    const certification = useMemo(() => {
+        if (!certifications.length) return null;
+
+        return certifications.find(
+            (c) => c.id === Number(certificationId)
+        );
+    }, [certifications, certificationId]);
+
+    useEffect(() => {
+        if (certification?.name) {
+            localStorage.setItem("certification_name", certification.name);
+        }
+    }, [certification]);
+
+
+    const [certificationName, setCertificationName] = useState(
+        localStorage.getItem("certification_name") || ""
+    );
+
+    useEffect(() => {
+        if (certification?.name) {
+            setCertificationName(certification.name);
+        }
+    }, [certification]);
+
+
+
 
     const fetchModules = async () => {
         dispatch({ loadingModules: true });
@@ -269,7 +295,7 @@ const AddModules = () => {
                             </IconButton>
                             <AssignmentOutlined color="primary" />
                             <Typography variant="h6" fontWeight={700}>
-                                Módulos de la Certificación - {certification?.name || ""}
+                                Módulos de la Certificación - {certificationName || ""}
                             </Typography>
                         </Box>
 
@@ -565,7 +591,7 @@ const AddModules = () => {
                                                                                 <Chip
                                                                                     label={`Máx: ${criterion.maxScore ?? criterion.max_score}`}
                                                                                     size="small"
-                                                                                    color="info"
+                                                                                    color="secondary"
                                                                                     variant="outlined"
                                                                                     sx={{ fontWeight: 600 }}
                                                                                 />

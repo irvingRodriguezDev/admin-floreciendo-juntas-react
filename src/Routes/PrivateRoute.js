@@ -24,7 +24,7 @@ export const PrivateRouter = ({
 
                 // 2️⃣ Reglas de rutas por rol (solo accesibles)
                 const rutasPermitidasPorRol = {
-                    "4": ["/task"],       // Tareas
+                    "3": ["/task"],       // Tareas
                     "5": ["/scanner"],    // Scanner
                 };
 

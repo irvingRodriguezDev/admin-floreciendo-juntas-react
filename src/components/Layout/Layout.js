@@ -58,7 +58,7 @@ import Order from '../../pages/orders/Order';
 import Lottery from '../../pages/lottery/lottery';
 import Live from '../../pages/lives/Live';
 import AddLive from '../../pages/lives/AddLive';
-// import Task from '../../pages/tasks/Task';
+import Task from '../../pages/task/Task';
 import { PrivateRouter } from '../../Routes/PrivateRoute';
 import AuthContext from '../../context/AuthContext/AuthContext';
 import AddCertificate from '../../pages/certifications/AddCertificate';
@@ -122,12 +122,12 @@ function Layout(props) {
             render={() => <Redirect to="/system/list" />}
           />
 
-          {/* <PrivateRouter
+          <PrivateRouter
             path="/task"
             component={Task}
             isAuthenticated={autenticado}
             allowedRoles={["3"]}
-          /> */}
+          />
 
 
           {/* Página de lista de sistemas */}

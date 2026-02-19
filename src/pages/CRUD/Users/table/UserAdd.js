@@ -166,7 +166,7 @@ const UserAdd = ({ onCancel }) => {
                                     {/* <MenuItem value={1}>Administrador</MenuItem> */}
                                     {/* <MenuItem value={2}>Gerente</MenuItem>
                                     <MenuItem value={3}>Supervisor</MenuItem> */}
-                                    {/* <MenuItem value={4}>Cliente</MenuItem> */}
+                                    <MenuItem value={3}>Evaluador</MenuItem>
                                     <MenuItem value={5}>Escaneador</MenuItem>
                                 </TextField>
                             </Grid>

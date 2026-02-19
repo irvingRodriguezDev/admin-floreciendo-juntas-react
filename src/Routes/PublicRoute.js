@@ -12,6 +12,7 @@ export const PublicRouter = ({
   const getRedirectPath = () => {
     if (roleId === "1") return "/dashboard";
     if (roleId === "5") return "/scanner";
+    if (roleId === "3") return "/task";
     return null; // todavía no tenemos roleId
   };
 
