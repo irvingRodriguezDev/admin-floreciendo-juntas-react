@@ -59,11 +59,6 @@ const Product = () => {
     return 350; // Desktop (350px)
   };
 
-  // 📌 El ancho de la imagen que se solicitará a CloudFront
-  const optimalWidth = getOptimalWidth();
-  // 📌 Calidad de la imagen (ajustable)
-  const imageQuality = 85;
-
   const [page, setPage] = useState(1);
   const itemsPerPage = 10;
 
