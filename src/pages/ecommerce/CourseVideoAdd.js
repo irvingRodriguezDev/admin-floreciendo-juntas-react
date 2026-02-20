@@ -31,7 +31,7 @@ const CourseVideoAdd = () => {
       const data = await obtenerCursoPorId(id);
       if (data) {
         setCourse(data);
-        if (data.video?.cloudfrontUrl) setExistingVideoUrl(data.video.cloudfrontUrl);
+        if (data.video?.cloudfrontUrl) setExistingVideoUrl(data.video?.cloudfrontUrl);
       }
     };
     fetchCourse();
@@ -40,12 +40,26 @@ const CourseVideoAdd = () => {
   // Reproducir HLS si aplica
   useEffect(() => {
     if (!existingVideoUrl || videoPreview) return;
+
     const video = document.getElementById('existing-video');
-    if (Hls.isSupported() && existingVideoUrl.endsWith('.m3u8')) {
-      const hls = new Hls();
-      hls.loadSource(existingVideoUrl);
-      hls.attachMedia(video);
-      return () => hls.destroy();
+    if (!video) return;
+
+    if (existingVideoUrl.includes('.m3u8')) {
+      if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = existingVideoUrl;
+      } else if (Hls.isSupported()) {
+        const hls = new Hls({
+          enableWorker: true,
+          lowLatencyMode: true,
+        });
+
+        hls.loadSource(existingVideoUrl);
+        hls.attachMedia(video);
+
+        return () => hls.destroy();
+      }
+    } else {
+      video.src = existingVideoUrl;
     }
   }, [existingVideoUrl, videoPreview]);
 
@@ -262,7 +276,20 @@ const CourseVideoAdd = () => {
           {(videoPreview || existingVideoUrl) && (
             <Box sx={{ mb: 3, display: 'flex', justifyContent: 'center' }}>
               <Box sx={{ width: '100%', maxWidth: 750, borderRadius: 2, overflow: 'hidden', backgroundColor: '#000', aspectRatio: '16/9' }}>
-                <video src={videoPreview || existingVideoUrl} controls style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '10px' }} id={existingVideoUrl && !videoPreview ? 'existing-video' : undefined} />
+                <video
+                  controls
+                  id={existingVideoUrl && !videoPreview ? 'existing-video' : undefined}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    borderRadius: '10px'
+                  }}
+                >
+                  {videoPreview && (
+                    <source src={videoPreview} type="video/mp4" />
+                  )}
+                </video>
               </Box>
             </Box>
           )}
