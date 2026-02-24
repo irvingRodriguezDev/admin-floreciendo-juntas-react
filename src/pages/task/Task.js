@@ -50,6 +50,7 @@ import {
     alpha,
     FormHelperText,
     CircularProgress,
+    Pagination,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import CloseIcon from '@mui/icons-material/Close';
@@ -87,6 +88,11 @@ const useStyles = makeStyles((theme) => ({
         borderRadius: 16,
         background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
         boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
+    },
+    '@global': {
+        '.swal2-container': {
+            zIndex: '99999 !important',
+        },
     },
 }));
 
@@ -138,6 +144,13 @@ const Task = () => {
     // Estado para las calificaciones
     const [ratings, setRatings] = useState({});
     const [comments, setComments] = useState('');
+
+    const [page, setPage] = useState(1);
+    const itemsPerPage = 12; // 12 tarjetas = 4 columnas x 3 filas
+
+    useEffect(() => {
+        setPage(1);
+    }, [searchTerm, selectedCertification, selectedModule, activeTab]);
 
     // Función para obtener criterios de un módulo específico
     const fetchModuleCriteria = useCallback(async (moduleId) => {
@@ -763,6 +776,7 @@ const Task = () => {
                     boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
                     transition: 'all 0.3s',
                     border: '1px solid #e0e0e0',
+                    overflow: 'visible', // 👈 clave para que salga el círculo
                     '&:hover': {
                         transform: 'translateY(-8px)',
                         boxShadow: '0 16px 32px rgba(0,0,0,0.16)',
@@ -770,17 +784,28 @@ const Task = () => {
                     position: 'relative',
                 }}
             >
-                <Box sx={{ position: 'absolute', top: 16, right: 16, zIndex: 1 }}>
-                    <Chip
-                        label={isRated ? 'Calificada' : 'Pendiente'}
-                        size="small"
-                        icon={isRated ? <CheckCircleIcon /> : <PendingActionsIcon />}
-                        sx={{
-                            bgcolor: isRated ? '#4caf50' : '#ff9800',
-                            color: '#ffffff',
-                            fontWeight: 600,
-                        }}
-                    />
+                {/* Círculo de estado mitad dentro mitad fuera */}
+                <Box
+                    sx={{
+                        position: 'absolute',
+                        top: -18,
+                        right: -6,
+                        zIndex: 1,
+                        width: 45,
+                        height: 45,
+                        borderRadius: '50%',
+                        bgcolor: isRated ? '#4caf50' : '#ff9800',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: '0 4px 10px rgba(0,0,0,0.25)',
+                        // border: '3px solid #ffffff',
+                    }}
+                >
+                    {isRated
+                        ? <Tooltip title="Tarea calificada"><CheckCircleIcon sx={{ color: '#ffffff', fontSize: 22 }} /></Tooltip>
+                        : <Tooltip title="Tarea pendiente"><PendingActionsIcon sx={{ color: '#ffffff', fontSize: 22 }} /></Tooltip>
+                    }
                 </Box>
 
                 <Box
@@ -797,7 +822,18 @@ const Task = () => {
                             {task.user.avatar || <PersonIcon />}
                         </Avatar>
                         <Box sx={{ flex: 1 }}>
-                            <Typography variant="subtitle1" fontWeight="700" sx={{ color: '#ffffff' }} noWrap>
+                            <Typography
+                                variant="subtitle1"
+                                fontWeight="700"
+                                sx={{
+                                    color: '#ffffff',
+                                    display: '-webkit-box',
+                                    WebkitBoxOrient: 'vertical',
+                                    WebkitLineClamp: 2,
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis'
+                                }}
+                            >
                                 {task.user.name}
                             </Typography>
                             <Typography variant="caption" sx={{ color: '#ffffff', opacity: 0.9 }} noWrap>
@@ -1233,15 +1269,31 @@ const Task = () => {
                     </Paper>
                 </Fade>
             ) : (
-                <Fade in={true}>
-                    <Grid container spacing={3}>
-                        {displayRows.map(task => (
-                            <Grid item xs={12} md={4} key={task.id}>
-                                <TaskCard task={task} onRate={openRatingModal} onViewDetail={openDetailModal} />
-                            </Grid>
-                        ))}
-                    </Grid>
-                </Fade>
+                <>
+                    <Fade in={true}>
+                        <Grid container spacing={3}>
+                            {displayRows
+                                .slice((page - 1) * itemsPerPage, page * itemsPerPage)
+                                .map(task => (
+                                    <Grid item xs={12} md={4} lg={3} key={task.id}>
+                                        <TaskCard task={task} onRate={openRatingModal} onViewDetail={openDetailModal} />
+                                    </Grid>
+                                ))}
+                        </Grid>
+                    </Fade>
+
+                    {displayRows.length > itemsPerPage && (
+                        <Box display="flex" justifyContent="center" sx={{ mt: 4 }}>
+                            <Pagination
+                                count={Math.ceil(displayRows.length / itemsPerPage)}
+                                page={page}
+                                onChange={(e, value) => setPage(value)}
+                                color="primary"
+                                shape="rounded"
+                            />
+                        </Box>
+                    )}
+                </>
             )}
 
             {/* Modal de Calificación */}
