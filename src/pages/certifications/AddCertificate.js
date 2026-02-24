@@ -181,15 +181,18 @@ const AddCertificate = ({ onCancel }) => {
             // console.log("Ancho (in):", width / 72);
             // console.log("Alto (in):", height / 72);
 
-            const expectedWidth = 791.25;  // puntos (27.91 cm)
-            const expectedHeight = 612.75; // puntos (21.62 cm)
+            const expectedWidth = 2550.83;   // puntos (89.96 cm)
+            const expectedHeight = 3300.66;  // puntos (116.42 cm)
             const tolerance = 5; // ±5 puntos
 
-            if (Math.abs(width - expectedWidth) > tolerance || Math.abs(height - expectedHeight) > tolerance) {
+            if (
+                Math.abs(width - expectedWidth) > tolerance ||
+                Math.abs(height - expectedHeight) > tolerance
+            ) {
                 Swal.fire({
                     icon: "error",
                     title: "Medidas incorrectas",
-                    text: "El certificado debe ser tamaño vertical 21.62 × 27.92 cm",
+                    text: "El certificado debe tener tamaño vertical 89.96 × 116.42 cm.",
                 });
                 e.target.value = "";
                 return;
