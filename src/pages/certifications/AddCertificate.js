@@ -16,10 +16,12 @@ import { useHistory, useParams } from "react-router-dom";
 import {
     CloudUpload as CloudUploadIcon,
     Save as SaveIcon,
+    PictureAsPdf as PdfIcon,
 } from "@mui/icons-material";
 import { Typography as MuiTypography } from "@mui/material";
 import Swal from "sweetalert2";
 import CertificationContext from "../../context/CertificationContext/CertificationContext";
+import { PDFDocument, degrees } from "pdf-lib";
 
 const AddCertificate = ({ onCancel }) => {
     const initialFormData = {
@@ -44,8 +46,16 @@ const AddCertificate = ({ onCancel }) => {
     } = useContext(CertificationContext);
 
     const [formData, setFormData] = useState(initialFormData);
-    const [file, setFile] = useState(null);
-    const [previewUrl, setPreviewUrl] = useState(null);
+
+    // --- IMAGEN ---
+    const [imageFile, setImageFile] = useState(null);
+    const [imagePreview, setImagePreview] = useState(null);
+
+    // --- PDF ---
+    const [pdfFile, setPdfFile] = useState(null);
+    const [pdfPreview, setPdfPreview] = useState(null);
+    const [pdfName, setPdfName] = useState("");
+
     const [submitting, setSubmitting] = useState(false);
 
     /** 🔹 CARGAR DATOS EN MODO EDICIÓN **/
@@ -55,7 +65,6 @@ const AddCertificate = ({ onCancel }) => {
         }
     }, [id]);
 
-    /** 🔹 Cuando lleguen los datos, llenar el formulario **/
     useEffect(() => {
         if (isEditMode && certificationActual && Object.keys(certificationActual).length > 0) {
             setFormData({
@@ -68,21 +77,29 @@ const AddCertificate = ({ onCancel }) => {
                     : "",
                 min_passing_score: certificationActual.certification.min_passing_score || "",
                 max_passing_score: certificationActual.certification.max_passing_score || "",
-                is_active: certificationActual.certification.is_active !== undefined ? certificationActual.certification.is_active : true,
+                is_active: certificationActual.certification.is_active !== undefined
+                    ? certificationActual.certification.is_active
+                    : true,
             });
 
             if (certificationActual.image) {
-                setPreviewUrl(certificationActual.image);
+                setImagePreview(certificationActual.image);
+            }
+            if (certificationActual.certificate) {
+                setPdfPreview(certificationActual.certificate);
+                setPdfName("Certificado actual");
             }
         }
     }, [certificationActual]);
 
-    /** 🔹 Resetear formulario cuando no está en modo edición **/
     useEffect(() => {
         if (!isEditMode) {
             setFormData(initialFormData);
-            setFile(null);
-            setPreviewUrl(null);
+            setImageFile(null);
+            setImagePreview(null);
+            setPdfFile(null);
+            setPdfPreview(null);
+            setPdfName("");
         }
     }, [isEditMode]);
 
@@ -95,7 +112,6 @@ const AddCertificate = ({ onCancel }) => {
         return `${year}-${month}-${day}`;
     };
 
-    /** 🔹 FORM HANDLERS **/
     const handleChange = (e) => {
         const { name, value, checked, type } = e.target;
         setFormData((prev) => ({
@@ -106,138 +122,136 @@ const AddCertificate = ({ onCancel }) => {
 
     const handleNumberChange = (e) => {
         const { name, value } = e.target;
-        // Permitir solo números enteros positivos
         if (value === "" || /^\d+$/.test(value)) {
-            setFormData((prev) => ({
-                ...prev,
-                [name]: value,
-            }));
+            setFormData((prev) => ({ ...prev, [name]: value }));
         }
     };
 
-    const handleFileChange = (e) => {
+    // --- HANDLERS IMAGEN ---
+    const handleImageChange = (e) => {
         const selectedFile = e.target.files[0];
         if (!selectedFile) return;
 
         if (!selectedFile.type.startsWith("image/")) {
-            Swal.fire({
-                icon: "error",
-                title: "Archivo inválido",
-                text: "Selecciona una imagen (PNG, JPG o JPEG)"
-            });
+            Swal.fire({ icon: "error", title: "Archivo inválido", text: "Selecciona una imagen (PNG, JPG o JPEG)" });
             return;
         }
-
         if (selectedFile.size > 5 * 1024 * 1024) {
-            Swal.fire({
-                icon: "error",
-                title: "Archivo muy grande",
-                text: "Máximo 5MB"
-            });
+            Swal.fire({ icon: "error", title: "Archivo muy grande", text: "La imagen no debe superar los 5MB" });
             return;
         }
 
-        setFile(selectedFile);
-
+        setImageFile(selectedFile);
         const reader = new FileReader();
-        reader.onloadend = () => setPreviewUrl(reader.result);
+        reader.onloadend = () => setImagePreview(reader.result);
         reader.readAsDataURL(selectedFile);
     };
 
-    const handleRemoveFile = () => {
-        setFile(null);
-        setPreviewUrl(isEditMode ? certificationActual?.image_url || null : null);
+    const handleRemoveImage = () => {
+        setImageFile(null);
+        setImagePreview(isEditMode ? certificationActual?.image || null : null);
+    };
+
+    // --- HANDLERS PDF ---
+    const handlePdfChange = async (e) => {
+        const selectedFile = e.target.files[0];
+        if (!selectedFile) return;
+
+        if (selectedFile.type !== "application/pdf") {
+            Swal.fire({ icon: "error", title: "Archivo inválido", text: "Selecciona un archivo PDF" });
+            return;
+        }
+
+        if (selectedFile.size > 10 * 1024 * 1024) {
+            Swal.fire({ icon: "error", title: "Archivo muy grande", text: "El PDF no debe superar los 10MB" });
+            return;
+        }
+
+        try {
+            const buffer = await selectedFile.arrayBuffer();
+            const pdf = await PDFDocument.load(buffer);
+            const { width, height } = pdf.getPage(0).getSize();
+
+            // LOG DE DIMENSIONES
+            // console.log("📄 Dimensiones detectadas del PDF:");
+            // console.log("Ancho (puntos):", width);
+            // console.log("Alto (puntos):", height);
+            // console.log("Ancho (cm):", (width / 72) * 2.54);
+            // console.log("Alto (cm):", (height / 72) * 2.54);
+            // console.log("Ancho (in):", width / 72);
+            // console.log("Alto (in):", height / 72);
+
+            const expectedWidth = 791.25;  // puntos (27.91 cm)
+            const expectedHeight = 612.75; // puntos (21.62 cm)
+            const tolerance = 5; // ±5 puntos
+
+            if (Math.abs(width - expectedWidth) > tolerance || Math.abs(height - expectedHeight) > tolerance) {
+                Swal.fire({
+                    icon: "error",
+                    title: "Medidas incorrectas",
+                    text: "El certificado debe ser tamaño vertical 21.62 × 27.92 cm",
+                });
+                e.target.value = "";
+                return;
+            }
+
+            setPdfFile(selectedFile);
+            setPdfName(selectedFile.name);
+            setPdfPreview(URL.createObjectURL(selectedFile));
+
+        } catch (err) {
+            console.error(err);
+            Swal.fire({ icon: "error", title: "Error", text: "No se pudo leer el PDF" });
+        }
+    };
+
+    const handleRemovePdf = () => {
+        setPdfFile(null);
+        setPdfName("");
+        setPdfPreview(isEditMode ? certificationActual?.pdf || null : null);
     };
 
     const validateForm = () => {
         if (!formData.name.trim()) {
-            Swal.fire({
-                icon: "error",
-                title: "Error",
-                text: "El nombre de la certificación es obligatorio"
-            });
+            Swal.fire({ icon: "error", title: "Error", text: "El nombre de la certificación es obligatorio" });
             return false;
         }
-
         if (!formData.start_date) {
-            Swal.fire({
-                icon: "error",
-                title: "Error",
-                text: "La fecha de inicio es obligatoria"
-            });
+            Swal.fire({ icon: "error", title: "Error", text: "La fecha de inicio es obligatoria" });
             return false;
         }
-
         if (!formData.end_date) {
-            Swal.fire({
-                icon: "error",
-                title: "Error",
-                text: "La fecha de fin es obligatoria"
-            });
+            Swal.fire({ icon: "error", title: "Error", text: "La fecha de fin es obligatoria" });
             return false;
         }
-
-        // Validar que end_date sea posterior a start_date
         if (new Date(formData.end_date) < new Date(formData.start_date)) {
-            Swal.fire({
-                icon: "error",
-                title: "Error",
-                text: "La fecha de fin debe ser posterior a la fecha de inicio"
-            });
+            Swal.fire({ icon: "error", title: "Error", text: "La fecha de fin debe ser posterior a la fecha de inicio" });
             return false;
         }
-
         if (!formData.min_passing_score) {
-            Swal.fire({
-                icon: "error",
-                title: "Error",
-                text: "La puntuación mínima para aprobar es obligatoria"
-            });
+            Swal.fire({ icon: "error", title: "Error", text: "La puntuación mínima para aprobar es obligatoria" });
             return false;
         }
-
         if (!formData.max_passing_score) {
-            Swal.fire({
-                icon: "error",
-                title: "Error",
-                text: "La puntuación máxima es obligatoria"
-            });
+            Swal.fire({ icon: "error", title: "Error", text: "La puntuación máxima es obligatoria" });
             return false;
         }
-
-        // Validar que min_passing_score no sea mayor que max_passing_score
-        const minScore = parseInt(formData.min_passing_score);
-        const maxScore = parseInt(formData.max_passing_score);
-
-        if (minScore > maxScore) {
-            Swal.fire({
-                icon: "error",
-                title: "Error",
-                text: "La puntuación mínima no puede ser mayor que la puntuación máxima"
-            });
+        if (parseInt(formData.min_passing_score) > parseInt(formData.max_passing_score)) {
+            Swal.fire({ icon: "error", title: "Error", text: "La puntuación mínima no puede ser mayor que la puntuación máxima" });
             return false;
         }
-
-        if (!isEditMode && !file) {
-            Swal.fire({
-                icon: "error",
-                title: "Error",
-                text: "Debes subir una imagen para la certificación"
-            });
+        if (!isEditMode && !imageFile) {
+            Swal.fire({ icon: "error", title: "Error", text: "Debes subir una imagen para la certificación" });
             return false;
         }
-
         return true;
     };
 
-    /** 🔹 SUBMIT **/
     const handleSubmit = async (e) => {
         e.preventDefault();
-
         if (!validateForm()) return;
 
         setSubmitting(true);
-
         try {
             const fd = new FormData();
             fd.append("name", formData.name);
@@ -246,8 +260,8 @@ const AddCertificate = ({ onCancel }) => {
             fd.append("min_passing_score", formData.min_passing_score);
             fd.append("max_passing_score", formData.max_passing_score);
             fd.append("is_active", formData.is_active);
-
-            if (file) fd.append("image", file);
+            if (imageFile) fd.append("image", imageFile);
+            if (pdfFile) fd.append("certificate", pdfFile);
 
             if (isEditMode) {
                 await updateCertification(id, fd);
@@ -255,9 +269,7 @@ const AddCertificate = ({ onCancel }) => {
                 await createCertification(fd);
             }
 
-            // Las alertas ya se manejan en el context
             history.push("/certifications/list");
-
         } catch (error) {
             Swal.fire({
                 icon: "error",
@@ -269,7 +281,6 @@ const AddCertificate = ({ onCancel }) => {
         }
     };
 
-    /** 🔹 LOADER **/
     if (isEditMode && loading && !certificationActual) {
         return (
             <Grid container spacing={3}>
@@ -282,7 +293,6 @@ const AddCertificate = ({ onCancel }) => {
         );
     }
 
-    /** 🔹 FORMULARIO **/
     return (
         <Grid container spacing={3}>
             <Grid item xs={12}>
@@ -305,7 +315,8 @@ const AddCertificate = ({ onCancel }) => {
 
                     <form onSubmit={handleSubmit}>
                         <Grid container spacing={3}>
-                            {/* NOMBRE DE LA CERTIFICACIÓN */}
+
+                            {/* NOMBRE */}
                             <Grid item xs={12}>
                                 <TextField
                                     fullWidth
@@ -391,9 +402,7 @@ const AddCertificate = ({ onCancel }) => {
                                         }
                                         label={
                                             <Box>
-                                                <MuiTypography fontWeight={600}>
-                                                    Certificación Activa
-                                                </MuiTypography>
+                                                <MuiTypography fontWeight={600}>Certificación Activa</MuiTypography>
                                                 <MuiTypography variant="caption" color="text.secondary">
                                                     Si está activa, los usuarios podrán ver y obtener esta certificación
                                                 </MuiTypography>
@@ -403,14 +412,14 @@ const AddCertificate = ({ onCancel }) => {
                                 </Card>
                             </Grid>
 
-                            {/* IMAGEN DE LA CERTIFICACIÓN */}
+                            {/* ══════════════ IMAGEN ══════════════ */}
                             <Grid item xs={12}>
                                 <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
                                     Imagen de la Certificación {!isEditMode && "*"}
                                 </Typography>
 
                                 <Card sx={{ p: 3, backgroundColor: "#f8f9fa" }}>
-                                    {!previewUrl ? (
+                                    {!imagePreview ? (
                                         <Box
                                             sx={{
                                                 border: "2px dashed rgba(0,0,0,0.2)",
@@ -424,55 +433,128 @@ const AddCertificate = ({ onCancel }) => {
                                                     backgroundColor: "rgba(25, 118, 210, 0.04)",
                                                 },
                                             }}
-                                            onClick={() => document.getElementById("file-input").click()}
+                                            onClick={() => document.getElementById("image-input").click()}
                                         >
                                             <CloudUploadIcon sx={{ fontSize: 60, mb: 2, color: "text.secondary" }} />
                                             <Typography fontWeight={600} gutterBottom>
                                                 Haz clic para subir una imagen
                                             </Typography>
-                                            <Typography variant="caption" color="text.secondary">
+                                            <Typography variant="caption" color="text.secondary" display="block">
                                                 PNG, JPG o JPEG (máx. 5MB)
                                             </Typography>
-                                            <Typography variant="caption" display="block" color="text.secondary" sx={{ mt: 1 }}>
-                                                Recomendado: 800x600 píxeles
+                                            <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
+                                                Recomendado: 800×600 píxeles
                                             </Typography>
                                         </Box>
                                     ) : (
                                         <Stack direction={{ xs: "column", sm: "row" }} spacing={3} alignItems="center">
                                             <Avatar
-                                                src={previewUrl}
+                                                src={imagePreview}
                                                 variant="rounded"
                                                 sx={{
                                                     width: { xs: "100%", sm: 150 },
                                                     height: { xs: 200, sm: 150 },
-                                                    objectFit: "cover"
+                                                    objectFit: "cover",
                                                 }}
                                             />
                                             <Stack direction="row" spacing={2}>
-                                                <Button
-                                                    variant="outlined"
-                                                    color="error"
-                                                    size="medium"
-                                                    onClick={handleRemoveFile}
-                                                >
-                                                    {file ? "Eliminar" : "Quitar imagen"}
+                                                <Button variant="outlined" color="error" size="medium" onClick={handleRemoveImage}>
+                                                    {imageFile ? "Eliminar" : "Quitar imagen"}
                                                 </Button>
-                                                <Button
-                                                    variant="outlined"
-                                                    size="medium"
-                                                    onClick={() => document.getElementById("file-input").click()}
-                                                >
+                                                <Button variant="outlined" size="medium" onClick={() => document.getElementById("image-input").click()}>
                                                     Cambiar imagen
                                                 </Button>
                                             </Stack>
                                         </Stack>
                                     )}
-
                                     <input
-                                        id="file-input"
+                                        id="image-input"
                                         type="file"
                                         accept="image/png, image/jpeg, image/jpg"
-                                        onChange={handleFileChange}
+                                        onChange={handleImageChange}
+                                        style={{ display: "none" }}
+                                    />
+                                </Card>
+                            </Grid>
+
+                            {/* ══════════════ PDF ══════════════ */}
+                            <Grid item xs={12}>
+                                <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 0.5 }}>
+                                    Certificado en PDF
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 2 }}>
+                                    Opcional — tamaño carta vertical (8.5 × 11 in)
+                                </Typography>
+
+                                <Card sx={{ p: 3, backgroundColor: "#f8f9fa" }}>
+                                    {!pdfPreview ? (
+                                        <Box
+                                            sx={{
+                                                border: "2px dashed rgba(211, 47, 47, 0.3)",
+                                                borderRadius: 2,
+                                                p: 4,
+                                                textAlign: "center",
+                                                cursor: "pointer",
+                                                transition: "all 0.3s ease",
+                                                "&:hover": {
+                                                    borderColor: "error.main",
+                                                    backgroundColor: "rgba(211, 47, 47, 0.04)",
+                                                },
+                                            }}
+                                            onClick={() => document.getElementById("pdf-input").click()}
+                                        >
+                                            <PdfIcon sx={{ fontSize: 60, mb: 2, color: "error.light" }} />
+                                            <Typography fontWeight={600} gutterBottom>
+                                                Haz clic para subir el PDF del certificado
+                                            </Typography>
+                                            <Typography variant="caption" color="text.secondary" display="block">
+                                                Solo archivos PDF (máx. 10MB)
+                                            </Typography>
+                                        </Box>
+                                    ) : (
+                                        <Stack spacing={2} alignItems="center">
+                                            {/* Preview proporción carta vertical 8.5:11 */}
+                                            <Box
+                                                sx={{
+                                                    width: '100%',
+                                                    maxWidth: 420,
+                                                    aspectRatio: '8.5 / 11',
+                                                    border: '1px solid #ddd',
+                                                    borderRadius: 1,
+                                                    overflow: 'hidden',
+                                                    boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+                                                    bgcolor: '#fff',
+                                                }}
+                                            >
+                                                <iframe
+                                                    src={pdfPreview}
+                                                    title="Vista previa del certificado PDF"
+                                                    style={{
+                                                        width: '100%',
+                                                        height: '100%',
+                                                        border: 'none',
+                                                        display: 'block',
+                                                    }}
+                                                />
+                                            </Box>
+                                            <Typography variant="caption" color="text.secondary">
+                                                {pdfName}
+                                            </Typography>
+                                            <Stack direction="row" spacing={2}>
+                                                <Button variant="outlined" color="error" size="medium" onClick={handleRemovePdf}>
+                                                    Eliminar PDF
+                                                </Button>
+                                                <Button variant="outlined" size="medium" onClick={() => document.getElementById("pdf-input").click()}>
+                                                    Cambiar PDF
+                                                </Button>
+                                            </Stack>
+                                        </Stack>
+                                    )}
+                                    <input
+                                        id="pdf-input"
+                                        type="file"
+                                        accept="application/pdf"
+                                        onChange={handlePdfChange}
                                         style={{ display: "none" }}
                                     />
                                 </Card>
@@ -504,6 +586,7 @@ const AddCertificate = ({ onCancel }) => {
                                     </Button>
                                 </Box>
                             </Grid>
+
                         </Grid>
                     </form>
                 </Paper>
