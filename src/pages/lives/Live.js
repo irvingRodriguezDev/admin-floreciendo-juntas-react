@@ -77,13 +77,19 @@ const useStyles = makeStyles(() => ({
         gap: 8,
         marginBottom: 16,
     },
+    '@global': {
+        '.swal2-container': {
+            zIndex: '99999 !important',
+        },
+    },
 }));
 
 const Live = () => {
     const classes = useStyles();
     const history = useHistory();
 
-    const VISIBLE_COMMENTS = 5;
+    const VISIBLE_COMMENTS = 6;
+    const SCROLL_COMMENTS = 15;
     const videoContainerRef = useRef(null);
     const commentsContainerRef = useRef(null);
     const fullscreenCommentsRef = useRef(null);
@@ -136,23 +142,18 @@ const Live = () => {
 
     // SCROLL AUTOMÁTICO PARA NUEVOS COMENTARIOS
     useEffect(() => {
-        // Solo hacer scroll si hay un nuevo comentario
-        if (comments.length > previousCommentsLength.current) {
-            // Para el chat normal
-            if (commentsContainerRef.current) {
-                // En column-reverse, el top es donde están los nuevos comentarios
-                commentsContainerRef.current.scrollTop = 0;
-            }
-
-            // Para el chat en pantalla completa
-            if (fullscreenCommentsRef.current && showCommentsInFullscreen) {
-                fullscreenCommentsRef.current.scrollTop = 0;
-            }
+        // Para el chat normal (column-reverse): scrollTop = 0 muestra los más nuevos
+        if (commentsContainerRef.current) {
+            commentsContainerRef.current.scrollTop = 0;
         }
 
-        // Actualizar el contador de comentarios previos
+        // Para fullscreen (column normal): scrollTop = scrollHeight muestra los más nuevos
+        if (fullscreenCommentsRef.current && showCommentsInFullscreen) {
+            fullscreenCommentsRef.current.scrollTop = fullscreenCommentsRef.current.scrollHeight;
+        }
+
         previousCommentsLength.current = comments.length;
-    }, [comments, showCommentsInFullscreen]);
+    }, [comments]); // 👈 quita la condición del if, que siempre haga scroll
 
     // DETECTAR CAMBIOS DE FULLSCREEN
     useEffect(() => {
@@ -211,7 +212,7 @@ const Live = () => {
         console.log("LIVE ABIERTO:", live.id);
         setSelectedLive(live);
         setOpenAdminModal(true);
-        previousCommentsLength.current = 0; // Resetear contador
+        previousCommentsLength.current = 0;
     };
 
     // CERRAR MODAL
@@ -246,7 +247,6 @@ const Live = () => {
             cancelButtonText: 'Cancelar',
         }).then((result) => {
             if (result.isConfirmed) {
-                // Aquí llamarías a tu función para finalizar el live
                 Swal.fire({
                     title: '¡Finalizado!',
                     text: 'La transmisión ha terminado exitosamente',
@@ -380,15 +380,14 @@ const Live = () => {
     // Obtener los últimos comentarios (los más nuevos primero)
     const getLatestComments = () => {
         return [...comments]
-            .slice(-VISIBLE_COMMENTS) // Tomar los últimos N comentarios
+            .slice(-SCROLL_COMMENTS)
             .reverse();
     };
 
     // Obtener los últimos comentarios para pantalla completa
     const getLatestFullscreenComments = () => {
         return [...comments]
-            .slice(-VISIBLE_COMMENTS) // Tomar los últimos 20 comentarios
-            // .reverse();
+            .slice(-SCROLL_COMMENTS);
     };
 
     return (
@@ -434,7 +433,6 @@ const Live = () => {
                     <Grid container sx={{ height: '70vh' }}>
                         {/* COLUMNA IZQUIERDA - VIDEO */}
                         <Grid item xs={12} md={8} sx={{ bgcolor: '#000', position: 'relative' }}>
-                            {/* Video Container con Overlay de Comentarios */}
                             <Box
                                 ref={videoContainerRef}
                                 sx={{
@@ -462,19 +460,13 @@ const Live = () => {
                                             Tu navegador no soporta el elemento de video.
                                         </video>
 
-
-                                        {/* Botón de fullscreen personalizado - solo visible cuando NO está en fullscreen */}
+                                        {/* Botón fullscreen - solo visible cuando NO está en fullscreen */}
                                         {!isFullscreen && (
                                             <Tooltip title="Pantalla completa" arrow>
                                                 <IconButton
                                                     onClick={async () => {
-                                                        if (!videoContainerRef.current) {
-                                                            console.log('No hay referencia al contenedor');
-                                                            return;
-                                                        }
-
+                                                        if (!videoContainerRef.current) return;
                                                         try {
-                                                            // Verificar si fullscreen está disponible
                                                             if (!document.fullscreenEnabled &&
                                                                 !document.webkitFullscreenEnabled &&
                                                                 !document.mozFullScreenEnabled &&
@@ -482,10 +474,7 @@ const Live = () => {
                                                                 alert('Tu navegador no soporta pantalla completa');
                                                                 return;
                                                             }
-
                                                             const element = videoContainerRef.current;
-
-                                                            // Intentar con diferentes APIs según el navegador
                                                             if (element.requestFullscreen) {
                                                                 await element.requestFullscreen();
                                                             } else if (element.webkitRequestFullscreen) {
@@ -497,7 +486,6 @@ const Live = () => {
                                                             }
                                                         } catch (err) {
                                                             console.error('Error al entrar en fullscreen:', err);
-                                                            // No mostrar alert, solo log
                                                         }
                                                     }}
                                                     sx={{
@@ -522,22 +510,17 @@ const Live = () => {
                                             </Tooltip>
                                         )}
 
-                                        {/* Botón para salir de fullscreen - solo visible EN fullscreen */}
+                                        {/* Botones EN fullscreen */}
                                         {isFullscreen && (
                                             <>
                                                 <Tooltip title="Salir de pantalla completa" arrow>
                                                     <IconButton
                                                         onClick={() => {
                                                             try {
-                                                                if (document.exitFullscreen) {
-                                                                    document.exitFullscreen();
-                                                                } else if (document.webkitExitFullscreen) {
-                                                                    document.webkitExitFullscreen();
-                                                                } else if (document.mozCancelFullScreen) {
-                                                                    document.mozCancelFullScreen();
-                                                                } else if (document.msExitFullscreen) {
-                                                                    document.msExitFullscreen();
-                                                                }
+                                                                if (document.exitFullscreen) document.exitFullscreen();
+                                                                else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+                                                                else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
+                                                                else if (document.msExitFullscreen) document.msExitFullscreen();
                                                             } catch (err) {
                                                                 console.error('Error al salir de fullscreen:', err);
                                                             }
@@ -606,22 +589,17 @@ const Live = () => {
                                             right: 0,
                                             top: 0,
                                             bottom: 0,
-                                            width: '350px',
+                                            width: '500px',
                                             display: 'flex',
-                                            flexDirection: 'column',
+                                            flexDirection: 'column',  // 👈 columna para apilar header, scroll e input
                                             pointerEvents: 'none',
                                             zIndex: 9999,
                                             p: 2,
+                                            gap: 1,
                                             animation: 'slideInRight 0.3s ease-out',
                                             '@keyframes slideInRight': {
-                                                from: {
-                                                    transform: 'translateX(100%)',
-                                                    opacity: 0,
-                                                },
-                                                to: {
-                                                    transform: 'translateX(0)',
-                                                    opacity: 1,
-                                                },
+                                                from: { transform: 'translateX(100%)', opacity: 0 },
+                                                to: { transform: 'translateX(0)', opacity: 1 },
                                             },
                                         }}
                                     >
@@ -632,13 +610,13 @@ const Live = () => {
                                                 backdropFilter: 'blur(10px)',
                                                 borderRadius: 2,
                                                 p: 1.5,
-                                                mb: 1,
                                                 pointerEvents: 'auto',
+                                                flexShrink: 0,  // 👈 no se encoge
                                             }}
                                         >
                                             <Typography
                                                 variant="subtitle2"
-                                                fontWeight="700"
+                                                fontWeight="600"
                                                 color="#fff"
                                                 sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
                                             >
@@ -658,19 +636,17 @@ const Live = () => {
                                             </Typography>
                                         </Box>
 
-                                        {/* Área de comentarios scrollable - MOSTRAR NUEVOS ARRIBA */}
+                                        {/* Área de comentarios scrollable */}
                                         <Box
                                             ref={fullscreenCommentsRef}
                                             sx={{
-                                                flexGrow: 1,
+                                                flexGrow: 1,        // 👈 ocupa todo el espacio disponible
                                                 overflowY: 'auto',
                                                 display: 'flex',
                                                 flexDirection: 'column',
                                                 gap: 1,
                                                 pointerEvents: 'auto',
-                                                '&::-webkit-scrollbar': {
-                                                    width: '6px',
-                                                },
+                                                '&::-webkit-scrollbar': { width: '6px' },
                                                 '&::-webkit-scrollbar-track': {
                                                     background: 'rgba(255, 255, 255, 0.1)',
                                                     borderRadius: 3,
@@ -690,8 +666,8 @@ const Live = () => {
                                                         borderRadius: 2,
                                                     }}
                                                 >
-                                                    <ChatIcon sx={{ fontSize: 40, opacity: 0.5, color: '#fff' }} />
-                                                    <Typography variant="body2" color="#fff" sx={{ opacity: 0.7, mt: 1 }}>
+                                                    <ChatIcon sx={{ fontSize: 64, opacity: 0.5, color: '#fff' }} />
+                                                    <Typography variant="h6" color="#fff" sx={{ opacity: 0.7, mt: 1 }}>
                                                         No hay comentarios
                                                     </Typography>
                                                 </Box>
@@ -718,51 +694,38 @@ const Live = () => {
                                                                     bgcolor: 'rgba(0, 0, 0, 0.85)',
                                                                     borderColor: 'rgba(255, 105, 180, 0.5)',
                                                                 },
-                                                                // animation: 'slideInUp 0.4s ease-out',
-                                                                // '@keyframes slideInUp': {
-                                                                //     from: {
-                                                                //         opacity: 0,
-                                                                //         transform: 'translateY(20px)',
-                                                                //     },
-                                                                //     to: {
-                                                                //         opacity: 1,
-                                                                //         transform: 'translateY(0)',
-                                                                //     },
-                                                                // },
                                                             }}
                                                         >
                                                             <Box display="flex" alignItems="flex-start" gap={1}>
                                                                 <Avatar
                                                                     sx={{
                                                                         bgcolor: '#FF69B4',
-                                                                        width: 28,
-                                                                        height: 28,
-                                                                        fontSize: '0.75rem',
+                                                                        width: 42,
+                                                                        height: 42,
+                                                                        fontSize: '1.75rem',
                                                                     }}
                                                                 >
                                                                     {comment.user_name?.charAt(0) || "U"}
                                                                 </Avatar>
-
                                                                 <Box flexGrow={1}>
                                                                     <Typography
                                                                         variant="caption"
                                                                         fontWeight={700}
-                                                                        sx={{ color: '#f27db8' }}
+                                                                        sx={{ color: '#f27db8', fontSize: '1.6rem' }}
                                                                     >
                                                                         {comment.user_name || "Usuario"}
                                                                     </Typography>
                                                                     <Typography
-                                                                        variant="body2"
+                                                                        variant="body1"
                                                                         sx={{
                                                                             color: '#fff',
-                                                                            fontSize: '0.85rem',
+                                                                            fontSize: '1.6rem',
                                                                             wordBreak: 'break-word',
                                                                         }}
                                                                     >
                                                                         {comment.message}
                                                                     </Typography>
                                                                 </Box>
-
                                                                 <IconButton
                                                                     size="small"
                                                                     onClick={() => handleDeleteComment(comment.id)}
@@ -770,9 +733,7 @@ const Live = () => {
                                                                         color: '#EF5350',
                                                                         width: 24,
                                                                         height: 24,
-                                                                        '&:hover': {
-                                                                            bgcolor: 'rgba(239, 83, 80, 0.2)',
-                                                                        },
+                                                                        '&:hover': { bgcolor: 'rgba(239, 83, 80, 0.2)' },
                                                                     }}
                                                                 >
                                                                     <DeleteIcon sx={{ fontSize: 16 }} />
@@ -782,11 +743,12 @@ const Live = () => {
                                                     </Grow>
                                                 ))
                                             )}
+                                        </Box>
 
-                                        {/* Input para enviar comentarios */}
+                                        {/* Input FUERA del scroll, siempre visible abajo 👇 */}
                                         <Box
                                             sx={{
-                                                mt: 1,
+                                                flexShrink: 0,      // 👈 no se encoge
                                                 pointerEvents: 'auto',
                                             }}
                                         >
@@ -807,30 +769,20 @@ const Live = () => {
                                                     value={commentText}
                                                     onChange={(e) => setCommentText(e.target.value)}
                                                     onKeyDown={(e) => {
-                                                        if (e.key === "Enter") {
-                                                            handleSendComment();
-                                                        }
+                                                        if (e.key === "Enter") handleSendComment();
                                                     }}
                                                     sx={{
                                                         '& .MuiOutlinedInput-root': {
                                                             borderRadius: 2,
                                                             bgcolor: 'rgba(255, 255, 255, 0.1)',
                                                             color: '#fff',
-                                                            '& fieldset': {
-                                                                borderColor: 'rgba(255, 255, 255, 0.2)',
-                                                            },
-                                                            '&:hover fieldset': {
-                                                                borderColor: 'rgba(255, 105, 180, 0.5)',
-                                                            },
-                                                            '&.Mui-focused fieldset': {
-                                                                borderColor: '#FF69B4',
-                                                            },
+                                                            '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.2)' },
+                                                            '&:hover fieldset': { borderColor: 'rgba(255, 105, 180, 0.5)' },
+                                                            '&.Mui-focused fieldset': { borderColor: '#FF69B4' },
                                                         },
                                                         '& .MuiInputBase-input': {
                                                             color: '#fff',
-                                                            '&::placeholder': {
-                                                                color: 'rgba(255, 255, 255, 0.5)',
-                                                            },
+                                                            '&::placeholder': { color: 'rgba(255, 255, 255, 0.5)' },
                                                         },
                                                     }}
                                                 />
@@ -843,19 +795,14 @@ const Live = () => {
                                                         fontWeight: 700,
                                                         borderRadius: 2,
                                                         minWidth: 60,
-                                                        '&:hover': {
-                                                            background: 'linear-gradient(135deg, #FF4081 0%, #FF5FA2 100%)',
-                                                        },
-                                                        '&:disabled': {
-                                                            background: 'rgba(255, 255, 255, 0.1)',
-                                                        },
+                                                        '&:hover': { background: 'linear-gradient(135deg, #FF4081 0%, #FF5FA2 100%)' },
+                                                        '&:disabled': { background: 'rgba(255, 255, 255, 0.1)' },
                                                     }}
                                                 >
                                                     <ChatIcon fontSize="small" />
                                                 </Button>
                                             </Box>
                                         </Box>
-                                      </Box>
                                     </Box>
                                 )}
                             </Box>
@@ -890,7 +837,7 @@ const Live = () => {
                         {/* COLUMNA DERECHA - CHAT Y CONTROLES */}
                         <Grid item xs={12} md={4} sx={{ display: 'flex', flexDirection: 'column', bgcolor: '#FFF5FA' }}>
                             {/* Estadísticas */}
-                            <Box sx={{ p: 2, bgcolor: '#fff', borderBottom: '1px solid #FFE6F0' }}>
+                            <Box sx={{ p: 1, bgcolor: '#fff', borderBottom: '1px solid #FFE6F0' }}>
                                 <Typography variant="subtitle2" fontWeight="700" color="#FF69B4" gutterBottom>
                                     📊 Estadísticas del Live
                                 </Typography>
@@ -898,7 +845,7 @@ const Live = () => {
                                     <Grid item xs={12}>
                                         <Box textAlign="center">
                                             <Typography variant="h6" fontWeight="700" color="#ff66ad">
-                                                {/* {liveStats.comments} */} 5
+                                                {liveStats.comments}
                                             </Typography>
                                             <Typography variant="caption" color="text.secondary">
                                                 Comentarios
@@ -908,12 +855,8 @@ const Live = () => {
                                 </Grid>
                             </Box>
 
-                            {/* Chat de comentarios - MOSTRAR NUEVOS ARRIBA */}
-                            <Box sx={{
-                                flexGrow: 1,
-                                overflowY: 'auto',
-                                p: 2,
-                            }}>
+                            {/* Chat de comentarios */}
+                            <Box sx={{ flexGrow: 1, overflowY: 'auto', p: 2 }}>
                                 <Box sx={{
                                     display: 'flex',
                                     alignItems: 'center',
@@ -926,27 +869,18 @@ const Live = () => {
                                     </Typography>
                                 </Box>
 
-                                {/* Lista de comentarios con scroll automático */}
                                 <Box
                                     ref={commentsContainerRef}
                                     sx={{
-                                        maxHeight: "300px",
+                                        maxHeight: "332px",
                                         overflowY: "auto",
                                         display: "flex",
-                                        flexDirection: "column-reverse", // NUEVOS ARRIBA
+                                        flexDirection: "column-reverse",
                                         gap: 1,
                                         p: 1,
-                                        '&::-webkit-scrollbar': {
-                                            width: '6px',
-                                        },
-                                        '&::-webkit-scrollbar-track': {
-                                            background: '#FFE6F0',
-                                            borderRadius: 3,
-                                        },
-                                        '&::-webkit-scrollbar-thumb': {
-                                            background: '#FF69B4',
-                                            borderRadius: 3,
-                                        },
+                                        '&::-webkit-scrollbar': { width: '6px' },
+                                        '&::-webkit-scrollbar-track': { background: '#FFE6F0', borderRadius: 3 },
+                                        '&::-webkit-scrollbar-thumb': { background: '#FF69B4', borderRadius: 3 },
                                     }}
                                 >
                                     {comments.length === 0 ? (
@@ -962,20 +896,7 @@ const Live = () => {
                                                 in={true}
                                                 key={comment.id}
                                                 timeout={400}
-                                                style={{
-                                                    transitionDelay: `${index * 50}ms`,
-                                                    animation: 'slideInUp 0.4s ease-out',
-                                                    '@keyframes slideInUp': {
-                                                        from: {
-                                                            opacity: 0,
-                                                            transform: 'translateY(20px)',
-                                                        },
-                                                        to: {
-                                                            opacity: 1,
-                                                            transform: 'translateY(0)',
-                                                        },
-                                                    },
-                                                }}
+                                                style={{ transitionDelay: `${index * 50}ms` }}
                                             >
                                                 <Paper
                                                     elevation={0}
@@ -992,19 +913,14 @@ const Live = () => {
                                                     }}
                                                 >
                                                     <Box display="flex" alignItems="flex-start" gap={2}>
-                                                        <Avatar sx={{
-                                                            bgcolor: "#FF69B4",
-                                                            width: 40,
-                                                            height: 40,
-                                                            transition: 'all 0.3s ease-out',
-                                                        }}>
+                                                        <Avatar sx={{ bgcolor: "#FF69B4", width: 40, height: 40 }}>
                                                             {comment.user_name?.charAt(0) || "U"}
                                                         </Avatar>
                                                         <Box flexGrow={1}>
                                                             <Typography fontWeight={600} variant="body2" color="#FF69B4">
                                                                 {comment.user_name || "Usuario"}
                                                             </Typography>
-                                                            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                                                            <Typography variant="body1" color="text.secondary" sx={{ mt: 0.5, fontSize: '1rem' }}>
                                                                 {comment.message}
                                                             </Typography>
                                                         </Box>
@@ -1048,17 +964,13 @@ const Live = () => {
                                     value={commentText}
                                     onChange={(e) => setCommentText(e.target.value)}
                                     onKeyDown={(e) => {
-                                        if (e.key === "Enter") {
-                                            handleSendComment();
-                                        }
+                                        if (e.key === "Enter") handleSendComment();
                                     }}
                                     sx={{
                                         "& .MuiOutlinedInput-root": {
                                             borderRadius: 3,
                                             transition: 'all 0.3s',
-                                            '&:hover': {
-                                                borderColor: '#FF69B4',
-                                            },
+                                            '&:hover': { borderColor: '#FF69B4' },
                                             '&.Mui-focused': {
                                                 borderColor: '#FF69B4',
                                                 boxShadow: '0 0 0 2px rgba(255, 105, 180, 0.2)',
@@ -1066,7 +978,6 @@ const Live = () => {
                                         },
                                     }}
                                 />
-
                                 <Button
                                     variant="contained"
                                     onClick={handleSendComment}
@@ -1077,15 +988,12 @@ const Live = () => {
                                         borderRadius: 3,
                                         px: 3,
                                         transition: 'all 0.3s',
-                                        transform: 'scale(1)',
                                         '&:hover': {
                                             background: "linear-gradient(135deg, #FF4081 0%, #FF5FA2 100%)",
                                             transform: 'scale(1.05)',
                                             boxShadow: '0 6px 20px rgba(255, 105, 180, 0.4)',
                                         },
-                                        '&:active': {
-                                            transform: 'scale(0.95)',
-                                        },
+                                        '&:active': { transform: 'scale(0.95)' },
                                     }}
                                 >
                                     Enviar
@@ -1103,10 +1011,7 @@ const Live = () => {
                 }}>
                     <Button
                         onClick={handleCloseAdminModal}
-                        sx={{
-                            color: '#757575',
-                            fontWeight: '600',
-                        }}
+                        sx={{ color: '#757575', fontWeight: '600' }}
                     >
                         Cerrar
                     </Button>
@@ -1145,9 +1050,7 @@ const Live = () => {
                                             onChange={handleChange(item.id)}
                                             sx={{
                                                 borderRadius: 2,
-                                                '& .MuiOutlinedInput-notchedOutline': {
-                                                    borderColor: '#FFD6EA',
-                                                },
+                                                '& .MuiOutlinedInput-notchedOutline': { borderColor: '#FFD6EA' },
                                             }}
                                         >
                                             {filters.map((f) => (
@@ -1170,9 +1073,7 @@ const Live = () => {
                                         sx={{
                                             '& .MuiOutlinedInput-root': {
                                                 borderRadius: 2,
-                                                '& fieldset': {
-                                                    borderColor: '#FFD6EA',
-                                                },
+                                                '& fieldset': { borderColor: '#FFD6EA' },
                                             },
                                         }}
                                     />
@@ -1184,9 +1085,7 @@ const Live = () => {
                                         sx={{
                                             color: '#FF6B9D',
                                             backgroundColor: '#FFF0F5',
-                                            '&:hover': {
-                                                backgroundColor: '#FFE1EE',
-                                            },
+                                            '&:hover': { backgroundColor: '#FFE1EE' },
                                         }}
                                     >
                                         <CloseIcon />
@@ -1283,9 +1182,7 @@ const Live = () => {
                             },
                         }}
                         InputProps={{
-                            startAdornment: (
-                                <SearchIcon sx={{ color: '#FF69B4', mr: 1 }} />
-                            ),
+                            startAdornment: <SearchIcon sx={{ color: '#FF69B4', mr: 1 }} />,
                             endAdornment: state.searchTerm && (
                                 <IconButton
                                     size="small"
@@ -1318,10 +1215,7 @@ const Live = () => {
                                 setRowsState((prev) => ({ ...prev, page: 0 }));
                             }}
                             label="Estado"
-                            sx={{
-                                backgroundColor: 'white',
-                                borderRadius: 2,
-                            }}
+                            sx={{ backgroundColor: 'white', borderRadius: 2 }}
                         >
                             <MenuItem value="Todos">Todos</MenuItem>
                             <MenuItem value="scheduled">Programado</MenuItem>
@@ -1344,9 +1238,7 @@ const Live = () => {
                     <Box sx={{ p: 4 }}>
                         <LinearProgress sx={{
                             backgroundColor: '#FFE6F0',
-                            '& .MuiLinearProgress-bar': {
-                                backgroundColor: '#FF69B4',
-                            }
+                            '& .MuiLinearProgress-bar': { backgroundColor: '#FF69B4' }
                         }} />
                     </Box>
                 ) : displayRows.length === 0 ? (
@@ -1356,18 +1248,10 @@ const Live = () => {
                         <Table>
                             <TableHead>
                                 <TableRow sx={{ bgcolor: '#FFF5FA' }}>
-                                    <TableCell align="center" sx={{ fontWeight: '700', color: '#FF69B4' }}>
-                                        Título
-                                    </TableCell>
-                                    <TableCell align="center" sx={{ fontWeight: '700', color: '#FF69B4' }}>
-                                        Fecha
-                                    </TableCell>
-                                    <TableCell align="center" sx={{ fontWeight: '700', color: '#FF69B4' }}>
-                                        Estado
-                                    </TableCell>
-                                    <TableCell align="center" sx={{ fontWeight: '700', color: '#FF69B4' }}>
-                                        Acciones
-                                    </TableCell>
+                                    <TableCell align="center" sx={{ fontWeight: '700', color: '#FF69B4' }}>Título</TableCell>
+                                    <TableCell align="center" sx={{ fontWeight: '700', color: '#FF69B4' }}>Fecha</TableCell>
+                                    <TableCell align="center" sx={{ fontWeight: '700', color: '#FF69B4' }}>Estado</TableCell>
+                                    <TableCell align="center" sx={{ fontWeight: '700', color: '#FF69B4' }}>Acciones</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -1380,17 +1264,12 @@ const Live = () => {
                                         <TableRow
                                             key={l.id}
                                             sx={{
-                                                '&:hover': {
-                                                    bgcolor: '#FFF5FA',
-                                                    transition: 'all 0.2s',
-                                                },
+                                                '&:hover': { bgcolor: '#FFF5FA', transition: 'all 0.2s' },
                                             }}
                                         >
                                             <TableCell>
                                                 <Box display="flex" flexDirection="column" alignItems="center">
-                                                    <Typography variant="body2" fontWeight="600">
-                                                        {l.title}
-                                                    </Typography>
+                                                    <Typography variant="body2" fontWeight="600">{l.title}</Typography>
                                                 </Box>
                                             </TableCell>
 
@@ -1423,10 +1302,7 @@ const Live = () => {
                                                             sx={{
                                                                 color: '#4CAF50',
                                                                 backgroundColor: '#E8F5E9',
-                                                                '&:hover': {
-                                                                    backgroundColor: '#C8E6C9',
-                                                                    transform: 'scale(1.05)',
-                                                                },
+                                                                '&:hover': { backgroundColor: '#C8E6C9', transform: 'scale(1.05)' },
                                                                 transition: 'all 0.2s',
                                                             }}
                                                         >
@@ -1441,10 +1317,7 @@ const Live = () => {
                                                             sx={{
                                                                 color: '#FF69B4',
                                                                 backgroundColor: '#FFF0F5',
-                                                                '&:hover': {
-                                                                    backgroundColor: '#FFE1EE',
-                                                                    transform: 'scale(1.05)',
-                                                                },
+                                                                '&:hover': { backgroundColor: '#FFE1EE', transform: 'scale(1.05)' },
                                                                 transition: 'all 0.2s',
                                                             }}
                                                         >
@@ -1459,10 +1332,7 @@ const Live = () => {
                                                             sx={{
                                                                 color: '#EF5350',
                                                                 backgroundColor: '#FFEBEE',
-                                                                '&:hover': {
-                                                                    backgroundColor: '#FFCDD2',
-                                                                    transform: 'scale(1.05)',
-                                                                },
+                                                                '&:hover': { backgroundColor: '#FFCDD2', transform: 'scale(1.05)' },
                                                                 transition: 'all 0.2s',
                                                             }}
                                                         >
@@ -1492,10 +1362,7 @@ const Live = () => {
                     >
                         <Typography variant="body2" color="text.secondary">
                             Mostrando {rowsState.page * rowsState.pageSize + 1} -{' '}
-                            {Math.min(
-                                (rowsState.page + 1) * rowsState.pageSize,
-                                displayRows.length
-                            )}{' '}
+                            {Math.min((rowsState.page + 1) * rowsState.pageSize, displayRows.length)}{' '}
                             de {displayRows.length}
                         </Typography>
                         <Box sx={{ display: 'flex', gap: 1 }}>
@@ -1503,23 +1370,15 @@ const Live = () => {
                                 size="small"
                                 disabled={rowsState.page === 0}
                                 onClick={() => setRowsState((prev) => ({ ...prev, page: prev.page - 1 }))}
-                                sx={{
-                                    color: '#FF69B4',
-                                    '&:disabled': { color: '#ccc' },
-                                }}
+                                sx={{ color: '#FF69B4', '&:disabled': { color: '#ccc' } }}
                             >
                                 Anterior
                             </Button>
                             <Button
                                 size="small"
-                                disabled={
-                                    (rowsState.page + 1) * rowsState.pageSize >= displayRows.length
-                                }
+                                disabled={(rowsState.page + 1) * rowsState.pageSize >= displayRows.length}
                                 onClick={() => setRowsState((prev) => ({ ...prev, page: prev.page + 1 }))}
-                                sx={{
-                                    color: '#FF69B4',
-                                    '&:disabled': { color: '#ccc' },
-                                }}
+                                sx={{ color: '#FF69B4', '&:disabled': { color: '#ccc' } }}
                             >
                                 Siguiente
                             </Button>

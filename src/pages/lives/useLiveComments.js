@@ -3,7 +3,7 @@ import io from "socket.io-client";
 
 const useLiveComments = (liveId) => {
     const [comments, setComments] = useState([]);
-    const MAX_COMMENTS = 5;
+    const MAX_COMMENTS = 15;
     const socketRef = useRef(null);
     const token = localStorage.getItem("token");
 
