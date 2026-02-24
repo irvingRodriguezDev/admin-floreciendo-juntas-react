@@ -60,7 +60,7 @@ const Product = () => {
   };
 
   const [page, setPage] = useState(1);
-  const itemsPerPage = 10;
+  const itemsPerPage = 12;
 
   useEffect(() => {
     obtenerCursos();
@@ -201,7 +201,7 @@ const Product = () => {
                     sx={{
                       position: "relative",
                       borderRadius: 3,
-                      width: 260,
+                      width: 250,
                       height: 470,
                       boxShadow: "0px 2px 8px rgba(15, 14, 14, 0.1), 0px 1px 2px rgba(0,0,0,0.1)",
                       transition: "transform 0.25s ease, box-shadow 0.25s ease",
