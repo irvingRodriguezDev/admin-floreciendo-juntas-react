@@ -30,9 +30,9 @@ import CloseIcon from '@mui/icons-material/Close';
 import ClearAllIcon from '@mui/icons-material/ClearAll';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import SearchIcon from '@mui/icons-material/Search';
-import Widget from 'components/Widget';
-import Actions from 'components/Table/Actions';
-import Dialog from 'components/Dialog';
+import Widget from '../../../../components/Widget/Widget';
+import Actions from '../../../../components/Table/Actions';
+import Dialog from '../../../../components/Dialog';
 import UserContext from '../../../../context/UserContext/UserContext';
 import { VerifiedIcon } from 'lucide-react';
 
