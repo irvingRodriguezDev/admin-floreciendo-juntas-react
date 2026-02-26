@@ -1099,9 +1099,15 @@
 .winner-name {
     margin: 0;
     font-size: 1.6rem;
-    color: var(--dark-gray);
     font-weight: 700;
     line-height: 1.2;
+
+    white-space: normal;
+    /* asegura salto de línea */
+    overflow: visible;
+    /* quita el corte */
+    text-overflow: unset;
+    /* quita los ... */
 }
 
 .prize-display {

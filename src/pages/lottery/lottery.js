@@ -721,7 +721,7 @@ const Lottery = () => {
                     setTimeout(() => {
                         fetchParticipants();
                         fetchPrizes();
-                        fetchCurrentWinners();
+                        // fetchCurrentWinners();
                     }, 1000);
                 }, 500);
             }
@@ -1386,8 +1386,8 @@ const Lottery = () => {
                                     <div className="wheel-wrapper">
                                         <canvas
                                             ref={canvasRef}
-                                            width="500"
-                                            height="500"
+                                            width="600"
+                                            height="600"
                                             className="wheel-canvas"
                                         />
                                     </div>
@@ -1467,7 +1467,7 @@ const Lottery = () => {
                                                 {winner.name.charAt(0)}
                                             </div>
                                             <div className="profile-info">
-                                                <h4 className="winner-name">{winner.name}</h4>
+                                                <h6 className="winner-name">{winner.name}</h6>
                                             </div>
                                         </div>
                                     </div>
@@ -1482,8 +1482,8 @@ const Lottery = () => {
                                         <div className="prize-display">
                                             <div className="prize-icon">🏆</div>
                                             <div className="prize-info">
-                                                <h4 className="prize-name">{selectedPrize.name}</h4>
-                                                <p className="prize-id">ID: {selectedPrize.id}</p>
+                                                <h6 className="prize-name">{selectedPrize.name}</h6>
+                                                {/* <p className="prize-id">ID: {selectedPrize.id}</p> */}
                                             </div>
                                         </div>
                                         <div className="prize-notice">
