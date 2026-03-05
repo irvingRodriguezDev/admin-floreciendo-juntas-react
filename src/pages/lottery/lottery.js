@@ -1317,8 +1317,8 @@ const Lottery = () => {
                 <div className="wheel-column">
                     <div className="wheel-header">
                         <div className="section-title">
-                            <span className="section-icon">🎡</span>
-                            <h2>Ruleta de tus Sueños</h2>
+                            <span className="section-icon">🌸</span>
+                            <h2>Gira la Flor</h2>
                         </div>
                         <div className="wheel-stats">
                             <div className="wheel-stat">
