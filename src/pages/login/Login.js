@@ -19,6 +19,7 @@ import { Button } from "../../components/Wrappers";
 import AuthContext from "../../context/AuthContext/AuthContext";
 import ResetPasswordContext from "../../context/ResetPasswordContext/ResetPasswordContext";
 import logo from "../../LOGOTIPO FLORECIENDO JUNTAS negro.png";
+import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 
 const getGreeting = () => {
   const d = new Date();
@@ -30,6 +31,8 @@ const getGreeting = () => {
 function Login(props) {
   const { iniciarSesion, autenticado, enviarEmailRecuperacion } = useContext(AuthContext);
   const { resetPassword } = useContext(ResetPasswordContext);
+
+  const { executeRecaptcha } = useGoogleReCaptcha();
 
   const [loginValue, setLoginValue] = useState("");
   const [passwordValue, setPasswordValue] = useState("");
@@ -48,8 +51,10 @@ function Login(props) {
 
   const handleLogin = async () => {
     if (!isLoginFormValid()) return;
+    if (!executeRecaptcha) return;
     setIsLoading(true);
-    await iniciarSesion({ email: loginValue, password: passwordValue });
+    const token = await executeRecaptcha('login');
+    await iniciarSesion({ email: loginValue, password: passwordValue, captchaToken: token });
     setIsLoading(false);
   };
 

@@ -58,7 +58,7 @@ const AuthState = (props) => {
   //cuando el usuario inicia sesion
   const iniciarSesion = async (datos) => {
     try {
-      const res = await MethodPost("/auth/login", datos);
+      const res = await MethodPost("/auth/login", { ...datos, captchaToken: datos.captchaToken });
 
       const roleId = res.data.user?.roleId;
 

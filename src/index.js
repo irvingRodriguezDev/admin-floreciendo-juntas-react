@@ -20,6 +20,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 
 // CAMBIA ESTA PARTE - usa createBrowserHistory en lugar de createHashHistory
 import { createBrowserHistory, createMemoryHistory } from 'history';
+import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
 
 const history =
   typeof window !== 'undefined'
@@ -49,18 +50,20 @@ const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <Provider store={store}>
     <LayoutProvider>
-        <StyledEngineProvider injectFirst>
-          <ThemeChangeProvider>
-            <ThemeStateContext.Consumer>
-              {(theme) => (
-                <ThemeProviderV5 theme={theme}>
-                    <CssBaseline />
-                    <App />
-                </ThemeProviderV5>
-              )}
-            </ThemeStateContext.Consumer>
-          </ThemeChangeProvider>
-        </StyledEngineProvider>
+      <StyledEngineProvider injectFirst>
+        <ThemeChangeProvider>
+          <ThemeStateContext.Consumer>
+            {(theme) => (
+              <ThemeProviderV5 theme={theme}>
+                <CssBaseline />
+                <GoogleReCaptchaProvider reCaptchaKey='6LdLB4EsAAAAADKpzUAgDhCAuPNmzbOWIApFVMpT'>
+                  <App />
+                </GoogleReCaptchaProvider>
+              </ThemeProviderV5>
+            )}
+          </ThemeStateContext.Consumer>
+        </ThemeChangeProvider>
+      </StyledEngineProvider>
     </LayoutProvider>
   </Provider>,
 );
