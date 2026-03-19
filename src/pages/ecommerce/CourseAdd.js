@@ -20,6 +20,85 @@ import 'react-quill-new/dist/quill.snow.css';
 import Swal from 'sweetalert2';
 import { PDFDocument } from 'pdf-lib';
 
+const usePdfBlobUrl = (url) => {
+  const [blobUrl, setBlobUrl] = useState(null);
+  const [loadingPdf, setLoadingPdf] = useState(false);
+
+  useEffect(() => {
+    if (!url) {
+      setBlobUrl(null);
+      return;
+    }
+
+    // Si ya es un blob local (archivo recién subido), úsalo directo
+    if (url.startsWith('blob:')) {
+      setBlobUrl(url);
+      return;
+    }
+
+    // Si es una URL remota, descárgala y conviértela a blob
+    let objectUrl;
+    setLoadingPdf(true);
+
+    fetch(url)
+      .then((res) => res.blob())
+      .then((blob) => {
+        objectUrl = URL.createObjectURL(blob);
+        setBlobUrl(objectUrl);
+      })
+      .catch(() => setBlobUrl(null))
+      .finally(() => setLoadingPdf(false));
+
+    return () => {
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [url]);
+
+  return { blobUrl, loadingPdf };
+};
+
+/* =========================
+    COMPONENTE: Preview PDF
+========================== */
+const PdfPreview = ({ url, title }) => {
+  const { blobUrl, loadingPdf } = usePdfBlobUrl(url);
+
+  return (
+    <Box
+      sx={{
+        mt: 1,
+        width: '100%',
+        height: 400,
+        border: '1px solid #ccc',
+        borderRadius: 2,
+        overflow: 'hidden',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      {loadingPdf ? (
+        <CircularProgress size={28} />
+      ) : blobUrl ? (
+        <iframe
+          src={blobUrl}
+          width="100%"
+          height="100%"
+          style={{ border: 'none' }}
+          title={title}
+        />
+      ) : (
+        <Typography variant="body2" color="text.secondary">
+          No se pudo cargar el PDF.
+        </Typography>
+      )}
+    </Box>
+  );
+};
+
+/* =========================
+    COMPONENTE PRINCIPAL
+========================== */
 const CourseAdd = ({ onCancel }) => {
   const { id } = useParams();
   const history = useHistory();
@@ -55,18 +134,8 @@ const CourseAdd = ({ onCancel }) => {
   };
 
   const quillFormats = [
-    'header',
-    'bold',
-    'italic',
-    'underline',
-    'strike',
-    'blockquote',
-    'color',
-    'background',
-    'list',
-    'bullet',
-    'align',
-    'link',
+    'header', 'bold', 'italic', 'underline', 'strike', 'blockquote',
+    'color', 'background', 'list', 'bullet', 'align', 'link',
   ];
 
   /* =========================
@@ -139,7 +208,6 @@ const CourseAdd = ({ onCancel }) => {
   ========================== */
   const handleChange = (e) => {
     const { name, value } = e.target;
-    console.log('Campo:', name, 'Valor:', value);
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -150,7 +218,6 @@ const CourseAdd = ({ onCancel }) => {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     setForm((prev) => ({ ...prev, coverImage: file }));
-
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => setPreview(reader.result);
@@ -173,11 +240,7 @@ const CourseAdd = ({ onCancel }) => {
       const { width, height } = pdf.getPage(0).getSize();
 
       if (Math.abs(width - 792) > 5 || Math.abs(height - 612) > 5) {
-        Swal.fire(
-          'Error',
-          'El certificado debe ser tamaño carta horizontal',
-          'error'
-        );
+        Swal.fire('Error', 'El certificado debe ser tamaño carta horizontal', 'error');
         return;
       }
 
@@ -209,11 +272,7 @@ const CourseAdd = ({ onCancel }) => {
     setLoading(true);
 
     if (form.hasCertificate && !form.certificate && !certificatePreview) {
-      Swal.fire(
-        'Falta certificado',
-        'Debes subir un certificado',
-        'warning'
-      );
+      Swal.fire('Falta certificado', 'Debes subir un certificado', 'warning');
       setLoading(false);
       return;
     }
@@ -233,9 +292,9 @@ const CourseAdd = ({ onCancel }) => {
 
     try {
       if (id) {
-        await actualizarCurso(id, form);
+        await actualizarCurso(id, formData);
       } else {
-        await crearCurso(form);
+        await crearCurso(formData);
       }
 
       Swal.fire('Éxito', 'Curso guardado correctamente', 'success');
@@ -339,12 +398,7 @@ const CourseAdd = ({ onCancel }) => {
               <Grid item xs={12} sm={6}>
                 <Button component="label" variant="contained" fullWidth>
                   Subir portada
-                  <input
-                    hidden
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                  />
+                  <input hidden type="file" accept="image/*" onChange={handleImageChange} />
                 </Button>
 
                 {preview && (
@@ -364,11 +418,7 @@ const CourseAdd = ({ onCancel }) => {
                       component="img"
                       src={preview}
                       alt="Vista previa"
-                      sx={{
-                        maxWidth: '100%',
-                        maxHeight: '100%',
-                        objectFit: 'contain',
-                      }}
+                      sx={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
                     />
                   </Box>
                 )}
@@ -387,28 +437,8 @@ const CourseAdd = ({ onCancel }) => {
                     />
                   </Button>
 
-                  {(certificatePreview || form.certificate) && (
-                    <Box
-                      sx={{
-                        mt: 1,
-                        width: '100%',
-                        height: 400,
-                        border: '1px solid #ccc',
-                        borderRadius: 2,
-                        overflow: 'hidden',
-                      }}
-                    >
-                      <object
-                        data={`${certificatePreview}#zoom=44`}
-                        type="application/pdf"
-                        width="100%"
-                        height="100%"
-                      >
-                        <Typography variant="body2" sx={{ p: 1 }}>
-                          Tu navegador no soporta previsualizar PDFs.
-                        </Typography>
-                      </object>
-                    </Box>
+                  {certificatePreview && (
+                    <PdfPreview url={certificatePreview} title="Vista previa certificado" />
                   )}
                 </Grid>
               )}
@@ -425,28 +455,8 @@ const CourseAdd = ({ onCancel }) => {
                   />
                 </Button>
 
-                {(workbookPreview || form.workbook) && (
-                  <Box
-                    sx={{
-                      mt: 1,
-                      width: '100%',
-                      height: 400,
-                      border: '1px solid #ccc',
-                      borderRadius: 2,
-                      overflow: 'hidden',
-                    }}
-                  >
-                    <object
-                      data={`${workbookPreview}#zoom=44`}
-                      type="application/pdf"
-                      width="100%"
-                      height="100%"
-                    >
-                      <Typography variant="body2" sx={{ p: 1 }}>
-                        Tu navegador no soporta previsualizar PDFs.
-                      </Typography>
-                    </object>
-                  </Box>
+                {workbookPreview && (
+                  <PdfPreview url={workbookPreview} title="Vista previa workbook" />
                 )}
               </Grid>
 
@@ -463,18 +473,8 @@ const CourseAdd = ({ onCancel }) => {
                       sx={{ minHeight: 45 }}
                     >
                       {loading ? (
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 1,
-                          }}
-                        >
-                          <CircularProgress
-                            size={22}
-                            color="inherit"
-                            thickness={5}
-                          />
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <CircularProgress size={22} color="inherit" thickness={5} />
                           Guardando...
                         </Box>
                       ) : id ? (
@@ -492,9 +492,7 @@ const CourseAdd = ({ onCancel }) => {
                       fullWidth
                       sx={{ minHeight: 45 }}
                       onClick={() =>
-                        onCancel
-                          ? onCancel()
-                          : history.push('/ecommerce/gridproducts')
+                        onCancel ? onCancel() : history.push('/ecommerce/gridproducts')
                       }
                     >
                       Cancelar

@@ -11,6 +11,7 @@ import {
     Avatar,
     Checkbox,
     Stack,
+    CircularProgress,
 } from "@mui/material";
 import { useHistory, useParams } from "react-router-dom";
 import {
@@ -21,8 +22,88 @@ import {
 import { Typography as MuiTypography } from "@mui/material";
 import Swal from "sweetalert2";
 import CertificationContext from "../../context/CertificationContext/CertificationContext";
-import { PDFDocument, degrees } from "pdf-lib";
+import { PDFDocument } from "pdf-lib";
 
+/* ================================
+   HOOK: Convierte URL remota a blob
+================================= */
+const usePdfBlobUrl = (url) => {
+    const [blobUrl, setBlobUrl] = useState(null);
+    const [loadingPdf, setLoadingPdf] = useState(false);
+
+    useEffect(() => {
+        if (!url) {
+            setBlobUrl(null);
+            return;
+        }
+
+        if (url.startsWith('blob:')) {
+            setBlobUrl(url);
+            return;
+        }
+
+        let objectUrl;
+        setLoadingPdf(true);
+
+        fetch(url)
+            .then((res) => res.blob())
+            .then((blob) => {
+                objectUrl = URL.createObjectURL(blob);
+                setBlobUrl(objectUrl);
+            })
+            .catch(() => setBlobUrl(null))
+            .finally(() => setLoadingPdf(false));
+
+        return () => {
+            if (objectUrl) URL.revokeObjectURL(objectUrl);
+        };
+    }, [url]);
+
+    return { blobUrl, loadingPdf };
+};
+
+/* ============================
+   COMPONENTE: Preview PDF
+============================= */
+const PdfPreview = ({ url, title }) => {
+    const { blobUrl, loadingPdf } = usePdfBlobUrl(url);
+
+    return (
+        <Box
+            sx={{
+                width: '100%',
+                maxWidth: 420,
+                aspectRatio: '8.5 / 11',
+                border: '1px solid #ddd',
+                borderRadius: 1,
+                overflow: 'hidden',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+                bgcolor: '#fff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+            }}
+        >
+            {loadingPdf ? (
+                <CircularProgress size={28} />
+            ) : blobUrl ? (
+                <iframe
+                    src={blobUrl}
+                    title={title}
+                    style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
+                />
+            ) : (
+                <Typography variant="body2" color="text.secondary">
+                    No se pudo cargar el PDF.
+                </Typography>
+            )}
+        </Box>
+    );
+};
+
+/* ============================
+   COMPONENTE PRINCIPAL
+============================= */
 const AddCertificate = ({ onCancel }) => {
     const initialFormData = {
         name: "",
@@ -58,7 +139,7 @@ const AddCertificate = ({ onCancel }) => {
 
     const [submitting, setSubmitting] = useState(false);
 
-    /** 🔹 CARGAR DATOS EN MODO EDICIÓN **/
+    /** CARGAR DATOS EN MODO EDICIÓN **/
     useEffect(() => {
         if (isEditMode) {
             getCertificationById(id);
@@ -172,18 +253,9 @@ const AddCertificate = ({ onCancel }) => {
             const pdf = await PDFDocument.load(buffer);
             const { width, height } = pdf.getPage(0).getSize();
 
-            // LOG DE DIMENSIONES
-            // console.log("📄 Dimensiones detectadas del PDF:");
-            // console.log("Ancho (puntos):", width);
-            // console.log("Alto (puntos):", height);
-            // console.log("Ancho (cm):", (width / 72) * 2.54);
-            // console.log("Alto (cm):", (height / 72) * 2.54);
-            // console.log("Ancho (in):", width / 72);
-            // console.log("Alto (in):", height / 72);
-
-            const expectedWidth = 2550.83;   // puntos (89.96 cm)
-            const expectedHeight = 3300.66;  // puntos (116.42 cm)
-            const tolerance = 5; // ±5 puntos
+            const expectedWidth = 2550.83;
+            const expectedHeight = 3300.66;
+            const tolerance = 5;
 
             if (
                 Math.abs(width - expectedWidth) > tolerance ||
@@ -211,7 +283,7 @@ const AddCertificate = ({ onCancel }) => {
     const handleRemovePdf = () => {
         setPdfFile(null);
         setPdfName("");
-        setPdfPreview(isEditMode ? certificationActual?.pdf || null : null);
+        setPdfPreview(isEditMode ? certificationActual?.certificate || null : null);
     };
 
     const validateForm = () => {
@@ -415,7 +487,7 @@ const AddCertificate = ({ onCancel }) => {
                                 </Card>
                             </Grid>
 
-                            {/* ══════════════ IMAGEN ══════════════ */}
+                            {/* IMAGEN */}
                             <Grid item xs={12}>
                                 <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
                                     Imagen de la Certificación {!isEditMode && "*"}
@@ -480,7 +552,7 @@ const AddCertificate = ({ onCancel }) => {
                                 </Card>
                             </Grid>
 
-                            {/* ══════════════ PDF ══════════════ */}
+                            {/* PDF */}
                             <Grid item xs={12}>
                                 <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 0.5 }}>
                                     Certificado en PDF
@@ -516,30 +588,8 @@ const AddCertificate = ({ onCancel }) => {
                                         </Box>
                                     ) : (
                                         <Stack spacing={2} alignItems="center">
-                                            {/* Preview proporción carta vertical 8.5:11 */}
-                                            <Box
-                                                sx={{
-                                                    width: '100%',
-                                                    maxWidth: 420,
-                                                    aspectRatio: '8.5 / 11',
-                                                    border: '1px solid #ddd',
-                                                    borderRadius: 1,
-                                                    overflow: 'hidden',
-                                                    boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
-                                                    bgcolor: '#fff',
-                                                }}
-                                            >
-                                                <iframe
-                                                    src={pdfPreview}
-                                                    title="Vista previa del certificado PDF"
-                                                    style={{
-                                                        width: '100%',
-                                                        height: '100%',
-                                                        border: 'none',
-                                                        display: 'block',
-                                                    }}
-                                                />
-                                            </Box>
+                                            {/* ✅ Reemplazado por PdfPreview */}
+                                            <PdfPreview url={pdfPreview} title="Vista previa del certificado PDF" />
                                             <Typography variant="caption" color="text.secondary">
                                                 {pdfName}
                                             </Typography>
