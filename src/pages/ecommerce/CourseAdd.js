@@ -292,9 +292,9 @@ const CourseAdd = ({ onCancel }) => {
 
     try {
       if (id) {
-        await actualizarCurso(id, formData);
+        await actualizarCurso(id, form);
       } else {
-        await crearCurso(formData);
+        await crearCurso(form);
       }
 
       Swal.fire('Éxito', 'Curso guardado correctamente', 'success');
