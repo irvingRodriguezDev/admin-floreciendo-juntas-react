@@ -13,7 +13,11 @@ import {
     useTheme,
 } from "@mui/material";
 import { useHistory } from "react-router-dom";
-import { Search as SearchIcon, Edit as EditIcon, Delete as DeleteIcon } from "@mui/icons-material";
+import {
+    Search as SearchIcon,
+    Edit as EditIcon,
+    Delete as DeleteIcon,
+} from "@mui/icons-material";
 import { Typography } from "../../components/Wrappers";
 import ProductContext from "../../context/ProductContext/ProductContext";
 import Swal from "sweetalert2";
@@ -23,36 +27,32 @@ const Product = () => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
-    const { products, getProducts, loading, deleteProduct } = useContext(ProductContext);
+    const {
+        products,
+        pagination,
+        getProducts,
+        loading,
+        deleteProduct,
+    } = useContext(ProductContext);
 
     const [state, dispatch] = useReducer(
         (s, a) => ({ ...s, ...a }),
         { searchTerm: "" }
     );
 
-    const [filteredProducts, setFilteredProducts] = useState([]);
     const [page, setPage] = useState(1);
-    const itemsPerPage = 10;
 
-    // Traer productos solo una vez
+    // 🔥 Cargar productos cuando cambia página o búsqueda
     useEffect(() => {
-        getProducts();
-    }, []);
+        getProducts(page, state.searchTerm);
+    }, [page, state.searchTerm]);
 
-    // Filtrar localmente
+    // 🔄 Sincronizar página con backend (opcional pero recomendado)
     useEffect(() => {
-        if (!products) return;
-
-        const term = state.searchTerm.toLowerCase();
-
-        const filtered = products.filter((p) =>
-            p.name?.toLowerCase().includes(term) ||
-            p.description?.toLowerCase().includes(term)
-        );
-
-        setFilteredProducts(filtered);
-        setPage(1);
-    }, [state.searchTerm, products]);
+        if (pagination?.page) {
+            setPage(pagination.page);
+        }
+    }, [pagination]);
 
     const handlePageChange = (event, value) => {
         setPage(value);
@@ -71,45 +71,43 @@ const Product = () => {
         }).then((result) => {
             if (result.isConfirmed) {
                 deleteProduct(id).then(() => {
-                    getProducts();
+                    getProducts(page, state.searchTerm);
                 });
             }
         });
     };
 
     const getImageUrl = (product) =>
-        product.image?.url || "https://via.placeholder.com/300x190?text=Producto";
+        product.image?.url ||
+        "https://via.placeholder.com/300x190?text=Producto";
 
-    // Calcular productos paginados
-    const startIndex = (page - 1) * itemsPerPage;
-    const paginatedProducts = filteredProducts.slice(startIndex, startIndex + itemsPerPage);
+    const items = products || [];
+    const totalPages = pagination?.totalPages || 1;
 
     return (
         <Grid container spacing={3}>
-            {/* Filtro de búsqueda con estilo de EVENT */}
+            {/* 🔍 Buscador */}
             <Grid item xs={12}>
                 <Paper
                     elevation={0}
                     sx={{
                         p: 3,
                         borderRadius: 4,
-                        background: "linear-gradient(135deg, rgba(240,244,248,0.9), rgba(255,255,255,0.95))",
+                        background:
+                            "linear-gradient(135deg, rgba(240,244,248,0.9), rgba(255,255,255,0.95))",
                         backdropFilter: "blur(6px)",
                         border: "1px solid rgba(200,200,200,0.3)",
                     }}
                 >
-                    <Box
-                        display="flex"
-                        justifyContent="center"
-                        alignItems="center"
-                        width="100%"
-                    >
+                    <Box display="flex" justifyContent="center">
                         <TextField
-                            variant="outlined"
                             placeholder="Buscar producto..."
                             size="small"
                             value={state.searchTerm}
-                            onChange={(e) => dispatch({ searchTerm: e.target.value })}
+                            onChange={(e) => {
+                                dispatch({ searchTerm: e.target.value });
+                                setPage(1); // reset a página 1
+                            }}
                             sx={{
                                 width: isMobile ? "100%" : 400,
                                 backgroundColor: "white",
@@ -130,46 +128,61 @@ const Product = () => {
                 </Paper>
             </Grid>
 
-            {/* Cards de productos */}
+            {/* 📦 Lista de productos */}
             <Grid item xs={12}>
                 {loading ? (
                     <Typography align="center">Cargando productos...</Typography>
-                ) : paginatedProducts.length === 0 ? (
-                    <Typography align="center">No hay productos encontrados.</Typography>
+                ) : items.length === 0 ? (
+                    <Typography align="center">
+                        No hay productos encontrados
+                    </Typography>
                 ) : (
                     <>
                         <Grid container spacing={3}>
-                            {paginatedProducts.map((product, index) => (
+                            {items.map((product, index) => (
                                 <Grid item xs={12} sm={6} md={3} key={product.id}>
                                     <Fade in timeout={400 + index * 80}>
                                         <Card
                                             sx={{
                                                 position: "relative",
                                                 borderRadius: 4,
-                                                boxShadow: "0px 4px 15px rgba(0,0,0,0.08), 0px 1px 3px rgba(0,0,0,0.1)",
-                                                transition: "transform 0.25s ease, box-shadow 0.25s ease",
+                                                boxShadow:
+                                                    "0px 4px 15px rgba(0,0,0,0.08), 0px 1px 3px rgba(0,0,0,0.1)",
+                                                transition:
+                                                    "transform 0.25s ease, box-shadow 0.25s ease",
                                                 "&:hover": {
                                                     transform: "translateY(-6px)",
-                                                    boxShadow: "0px 6px 18px rgba(0,0,0,0.12), 0px 3px 6px rgba(0,0,0,0.1)",
+                                                    boxShadow:
+                                                        "0px 6px 18px rgba(0,0,0,0.12), 0px 3px 6px rgba(0,0,0,0.1)",
                                                 },
                                             }}
                                         >
-                                            {/* Iconos */}
-                                            <Box sx={{ position: "absolute", top: 10, right: 10, zIndex: 2 }}>
+                                            {/* Acciones */}
+                                            <Box
+                                                sx={{
+                                                    position: "absolute",
+                                                    top: 10,
+                                                    right: 10,
+                                                    zIndex: 2,
+                                                }}
+                                            >
                                                 <IconButton
                                                     size="large"
                                                     color="primary"
                                                     sx={{
                                                         backgroundColor: "white",
-                                                        "&:hover": { backgroundColor: "rgba(0,0,0,0.08)" },
                                                         borderRadius: "50%",
                                                         width: 40,
                                                         height: 40,
                                                         mr: 1,
                                                     }}
-                                                    onClick={() => history.push(`/product/editproduct/${product.id}`)}
+                                                    onClick={() =>
+                                                        history.push(
+                                                            `/product/editproduct/${product.id}`
+                                                        )
+                                                    }
                                                 >
-                                                    <EditIcon fontSize="medium" />
+                                                    <EditIcon />
                                                 </IconButton>
 
                                                 <IconButton
@@ -177,29 +190,27 @@ const Product = () => {
                                                     color="error"
                                                     sx={{
                                                         backgroundColor: "white",
-                                                        "&:hover": { backgroundColor: "rgba(0,0,0,0.08)" },
                                                         borderRadius: "50%",
                                                         width: 40,
                                                         height: 40,
                                                     }}
                                                     onClick={() => handleDelete(product.id)}
                                                 >
-                                                    <DeleteIcon fontSize="medium" />
+                                                    <DeleteIcon />
                                                 </IconButton>
                                             </Box>
 
                                             {/* Imagen */}
                                             <Box
                                                 sx={{
-                                                    position: "relative",
                                                     height: 220,
                                                     backgroundColor: "#f7f7f7",
                                                     display: "flex",
                                                     alignItems: "center",
                                                     justifyContent: "center",
+                                                    overflow: "hidden",
                                                     borderTopLeftRadius: 4,
                                                     borderTopRightRadius: 4,
-                                                    overflow: "hidden",
                                                 }}
                                             >
                                                 <Box
@@ -216,8 +227,8 @@ const Product = () => {
 
                                             {/* Contenido */}
                                             <Box sx={{ p: 2 }}>
-                                                <Typography variant="h6" fontWeight={600} gutterBottom>
-                                                    <b>{product.name}</b>
+                                                <Typography variant="h6" fontWeight={600}>
+                                                    {product.name}
                                                 </Typography>
 
                                                 <Typography
@@ -234,11 +245,11 @@ const Product = () => {
                                                     {product.description || "Sin descripción"}
                                                 </Typography>
 
-                                                <Typography variant="body2" color="text.secondary">
+                                                <Typography variant="body2">
                                                     Precio: ${product.price ?? "N/D"}
                                                 </Typography>
 
-                                                <Typography variant="body2" color="text.secondary">
+                                                <Typography variant="body2">
                                                     Stock: {product.stock ?? "N/A"}
                                                 </Typography>
                                             </Box>
@@ -248,20 +259,18 @@ const Product = () => {
                             ))}
                         </Grid>
 
-                        {/* Paginación */}
-                        {filteredProducts.length > itemsPerPage && (
-                            <Box display="flex" justifyContent="center" sx={{ mt: 4 }}>
-                                <Pagination
-                                    count={Math.ceil(filteredProducts.length / itemsPerPage)}
-                                    page={page}
-                                    onChange={handlePageChange}
-                                    color="primary"
-                                    shape="rounded"
-                                    showFirstButton
-                                    showLastButton
-                                />
-                            </Box>
-                        )}
+                        {/* 🔢 Paginación */}
+                        <Box display="flex" justifyContent="center" mt={4}>
+                            <Pagination
+                                count={totalPages}
+                                page={page}
+                                onChange={handlePageChange}
+                                color="primary"
+                                shape="rounded"
+                                showFirstButton
+                                showLastButton
+                            />
+                        </Box>
                     </>
                 )}
             </Grid>
