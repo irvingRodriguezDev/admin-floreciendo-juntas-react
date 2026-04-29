@@ -409,9 +409,36 @@
     white-space: nowrap;
 }
 
+/* Estado Vencido (past_due) - Amarillo */
+/* ── Status badges ── */
 .status-badge.active {
-    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
-    color: white;
+    background-color: #d4edda;
+    color: #1a7a35;
+    border: 1px solid #a3d9b1;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.82rem;
+}
+
+.status-badge.past-due {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffc107;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.82rem;
+}
+
+.status-badge.winner {
+    background-color: #f8d7e3;
+    color: #C71585;
+    border: 1px solid #FF69B4;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.82rem;
 }
 
 .status-badge.inactive {
@@ -419,9 +446,27 @@
     color: white;
 }
 
-.status-badge.winner {
-    background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
-    color: #8B4513;
+/* .status-badge.winner {
+    background: linear-gradient(135deg, #FF69B4 0%, #FF1493 100%);
+    color: white;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: inline-block;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(255, 105, 180, 0.4);
+} */
+
+/* Estilos responsivos para móvil */
+@media (max-width: 768px) {
+
+    .status-badge.active,
+    .status-badge.past-due,
+    .status-badge.winner {
+        padding: 4px 10px;
+        font-size: 0.75rem;
+    }
 }
 
 /* Sección de ganadores actuales */

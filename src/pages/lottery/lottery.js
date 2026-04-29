@@ -34,6 +34,10 @@ const Lottery = () => {
     const fullscreenCanvasRef = useRef(null);
     const animationRef = useRef(null);
 
+    // ─── Mínimo siempre 5 pétalos ──────────────────────────────────────────────
+    const MIN_PETALS = 5;
+    const petalCount = Math.max(MIN_PETALS, prizes.length);
+
     const getCurrentMonth = () => {
         const now = new Date();
         return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -136,11 +140,10 @@ const Lottery = () => {
         return { available: avail.length > 0, count: avail.length, participants: avail };
     };
 
+    // ─── Redibujar siempre (incluso con 0 premios → 5 pétalos vacíos) ──────────
     useEffect(() => {
-        if (prizes.length > 0) {
-            if (canvasRef.current) drawWheelOnCanvas(canvasRef.current, false);
-            if (isFullscreen && fullscreenCanvasRef.current) drawWheelOnCanvas(fullscreenCanvasRef.current, true);
-        }
+        if (canvasRef.current) drawWheelOnCanvas(canvasRef.current, false);
+        if (isFullscreen && fullscreenCanvasRef.current) drawWheelOnCanvas(fullscreenCanvasRef.current, true);
     }, [prizes, rotation, winningIndex, isFullscreen]);
 
     useEffect(() => {
@@ -160,9 +163,10 @@ const Lottery = () => {
         const petalLength = Math.min(centerX, centerY) - (fullscreen ? 22 : 18);
 
         ctx.clearRect(0, 0, SIZE, SIZE);
-        if (prizes.length === 0) return;
 
-        const sliceAngle = (2 * Math.PI) / prizes.length;
+        // ── Calcular total de pétalos: mínimo 5 siempre ──────────────────────
+        const totalPetals = Math.max(MIN_PETALS, prizes.length);
+        const sliceAngle = (2 * Math.PI) / totalPetals;
 
         const pinkColors = [
             '#FF1493', '#FFB6C1', '#C71585', '#FFC0CB',
@@ -171,15 +175,26 @@ const Lottery = () => {
             '#D63384'
         ];
 
-        prizes.forEach((prize, index) => {
+        // Colores apagados para pétalos sin premio asignado
+        const emptyPetalColors = [
+            '#FFCFE6', '#FFD9EE', '#FFCFE6', '#FFD9EE', '#FFD2E8'
+        ];
+
+        for (let index = 0; index < totalPetals; index++) {
+            // ¿Este pétalo tiene un premio real?
+            const hasPrize = index < prizes.length;
+            const prize = hasPrize ? prizes[index] : null;
+
             const petalAngle = index * sliceAngle + sliceAngle / 2 + rotation;
             ctx.save();
             ctx.translate(centerX, centerY);
             ctx.rotate(petalAngle);
+
             const pLen = petalLength;
-            const visualSliceAngle = prizes.length === 1 ? Math.PI * 0.75 : sliceAngle;
+            const visualSliceAngle = totalPetals === 1 ? Math.PI * 0.75 : sliceAngle;
             const pHalfWidth = Math.min(Math.tan(visualSliceAngle / 2) * pLen * 0.68, pLen * 0.44);
-            const isWinning = winningIndex === index && selectedPrize?.id === prize.id;
+
+            const isWinning = hasPrize && winningIndex === index && selectedPrize?.id === prize.id;
 
             ctx.beginPath();
             ctx.moveTo(18, 0);
@@ -188,60 +203,89 @@ const Lottery = () => {
             ctx.closePath();
 
             const gradient = ctx.createLinearGradient(0, -pHalfWidth, pLen, pHalfWidth);
+
             if (isWinning) {
+                // Pétalo ganador: resaltado
                 gradient.addColorStop(0, '#FFD1DC');
                 gradient.addColorStop(0.35, '#FF1493');
                 gradient.addColorStop(1, '#C71585');
                 ctx.shadowColor = 'rgba(255, 20, 147, 0.95)';
                 ctx.shadowBlur = 28;
-            } else {
+            } else if (hasPrize) {
+                // Pétalo con premio: colores vibrantes
                 gradient.addColorStop(0, '#FFE8F2');
                 gradient.addColorStop(0.3, pinkColors[index % pinkColors.length]);
                 gradient.addColorStop(1, pinkColors[(index + 6) % pinkColors.length]);
                 ctx.shadowColor = 'rgba(0,0,0,0.18)';
                 ctx.shadowBlur = 10;
+            } else {
+                // Pétalo vacío (sin premio): tono rosado muy suave / apagado
+                gradient.addColorStop(0, '#FFF0F8');
+                gradient.addColorStop(0.3, emptyPetalColors[index % emptyPetalColors.length]);
+                gradient.addColorStop(1, '#FFBEDD');
+                ctx.shadowColor = 'rgba(0,0,0,0.08)';
+                ctx.shadowBlur = 6;
             }
+
             ctx.fillStyle = gradient;
             ctx.fill();
             ctx.strokeStyle = '#FFFFFF';
-            ctx.lineWidth = 2.5;
+            ctx.lineWidth = hasPrize ? 2.5 : 1.5;
             ctx.stroke();
             ctx.shadowBlur = 0;
 
-            ctx.beginPath();
-            ctx.moveTo(22, 0);
-            ctx.bezierCurveTo(pLen * 0.25, -pHalfWidth * 0.55, pLen * 0.55, -pHalfWidth * 0.5, pLen * 0.72, -pHalfWidth * 0.15);
-            ctx.bezierCurveTo(pLen * 0.55, -pHalfWidth * 0.28, pLen * 0.25, -pHalfWidth * 0.28, 22, 0);
-            ctx.fillStyle = 'rgba(255,255,255,0.22)';
-            ctx.fill();
-
-            ctx.save();
-            ctx.textAlign = 'center'; // ← Cambiado a 'center'
-            ctx.textBaseline = 'middle';
-            ctx.fillStyle = '#FFFFFF';
-            const fontSize = fullscreen
-                ? Math.max(14, Math.min(22, pLen / 6.5))
-                : Math.max(13, Math.min(18, pLen / 7));
-            ctx.font = `bold ${fontSize}px 'Segoe UI', Arial, sans-serif`;
-            ctx.shadowColor = 'rgba(0,0,0,0.75)';
-            ctx.shadowBlur = 4;
-            ctx.shadowOffsetX = 1;
-            ctx.shadowOffsetY = 1;
-            const textX = pLen * 0.6; // ← Posición centrada (ajusta este valor según necesites)
-            const prizeName = (prize.prize_name || prize.name || '').trim();
-            const words = prizeName.split(' ');
-            const lineH = fontSize + 4;
-            if (words.length <= 2 || prizeName.length <= 12) {
-                ctx.fillText(prizeName, textX, 0);
-            } else {
-                const mid = Math.ceil(words.length / 2);
-                ctx.fillText(words.slice(0, mid).join(' '), textX, -lineH / 2);
-                ctx.fillText(words.slice(mid).join(' '), textX, lineH / 2);
+            // Brillo interno (solo pétalos con premio)
+            if (hasPrize) {
+                ctx.beginPath();
+                ctx.moveTo(22, 0);
+                ctx.bezierCurveTo(pLen * 0.25, -pHalfWidth * 0.55, pLen * 0.55, -pHalfWidth * 0.5, pLen * 0.72, -pHalfWidth * 0.15);
+                ctx.bezierCurveTo(pLen * 0.55, -pHalfWidth * 0.28, pLen * 0.25, -pHalfWidth * 0.28, 22, 0);
+                ctx.fillStyle = 'rgba(255,255,255,0.22)';
+                ctx.fill();
             }
-            ctx.restore();
-            ctx.restore();
-        });
 
+            // ── Texto del premio (solo si el pétalo tiene uno) ────────────────
+            if (hasPrize) {
+                ctx.save();
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = '#FFFFFF';
+                const fontSize = fullscreen
+                    ? Math.max(14, Math.min(22, pLen / 6.5))
+                    : Math.max(13, Math.min(18, pLen / 7));
+                ctx.font = `bold ${fontSize}px 'Segoe UI', Arial, sans-serif`;
+                ctx.shadowColor = 'rgba(0,0,0,0.75)';
+                ctx.shadowBlur = 4;
+                ctx.shadowOffsetX = 1;
+                ctx.shadowOffsetY = 1;
+                const textX = pLen * 0.6;
+                const prizeName = (prize.prize_name || prize.name || '').trim();
+                const words = prizeName.split(' ');
+                const lineH = fontSize + 4;
+                if (words.length <= 2 || prizeName.length <= 12) {
+                    ctx.fillText(prizeName, textX, 0);
+                } else {
+                    const mid = Math.ceil(words.length / 2);
+                    ctx.fillText(words.slice(0, mid).join(' '), textX, -lineH / 2);
+                    ctx.fillText(words.slice(mid).join(' '), textX, lineH / 2);
+                }
+                ctx.restore();
+            } else {
+                // Pétalo vacío: pequeño símbolo decorativo ✦
+                ctx.save();
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = 'rgba(255,100,170,0.35)';
+                const decorFontSize = fullscreen ? 18 : 14;
+                ctx.font = `${decorFontSize}px Arial`;
+                ctx.fillText('✦', pLen * 0.58, 0);
+                ctx.restore();
+            }
+
+            ctx.restore();
+        }
+
+        // ── Centro dorado ─────────────────────────────────────────────────────
         const centerRadius = fullscreen ? 42 : 34;
         const centerGrad = ctx.createRadialGradient(centerX - 7, centerY - 7, 3, centerX, centerY, centerRadius);
         centerGrad.addColorStop(0, '#FFF9E6');
@@ -262,6 +306,7 @@ const Lottery = () => {
         ctx.fillStyle = 'rgba(255,255,255,0.32)';
         ctx.fill();
 
+        // ── Puntero ───────────────────────────────────────────────────────────
         const pointerAngle = -Math.PI / 2;
         const pointerX = centerX + Math.cos(pointerAngle) * (petalLength + 16);
         const pointerY = centerY + Math.sin(pointerAngle) * (petalLength + 16);
@@ -286,11 +331,13 @@ const Lottery = () => {
         ctx.restore();
     };
 
+    // ─── calculateWinningRotation usa el mismo totalPetals ────────────────────
     const calculateWinningRotation = (prizeId) => {
-        if (prizes.length === 0) return 0;
+        const totalPetals = Math.max(MIN_PETALS, prizes.length);
+        if (totalPetals === 0) return 0;
         const prizeIndex = prizes.findIndex(p => p.id === prizeId);
         if (prizeIndex === -1) return 0;
-        const sliceAngle = (2 * Math.PI) / prizes.length;
+        const sliceAngle = (2 * Math.PI) / totalPetals;
         const prizeCenterAngle = prizeIndex * sliceAngle + sliceAngle / 2;
         let target = (-Math.PI / 2) - prizeCenterAngle;
         target = ((target % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
@@ -314,7 +361,9 @@ const Lottery = () => {
         if (spinning || participants.length === 0 || prizes.length === 0) {
             Swal.fire({
                 title: '🎯 Información',
-                text: 'No hay suficientes participantes o premios para realizar el sorteo.',
+                text: prizes.length === 0
+                    ? 'No hay premios disponibles. Crea un premio para comenzar el sorteo.'
+                    : 'No hay suficientes participantes o premios para realizar el sorteo.',
                 icon: 'info',
                 confirmButtonText: 'Entendido',
                 confirmButtonColor: '#FF69B4'
@@ -333,7 +382,6 @@ const Lottery = () => {
         try {
             const response = await MethodGet('/admin/run-raffle');
 
-            // Verificar si no hay usuarios disponibles
             if (response?.message?.includes("no quedan usuarios disponibles")) {
                 setSpinning(false);
                 showNoParticipantsAlert();
@@ -342,7 +390,6 @@ const Lottery = () => {
 
             const data = response?.data || response;
             if (data && data.message && data.prize && data.winner) {
-                // Verificar si el ganador ya fue premiado
                 if (currentWinners.some(w => w.id === data.winner.id)) {
                     Swal.fire({
                         title: '⚠️ Participante ya premiado',
@@ -381,7 +428,6 @@ const Lottery = () => {
         } catch (error) {
             console.error('❌ Error en el sorteo:', error);
 
-            // Verificar si el error es por no haber usuarios disponibles
             if (error.response?.data?.message?.includes("no quedan usuarios disponibles")) {
                 setSpinning(false);
                 showNoParticipantsAlert();
@@ -390,58 +436,20 @@ const Lottery = () => {
 
             setSpinning(false);
 
-            // Mostrar alerta de error de conexión (funciona en todos los modos)
             Swal.fire({
                 title: '🌐 Error de conexión',
                 html: `<div style="text-align:center;">
-                <div style="font-size:3.5rem;margin-bottom:16px;">
-                    <span role="img" aria-label="wifi">🛜</span>
-                </div>
-                <p style="font-size:1.15rem;color:#333;margin-bottom:12px;">
-                    <strong>Hubo un error de red.</strong>
-                </p>
-                <p style="color:#666;font-size:0.95rem;">
-                    Por favor, verifica tu conexión a internet e inténtalo de nuevo.
-                </p>
+                <div style="font-size:3.5rem;margin-bottom:16px;"><span role="img" aria-label="wifi">🛜</span></div>
+                <p style="font-size:1.15rem;color:#333;margin-bottom:12px;"><strong>Hubo un error de red.</strong></p>
+                <p style="color:#666;font-size:0.95rem;">Por favor, verifica tu conexión a internet e inténtalo de nuevo.</p>
             </div>`,
-                icon: 'error',
-                iconColor: '#FF69B4',
-                confirmButtonText: '🔄 Intentarlo de nuevo',
-                confirmButtonColor: '#FF69B4',
-                showCancelButton: true,
-                cancelButtonText: 'Cancelar',
-                cancelButtonColor: '#aaa',
-                width: '520px',
-                // Asegurar que la alerta se muestre sobre cualquier contenido
-                backdrop: true,
-                allowOutsideClick: true,
-                allowEscapeKey: true,
-                allowEnterKey: true,
-                // Personalización adicional para mejor visibilidad
-                customClass: {
-                    container: 'swal-container',
-                    popup: 'swal-popup',
-                    header: 'swal-header',
-                    title: 'swal-title',
-                    closeButton: 'swal-close-button',
-                    icon: 'swal-icon',
-                    image: 'swal-image',
-                    content: 'swal-content',
-                    input: 'swal-input',
-                    actions: 'swal-actions',
-                    confirmButton: 'swal-confirm-button',
-                    cancelButton: 'swal-cancel-button',
-                    footer: 'swal-footer'
-                }
+                icon: 'error', iconColor: '#FF69B4',
+                confirmButtonText: '🔄 Intentarlo de nuevo', confirmButtonColor: '#FF69B4',
+                showCancelButton: true, cancelButtonText: 'Cancelar', cancelButtonColor: '#aaa', width: '520px',
+                backdrop: true, allowOutsideClick: true, allowEscapeKey: true, allowEnterKey: true,
             }).then(r => {
-                if (r.isConfirmed) {
-                    // Asegurar que el estado de spinning se resetee antes de reintentar
-                    setSpinning(false);
-                    setTimeout(() => runRaffle(), 300);
-                } else {
-                    // Si cancela, asegurar que spinning sea false
-                    setSpinning(false);
-                }
+                if (r.isConfirmed) { setSpinning(false); setTimeout(() => runRaffle(), 300); }
+                else { setSpinning(false); }
             });
         }
     };
@@ -491,11 +499,7 @@ const Lottery = () => {
 
     const openCreatePrizeModal = () => setShowPrizeModal(true);
     const closeCreatePrizeModal = () => {
-        if (!creatingPrize) {
-            setShowPrizeModal(false);
-            setNewPrizeName('');
-            setIsPremium(false);
-        }
+        if (!creatingPrize) { setShowPrizeModal(false); setNewPrizeName(''); setIsPremium(false); }
     };
     const closeResults = () => { setShowResults(false); setWinner(null); setSelectedPrize(null); setRaffleResult(null); setWinningIndex(-1); setTargetRotation(0); };
 
@@ -557,8 +561,8 @@ const Lottery = () => {
     };
     const refreshData = () => { if (activeTable === 'current') fetchParticipants(); else handleSearchHistorical(); };
 
-    const normalCanvasRef = (node) => { canvasRef.current = node; if (node && prizes.length > 0) drawWheelOnCanvas(node, false); };
-    const fsCanvasRef = (node) => { fullscreenCanvasRef.current = node; if (node && prizes.length > 0) drawWheelOnCanvas(node, true); };
+    const normalCanvasRef = (node) => { canvasRef.current = node; if (node) drawWheelOnCanvas(node, false); };
+    const fsCanvasRef = (node) => { fullscreenCanvasRef.current = node; if (node) drawWheelOnCanvas(node, true); };
 
     return (
         <div className="lottery-container">
@@ -596,6 +600,14 @@ const Lottery = () => {
                 .fs-hint { position: absolute; bottom: 18px; color: rgba(255,255,255,0.45); font-size: 0.82rem; }
                 kbd { background: rgba(255,255,255,0.14); padding: 2px 7px; border-radius: 4px; color: rgba(255,255,255,0.7); font-size: 0.8rem; }
                 @keyframes fsspin { to { transform: rotate(360deg); } }
+
+                /* Hint para pétalos vacíos */
+                .empty-petals-hint {
+                    margin-top: 8px; font-size: 0.82rem;
+                    color: rgba(255,100,170,0.7); text-align: center;
+                    animation: fadeHint 0.4s ease;
+                }
+                @keyframes fadeHint { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
             `}</style>
 
             <div className="lottery-header">
@@ -645,21 +657,44 @@ const Lottery = () => {
                                     <div className="table-container">
                                         <table className="participants-table">
                                             <thead><tr><th>ID</th><th>Nombre</th><th>Email</th><th>Teléfono</th><th>Estado</th></tr></thead>
-                                            <tbody>
-                                                {participants.map(participant => {
-                                                    const isWinner = currentWinners.some(w => w.id === participant.id);
-                                                    const wInfo = isWinner ? currentWinners.find(w => w.id === participant.id) : null;
-                                                    return (
-                                                        <tr key={participant.id} className={isWinner ? 'winner-row' : ''}>
-                                                            <td className="id-cell">{participant.id}</td>
-                                                            <td className="name-cell"><div className="user-info"><span className="user-name">{participant.name}</span>{isWinner && <span className="winner-badge" title={`Premio: ${wInfo.prize}`}>🏆 GANADOR</span>}</div></td>
-                                                            <td className="email-cell">{participant.email}</td>
-                                                            <td className="phone-cell">{participant.phone || 'N/A'}</td>
-                                                            <td className="status-cell"><span className={`status-badge ${isWinner ? 'winner' : participant.subscriptions?.[0]?.status === 'active' ? 'active' : 'inactive'}`}>{isWinner ? 'Premiado' : participant.subscriptions?.[0]?.status === 'active' ? 'Activo' : 'Inactivo'}</span></td>
-                                                        </tr>
-                                                    );
-                                                })}
-                                            </tbody>
+                                                    <tbody>
+                                                        {participants.map(participant => {
+                                                            // 🔍 LOG PARA DEPURAR - MUESTRA EL ESTADO DE CADA PARTICIPANTE
+                                                            // console.log('📊 Participante:', participant.name, 'Status:', participant.subscriptions?.status);
+
+                                                            const isWinner = currentWinners.some(w => w.id === participant.id);
+                                                            const wInfo = isWinner ? currentWinners.find(w => w.id === participant.id) : null;
+                                                            return (
+                                                                <tr key={participant.id} className={isWinner ? 'winner-row' : ''}>
+                                                                    <td className="id-cell">{participant.id}</td>
+                                                                    <td className="name-cell">
+                                                                        <div className="user-info">
+                                                                            <span className="user-name">{participant.name}</span>
+                                                                            {isWinner && <span className="winner-badge" title={`Premio: ${wInfo.prize}`}>🏆 GANADOR</span>}
+                                                                        </div>
+                                                                    </td>
+                                                                    <td className="email-cell">{participant.email}</td>
+                                                                    <td className="phone-cell">{participant.phone || 'N/A'}</td>
+                                                                    <td className="status-cell">
+                                                                        <span
+                                                                            className={`status-badge ${isWinner
+                                                                                    ? 'winner'
+                                                                                    : (participant["subscriptions.status"] === 'past_due'
+                                                                                        ? 'past-due'
+                                                                                        : 'active')
+                                                                                }`}
+                                                                        >
+                                                                            {isWinner
+                                                                                ? 'Premiado'
+                                                                                : (participant["subscriptions.status"] === 'past_due'
+                                                                                    ? 'Vencido'
+                                                                                    : 'Activo')}
+                                                                        </span>
+                                                                    </td>
+                                                                </tr>
+                                                            );
+                                                        })}
+                                                    </tbody>
                                         </table>
                                         {currentWinners.length > 0 && (
                                             <div className="winners-section">
@@ -712,6 +747,7 @@ const Lottery = () => {
                     </div>
                 </div>
 
+                {/* ── Columna de la rueda ─────────────────────────────────────── */}
                 <div className="wheel-column">
                     <div className="wheel-header">
                         <div className="section-title"><span className="section-icon">🌸</span><h2>Gira la Flor</h2></div>
@@ -721,60 +757,69 @@ const Lottery = () => {
                         </div>
                     </div>
                     <div className="wheel-section">
-                        {prizes.length === 0 ? (
-                            <div className="no-prizes-container">
-                                <div className="no-prizes-content">
-                                    <div className="no-prizes-icon"><span style={{ fontSize: '5rem', display: 'block' }}>🌸</span></div>
-                                    <h3 className="no-prizes-title">Sin Premios Disponibles</h3>
-                                    <p className="no-prizes-message">No hay premios creados para realizar el sorteo.<br />Crea tu primer premio para comenzar a girar la flor.</p>
-                                    <div className="no-prizes-actions">
-                                        <button className="create-prize-btn-large" onClick={openCreatePrizeModal} disabled={spinning}>
-                                            <span className="btn-icon-large">➕</span>
-                                            <div className="btn-text-container"><span className="btn-text-main">Crear Nuevo Premio</span><span className="btn-text-sub">Iniciar la experiencia de sorteos</span></div>
-                                        </button>
-                                    </div>
-                                    <div className="no-prizes-info">
-                                        <div className="info-card"><span className="info-icon">💡</span><div className="info-content"><h4>¿Cómo funciona?</h4><p>Crea premios atractivos para motivar la participación.</p></div></div>
-                                        <div className="info-card"><span className="info-icon">🎯</span><div className="info-content"><h4>Beneficios</h4><p>Cada pétalo representa un premio diferente.</p></div></div>
-                                    </div>
-                                </div>
+                        {/*
+                          ── La flor SIEMPRE se renderiza (mínimo 5 pétalos).
+                             El botón "Girar" se deshabilita si no hay premios. ──
+                        */}
+                        <div className="wheel-container">
+                            <div className="wheel-wrapper">
+                                <canvas ref={normalCanvasRef} width="680" height="680" className="wheel-canvas" />
+                                <button
+                                    className="fullscreen-btn"
+                                    onClick={() => setIsFullscreen(true)}
+                                    title="Ver en pantalla completa"
+                                    aria-label="Abrir pantalla completa"
+                                >
+                                    ⛶
+                                </button>
                             </div>
-                        ) : (
-                            <>
-                                <div className="wheel-container">
-                                    <div className="wheel-wrapper">
-                                        <canvas ref={normalCanvasRef} width="680" height="680" className="wheel-canvas" />
-                                        <button
-                                            className="fullscreen-btn"
-                                            onClick={() => setIsFullscreen(true)}
-                                            title="Ver en pantalla completa"
-                                            aria-label="Abrir pantalla completa"
-                                        >
-                                            ⛶
-                                        </button>
-                                    </div>
-                                    <div className="wheel-instructions">
+
+                            <div className="wheel-instructions">
+                                {prizes.length === 0 ? (
+                                    /* Sin premios: hint amigable debajo de la flor */
+                                    <p className="empty-petals-hint">
+                                        🌸 Crea un premio para activar los pétalos y comenzar el sorteo
+                                    </p>
+                                ) : (
+                                    <>
                                         <p className="instruction-text">Haz click en "Girar Flor" para seleccionar un ganador aleatoriamente</p>
                                         {currentWinners.length > 0 && (
                                             <p className="instruction-info"><span className="info-icon">ℹ️</span>Ganadores de hoy: <strong>{currentWinners.length}</strong> de <strong>{participants.length}</strong> participantes</p>
                                         )}
-                                    </div>
-                                </div>
-                                <div className="spin-controls">
-                                    <button className="spin-button" onClick={runRaffle} disabled={spinning}>
-                                        {spinning
-                                            ? <><span className="button-spinner"></span><span className="button-text">Girando Flor...</span><span className="button-time">⏱️ 5s</span></>
-                                            : <><span className="button-icon">🌸</span><span className="button-text">Girar Flor</span></>
-                                        }
-                                    </button>
-                                </div>
-                            </>
-                        )}
+                                    </>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="spin-controls">
+                            {prizes.length === 0 && (
+                                /* Acceso rápido para crear el primer premio */
+                                <button
+                                    className="action-btn add-prize-btn"
+                                    onClick={openCreatePrizeModal}
+                                    disabled={spinning}
+                                    style={{ marginBottom: '10px', padding: '12px 28px', fontSize: '1rem' }}
+                                >
+                                    <span className="btn-icon">➕</span> Crear Primer Premio
+                                </button>
+                            )}
+                            <button
+                                className="spin-button"
+                                onClick={runRaffle}
+                                disabled={spinning || prizes.length === 0}
+                            >
+                                {spinning
+                                    ? <><span className="button-spinner"></span><span className="button-text">Girando Flor...</span><span className="button-time">⏱️ 5s</span></>
+                                    : <><span className="button-icon">🌸</span><span className="button-text">Girar Flor</span></>
+                                }
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            {isFullscreen && prizes.length > 0 && (
+            {/* ── Pantalla completa ─────────────────────────────────────────────── */}
+            {isFullscreen && (
                 <div className="fs-overlay">
                     <div className="fs-topbar">
                         <h2>🌸 Gira la Flor 🌸</h2>
@@ -784,17 +829,17 @@ const Lottery = () => {
                         <canvas ref={fsCanvasRef} className="wheel-canvas" />
                     </div>
                     <div className="fs-controls">
-                        <button className="fs-spin-btn" onClick={runRaffle} disabled={spinning}>
+                        <button className="fs-spin-btn" onClick={runRaffle} disabled={spinning || prizes.length === 0}>
                             {spinning
                                 ? <><span style={{ width: 22, height: 22, border: '3px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', display: 'inline-block', animation: 'fsspin 0.8s linear infinite' }}></span>Girando... ⏱️ 5s</>
                                 : <>🌸 Girar Flor</>
                             }
                         </button>
                     </div>
-                    {/* <p className="fs-hint">Presiona <kbd>ESC</kbd> o el botón ✕ para salir</p> */}
                 </div>
             )}
 
+            {/* ── Modal resultado ganador ────────────────────────────────────── */}
             {showResults && winner && selectedPrize && (
                 <div className="results-overlay">
                     <div className="results-modal">
@@ -824,6 +869,7 @@ const Lottery = () => {
                 </div>
             )}
 
+            {/* ── Modal crear premio ─────────────────────────────────────────── */}
             {showPrizeModal && (
                 <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.75)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999, animation: 'fadeIn 0.3s ease' }}>
                     <div style={{ width: '90%', maxWidth: '500px', animation: 'modalSlideIn 0.4s ease-out' }}>
@@ -849,38 +895,19 @@ const Lottery = () => {
                                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginTop: '10px', color: '#666', fontSize: '0.9rem', background: '#fff0f6', padding: '12px 15px', borderRadius: '10px', borderLeft: '4px solid #ff69b4', lineHeight: 1.4 }}>
                                     <span>💡</span>Este nombre aparecerá en un pétalo de la flor y será visible para todos los participantes
                                 </div>
-                                {/* Checkbox Premio Premium */}
                                 <div
                                     onClick={() => !creatingPrize && setIsPremium(prev => !prev)}
-                                    style={{
-                                        display: 'flex', alignItems: 'center', gap: '12px',
-                                        marginTop: '16px', padding: '14px 18px',
-                                        border: `2px solid ${isPremium ? '#ff1493' : '#ffb6c1'}`,
-                                        borderRadius: '12px', cursor: creatingPrize ? 'not-allowed' : 'pointer',
-                                        background: isPremium ? 'linear-gradient(135deg, #fff0f8, #ffe0f2)' : '#fff',
-                                        transition: 'all 0.2s ease',
-                                        userSelect: 'none',
-                                    }}
+                                    style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '16px', padding: '14px 18px', border: `2px solid ${isPremium ? '#ff1493' : '#ffb6c1'}`, borderRadius: '12px', cursor: creatingPrize ? 'not-allowed' : 'pointer', background: isPremium ? 'linear-gradient(135deg, #fff0f8, #ffe0f2)' : '#fff', transition: 'all 0.2s ease', userSelect: 'none' }}
                                 >
-                                    <div style={{
-                                        width: '22px', height: '22px', borderRadius: '6px', flexShrink: 0,
-                                        border: `2px solid ${isPremium ? '#ff1493' : '#ccc'}`,
-                                        background: isPremium ? 'linear-gradient(135deg, #ff69b4, #ff1493)' : 'white',
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        transition: 'all 0.2s ease',
-                                    }}>
+                                    <div style={{ width: '22px', height: '22px', borderRadius: '6px', flexShrink: 0, border: `2px solid ${isPremium ? '#ff1493' : '#ccc'}`, background: isPremium ? 'linear-gradient(135deg, #ff69b4, #ff1493)' : 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s ease' }}>
                                         {isPremium && <span style={{ color: 'white', fontSize: '13px', fontWeight: 'bold' }}>✓</span>}
                                     </div>
                                     <div>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                                             <span style={{ fontSize: '1.1rem' }}>⭐</span>
-                                            <span style={{ fontWeight: 700, fontSize: '1rem', color: isPremium ? '#ff1493' : '#333' }}>
-                                                Premio Premium
-                                            </span>
+                                            <span style={{ fontWeight: 700, fontSize: '1rem', color: isPremium ? '#ff1493' : '#333' }}>Premio Premium</span>
                                         </div>
-                                        <span style={{ fontSize: '0.82rem', color: '#888' }}>
-                                            Marca si este premio es de categoría premium
-                                        </span>
+                                        <span style={{ fontSize: '0.82rem', color: '#888' }}>Marca si este premio es de categoría premium</span>
                                     </div>
                                 </div>
                             </div>
