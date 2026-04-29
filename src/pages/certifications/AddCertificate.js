@@ -137,6 +137,11 @@ const AddCertificate = ({ onCancel }) => {
     const [pdfPreview, setPdfPreview] = useState(null);
     const [pdfName, setPdfName] = useState("");
 
+    // --- DIPLOMA ---
+    const [diplomaFile, setDiplomaFile] = useState(null);
+    const [diplomaPreview, setDiplomaPreview] = useState(null);
+    const [diplomaName, setDiplomaName] = useState("");
+
     const [submitting, setSubmitting] = useState(false);
 
     /** CARGAR DATOS EN MODO EDICIÓN **/
@@ -170,6 +175,10 @@ const AddCertificate = ({ onCancel }) => {
                 setPdfPreview(certificationActual.certificate);
                 setPdfName("Certificado actual");
             }
+            if (certificationActual.diploma) {
+                setDiplomaPreview(certificationActual.diploma);
+                setDiplomaName("Diploma actual");
+            }
         }
     }, [certificationActual]);
 
@@ -181,6 +190,9 @@ const AddCertificate = ({ onCancel }) => {
             setPdfFile(null);
             setPdfPreview(null);
             setPdfName("");
+            setDiplomaFile(null);
+            setDiplomaPreview(null);
+            setDiplomaName("");
         }
     }, [isEditMode]);
 
@@ -286,6 +298,56 @@ const AddCertificate = ({ onCancel }) => {
         setPdfPreview(isEditMode ? certificationActual?.certificate || null : null);
     };
 
+    const handleDiplomaChange = async (e) => {
+        const selectedFile = e.target.files[0];
+        if (!selectedFile) return;
+
+        if (selectedFile.type !== "application/pdf") {
+            Swal.fire({ icon: "error", title: "Archivo inválido", text: "Selecciona un PDF" });
+            return;
+        }
+
+        if (selectedFile.size > 10 * 1024 * 1024) {
+            Swal.fire({ icon: "error", title: "Archivo muy grande", text: "Máx 10MB" });
+            return;
+        }
+
+        try {
+            const buffer = await selectedFile.arrayBuffer();
+            const pdf = await PDFDocument.load(buffer);
+            const { width, height } = pdf.getPage(0).getSize();
+
+            const expectedWidth = 2550.83;
+            const expectedHeight = 3300.66;
+
+            if (
+                Math.abs(width - expectedWidth) > 5 ||
+                Math.abs(height - expectedHeight) > 5
+            ) {
+                Swal.fire({
+                    icon: "error",
+                    title: "Medidas incorrectas",
+                    text: "El diploma debe ser vertical (8.5 × 11)",
+                });
+                e.target.value = "";
+                return;
+            }
+
+            setDiplomaFile(selectedFile);
+            setDiplomaName(selectedFile.name);
+            setDiplomaPreview(URL.createObjectURL(selectedFile));
+
+        } catch {
+            Swal.fire({ icon: "error", title: "Error", text: "No se pudo leer el PDF" });
+        }
+    };
+
+    const handleRemoveDiploma = () => {
+        setDiplomaFile(null);
+        setDiplomaName("");
+        setDiplomaPreview(isEditMode ? certificationActual?.diploma || null : null);
+    };
+
     const validateForm = () => {
         if (!formData.name.trim()) {
             Swal.fire({ icon: "error", title: "Error", text: "El nombre de la certificación es obligatorio" });
@@ -337,6 +399,7 @@ const AddCertificate = ({ onCancel }) => {
             fd.append("is_active", formData.is_active);
             if (imageFile) fd.append("image", imageFile);
             if (pdfFile) fd.append("certificate", pdfFile);
+            if (diplomaFile) fd.append("diploma", diplomaFile);
 
             if (isEditMode) {
                 await updateCertification(id, fd);
@@ -553,10 +616,11 @@ const AddCertificate = ({ onCancel }) => {
                             </Grid>
 
                             {/* PDF */}
-                            <Grid item xs={12}>
+                            <Grid item xs={12} md={6}>
                                 <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 0.5 }}>
                                     Certificado en PDF
                                 </Typography>
+
                                 <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 2 }}>
                                     Opcional — tamaño carta vertical (8.5 × 11 in)
                                 </Typography>
@@ -588,11 +652,12 @@ const AddCertificate = ({ onCancel }) => {
                                         </Box>
                                     ) : (
                                         <Stack spacing={2} alignItems="center">
-                                            {/* ✅ Reemplazado por PdfPreview */}
                                             <PdfPreview url={pdfPreview} title="Vista previa del certificado PDF" />
+
                                             <Typography variant="caption" color="text.secondary">
                                                 {pdfName}
                                             </Typography>
+
                                             <Stack direction="row" spacing={2}>
                                                 <Button variant="outlined" color="error" size="medium" onClick={handleRemovePdf}>
                                                     Eliminar PDF
@@ -603,6 +668,7 @@ const AddCertificate = ({ onCancel }) => {
                                             </Stack>
                                         </Stack>
                                     )}
+
                                     <input
                                         id="pdf-input"
                                         type="file"
@@ -612,6 +678,71 @@ const AddCertificate = ({ onCancel }) => {
                                     />
                                 </Card>
                             </Grid>
+
+                            {/* DIPLOMA */}
+                            <Grid item xs={12} md={6}>
+                                <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 0.5 }}>
+                                    Diploma en PDF
+                                </Typography>
+
+                                <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 2 }}>
+                                    Opcional — tamaño carta vertical (8.5 × 11 in)
+                                </Typography>
+
+                                <Card sx={{ p: 3, backgroundColor: "#f8f9fa" }}>
+                                    {!diplomaPreview ? (
+                                        <Box
+                                            sx={{
+                                                border: "2px dashed rgba(25, 118, 210, 0.3)",
+                                                borderRadius: 2,
+                                                p: 4,
+                                                textAlign: "center",
+                                                cursor: "pointer",
+                                                transition: "all 0.3s ease",
+                                                "&:hover": {
+                                                    borderColor: "primary.main",
+                                                    backgroundColor: "rgba(25, 118, 210, 0.04)",
+                                                },
+                                            }}
+                                            onClick={() => document.getElementById("diploma-input").click()}
+                                        >
+                                            <PdfIcon sx={{ fontSize: 60, mb: 2, color: "primary.light" }} />
+                                            <Typography fontWeight={600}>
+                                                Haz clic para subir el diploma en PDF
+                                            </Typography>
+                                            <Typography variant="caption" color="text.secondary" display="block">
+                                                Solo archivos PDF (máx. 10MB)
+                                            </Typography>
+                                        </Box>
+                                    ) : (
+                                        <Stack spacing={2} alignItems="center">
+                                            <PdfPreview url={diplomaPreview} title="Vista previa del diploma" />
+
+                                            <Typography variant="caption">
+                                                {diplomaName}
+                                            </Typography>
+
+                                            <Stack direction="row" spacing={2}>
+                                                <Button variant="outlined" color="error" onClick={handleRemoveDiploma}>
+                                                    Eliminar
+                                                </Button>
+                                                <Button variant="outlined" onClick={() => document.getElementById("diploma-input").click()}>
+                                                    Cambiar
+                                                </Button>
+                                            </Stack>
+                                        </Stack>
+                                    )}
+
+                                    <input
+                                        id="diploma-input"
+                                        type="file"
+                                        accept="application/pdf"
+                                        onChange={handleDiplomaChange}
+                                        style={{ display: "none" }}
+                                    />
+                                </Card>
+                            </Grid>
+
 
                             {/* BOTONES */}
                             <Grid item xs={12}>
