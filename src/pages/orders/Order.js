@@ -1124,22 +1124,41 @@ const Order = () => {
                                                 )}
 
                                                 {activeTab === 1 && (
-                                                    <Tooltip title={hasShippingCost(order) ? "Editar Costo de Envío" : "Agregar Costo de Envío"} arrow>
-                                                        <IconButton
-                                                            onClick={() => openShippingModal(order)}
-                                                            sx={{
-                                                                color: hasShippingCost(order) ? '#42A5F5' : '#FF6B9D',
-                                                                backgroundColor: hasShippingCost(order) ? '#E3F2FD' : '#FFF0F5',
-                                                                '&:hover': {
-                                                                    backgroundColor: hasShippingCost(order) ? '#BBDEFB' : '#FFE1EE',
-                                                                    transform: 'scale(1.05)',
-                                                                },
-                                                                transition: 'all 0.2s',
-                                                            }}
-                                                        >
-                                                            {hasShippingCost(order) ? <EditIcon /> : <LocalShippingIcon />}
-                                                        </IconButton>
-                                                    </Tooltip>
+                                                    <Box sx={{ display: 'flex', gap: 1 }}>
+                                                        <Tooltip title={hasShippingCost(order) ? "Editar Costo de Envío" : "Agregar Costo de Envío"} arrow>
+                                                            <IconButton
+                                                                onClick={() => openShippingModal(order)}
+                                                                sx={{
+                                                                    color: hasShippingCost(order) ? '#42A5F5' : '#FF6B9D',
+                                                                    backgroundColor: hasShippingCost(order) ? '#E3F2FD' : '#FFF0F5',
+                                                                    '&:hover': {
+                                                                        backgroundColor: hasShippingCost(order) ? '#BBDEFB' : '#FFE1EE',
+                                                                        transform: 'scale(1.05)',
+                                                                    },
+                                                                    transition: 'all 0.2s',
+                                                                }}
+                                                            >
+                                                                {hasShippingCost(order) ? <EditIcon /> : <LocalShippingIcon />}
+                                                            </IconButton>
+                                                        </Tooltip>
+
+                                                        <Tooltip title="Ver detalle de venta" arrow>
+                                                            <IconButton
+                                                                onClick={() => openDetailModal(order)}
+                                                                sx={{
+                                                                    color: '#FF69B4',
+                                                                    backgroundColor: '#FFF0F5',
+                                                                    '&:hover': {
+                                                                        backgroundColor: '#FFE1EE',
+                                                                        transform: 'scale(1.05)',
+                                                                    },
+                                                                    transition: 'all 0.2s',
+                                                                }}
+                                                            >
+                                                                <VisibilityIcon />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                    </Box>
                                                 )}
 
                                                 {activeTab === 2 && (
