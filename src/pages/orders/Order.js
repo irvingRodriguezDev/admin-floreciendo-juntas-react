@@ -1162,22 +1162,41 @@ const Order = () => {
                                                 )}
 
                                                 {activeTab === 2 && (
-                                                    <Tooltip title="Agregar información de envío" arrow>
-                                                        <IconButton
-                                                            onClick={() => openTrackingModal(order)}
-                                                            sx={{
-                                                                color: '#9C27B0',
-                                                                backgroundColor: '#F3E5F5',
-                                                                '&:hover': {
-                                                                    backgroundColor: '#E1BEE7',
-                                                                    transform: 'scale(1.05)',
-                                                                },
-                                                                transition: 'all 0.2s',
-                                                            }}
-                                                        >
-                                                            <AssignmentIcon />
-                                                        </IconButton>
-                                                    </Tooltip>
+                                                    <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
+                                                        <Tooltip title="Agregar información de envío" arrow>
+                                                            <IconButton
+                                                                onClick={() => openTrackingModal(order)}
+                                                                sx={{
+                                                                    color: '#9C27B0',
+                                                                    backgroundColor: '#F3E5F5',
+                                                                    '&:hover': {
+                                                                        backgroundColor: '#E1BEE7',
+                                                                        transform: 'scale(1.05)',
+                                                                    },
+                                                                    transition: 'all 0.2s',
+                                                                }}
+                                                            >
+                                                                <AssignmentIcon />
+                                                            </IconButton>
+                                                        </Tooltip>
+
+                                                        <Tooltip title="Ver detalle de venta" arrow>
+                                                            <IconButton
+                                                                onClick={() => openDetailModal(order)}
+                                                                sx={{
+                                                                    color: '#FF69B4',
+                                                                    backgroundColor: '#FFF0F5',
+                                                                    '&:hover': {
+                                                                        backgroundColor: '#FFE1EE',
+                                                                        transform: 'scale(1.05)',
+                                                                    },
+                                                                    transition: 'all 0.2s',
+                                                                }}
+                                                            >
+                                                                <VisibilityIcon />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                    </Box>
                                                 )}
 
                                                 {activeTab === 3 && (
