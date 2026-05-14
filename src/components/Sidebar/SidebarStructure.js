@@ -136,6 +136,7 @@ export const useSidebarStructure = () => {
         // { label: 'Agregar producto', link: '/product/addproduct' }
       ]
     },
+    { id: 109, label: 'Tareas Pendientes', link: '/pending-tasks', icon: <TaskIcon /> },
   ];
 
   // 🔹 Filtrado según rol

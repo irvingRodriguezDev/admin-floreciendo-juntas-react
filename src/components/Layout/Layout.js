@@ -64,6 +64,7 @@ import AuthContext from '../../context/AuthContext/AuthContext';
 import AddCertificate from '../../pages/certifications/AddCertificate';
 import Certification from '../../pages/certifications/Certification';
 import AddModules from '../../pages/certifications/AddModules';
+import PendingTask from '../../pages/task/PendingTask';
 // import Secrets from '../../pages/secretsComponent/secrets';
 // import AddSecret from '../../pages/secretsComponent/Addsecret';
 
@@ -199,6 +200,11 @@ function Layout(props) {
           {/* Página para agregar un sistema */}
           <Route path="/events/addevent" component={EventAdd} />
           <Route path="/events/editevent/:id" component={EventAdd} />
+
+          {/* Página para elimnar alguna tarea */}
+          <Route path="/pending-tasks" component={PendingTask} />
+
+
 
           <Route path="/ecommerce/management" exact>
             <ProductsProvider>
