@@ -13,6 +13,7 @@ import {
   LiveTv,
   Task as TaskIcon,
   DocumentScanner,
+  RateReview,
 } from '@mui/icons-material';
 import AuthContext from '../../context/AuthContext/AuthContext';
 
@@ -131,6 +132,20 @@ export const useSidebarStructure = () => {
       children: [
         { label: 'Lista de certificaciones', link: '/certifications/list' },
         { label: 'Crea una certificación', link: '/certifications/addcertificate' },
+        // { label: 'Agregar modulo', link: '/certifications/:certificationId/modules' },
+
+        // { label: 'Agregar producto', link: '/product/addproduct' }
+      ]
+    },
+    {
+      id: 110,
+      label: 'Formaciones',
+      link: '/formations',
+      icon: < RateReview />,
+      children: [
+        { label: 'Lista de formaciones', link: '/formations/list' },
+        { label: 'Crea una formación', link: '/formations/addformation' },
+        { label: 'Entregables', link: '/formations/deliverable' },
         // { label: 'Agregar modulo', link: '/certifications/:certificationId/modules' },
 
         // { label: 'Agregar producto', link: '/product/addproduct' }

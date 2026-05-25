@@ -65,6 +65,10 @@ import AddCertificate from '../../pages/certifications/AddCertificate';
 import Certification from '../../pages/certifications/Certification';
 import AddModules from '../../pages/certifications/AddModules';
 import PendingTask from '../../pages/task/PendingTask';
+import Formation from '../../pages/formations/formation';
+import AddModuleFormation from '../../pages/formations/addmodule';
+import AddFormation from '../../pages/formations/addformation';
+import Deliverable from '../../pages/formations/deliverable';
 // import Secrets from '../../pages/secretsComponent/secrets';
 // import AddSecret from '../../pages/secretsComponent/Addsecret';
 
@@ -145,6 +149,15 @@ function Layout(props) {
           <Route path="/certifications/addcertificate" component={AddCertificate} />
           <Route path="/certifications/editcertificate/:id" component={AddCertificate} />
           <Route path="/certifications/:certificationId/modules" component={AddModules} />
+
+          {/* Página de lista de formaciones */}
+          <Route path="/formations/list" component={Formation} />
+
+          {/* Página para agregar una formacion */}
+          <Route path="/formations/addformation" component={AddFormation} />
+          <Route path="/formations/editformation/:id" component={AddFormation} />
+          <Route path="/formations/:formationId/modules" component={AddModuleFormation} />
+          <Route path="/formations/deliverable" component={Deliverable} />
 
           <Route
             exact
