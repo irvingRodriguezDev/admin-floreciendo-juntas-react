@@ -116,7 +116,7 @@ function Layout(props) {
             path="/scanner"
             component={ScannerComponent}
             isAuthenticated={autenticado}
-            allowedRoles={["5"]}
+            allowedRoles={["1"]}
           />
 
 

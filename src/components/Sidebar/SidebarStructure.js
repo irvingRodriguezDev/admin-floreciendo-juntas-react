@@ -169,7 +169,9 @@ export const useSidebarStructure = () => {
   if (parseInt(roleId) === 1) {
     // Mostrar todo excepto Escáner y Tareas
     return structure.filter(
-      item => item.label !== "Escáner" && item.label !== "Tareas"
+      item => 
+      // item.label !== "Escáner" && 
+      item.label !== "Tareas"
     );
   }
 

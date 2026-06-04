@@ -24,12 +24,12 @@ export const PrivateRouter = ({
 
                 // 2️⃣ Reglas de rutas por rol (solo accesibles)
                 const rutasPermitidasPorRol = {
-                    "3": ["/task"],       // Tareas
-                    "5": ["/scanner"],    // Scanner
+                    "3": ["/task"],              // Tareas
+                    "5": ["/scanner"],           // Scanner
                 };
 
-                // 3️⃣ Exclusión para role 1: NO puede Scanner ni Task
-                const rutasExcluidasRole1 = ["/scanner", "/task"];
+                // 3️⃣ Exclusión para role 1: NO puede acceder a Task
+                const rutasExcluidasRole1 = ["/task"];
                 if (parseInt(roleId) === 1 && rutasExcluidasRole1.includes(path)) {
                     Swal.fire({
                         icon: "error",
@@ -41,7 +41,8 @@ export const PrivateRouter = ({
                     return <Redirect to="/" />; // dashboard
                 }
 
-                // 4️⃣ Roles 4 y 5: solo pueden sus rutas
+                // 4️⃣ Roles con rutas restringidas: solo pueden sus rutas permitidas
+                //    Role 1 se excluye aquí porque tiene acceso amplio (más scanner)
                 const permitidas = rutasPermitidasPorRol[roleId];
                 if (permitidas && !permitidas.includes(path)) {
                     Swal.fire({
@@ -54,7 +55,23 @@ export const PrivateRouter = ({
                     return <Redirect to={permitidas[0]} />;
                 }
 
-                // 5️⃣ AllowedRoles opcional
+                // 5️⃣ Rutas que requieren roles específicos (ej: /scanner → solo 1 y 5)
+                const rutasConRolesEspecificos = {
+                    "/scanner": ["1", "5"],
+                };
+                const rolesPermitidosParaRuta = rutasConRolesEspecificos[path];
+                if (rolesPermitidosParaRuta && !rolesPermitidosParaRuta.includes(roleId)) {
+                    Swal.fire({
+                        icon: "error",
+                        title: "Acceso denegado",
+                        text: "No tienes permiso para esta sección",
+                        timer: 2000,
+                        showConfirmButton: false,
+                    });
+                    return <Redirect to="/" />;
+                }
+
+                // 6️⃣ AllowedRoles opcional
                 if (allowedRoles.length > 0 && !allowedRoles.includes(roleId)) {
                     Swal.fire({
                         icon: "error",
@@ -66,7 +83,7 @@ export const PrivateRouter = ({
                     return <Redirect to="/" />;
                 }
 
-                // 6️⃣ Todo OK → renderiza componente
+                // 7️⃣ Todo OK → renderiza componente
                 return <Component {...props} />;
             }}
         />
