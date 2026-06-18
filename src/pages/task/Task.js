@@ -428,7 +428,7 @@ const Task = () => {
             setLoading(true);
             await clienteAxios.post('/module-evaluation', {
                 submissionId: selectedTask.id,
-                feedback: comments || 'Sin comentarios',
+                feedback: comments || null,
                 scores: Object.entries(ratings).map(([criterionId, score]) => ({ criterionId: parseInt(criterionId), score })),
             });
             fetchTasks(true, submittedPage.page, debouncedSearch, selectedCert, selectedModule);
@@ -766,12 +766,12 @@ const Task = () => {
                                 <Alert severity="info">No hay criterios de evaluación definidos para este módulo</Alert>
                             )}
 
-                            <Box sx={{ mt: { xs: 3, sm: 4 } }}>
+                            {/* <Box sx={{ mt: { xs: 3, sm: 4 } }}>
                                 <TextField fullWidth multiline rows={isMobile ? 3 : 4} label="Comentarios (opcional)"
                                     value={comments} onChange={e => setComments(e.target.value)}
                                     placeholder="Escribe comentarios constructivos..."
                                     sx={{ '& .MuiInputLabel-root': { color: '#757575' } }} />
-                            </Box>
+                            </Box> */}
                         </>
                     )}
                 </DialogContent>
@@ -891,12 +891,12 @@ const Task = () => {
                                             <LinearProgress variant="determinate" value={pctEv}
                                                 sx={{ height: { xs: 6, sm: 8 }, borderRadius: 4, bgcolor: '#e2e8f0', '& .MuiLinearProgress-bar': { bgcolor: '#FF5C93', borderRadius: 4 } }} />
                                         </Box>
-                                        {ev.general_feedback && (
+                                        {/* {ev.general_feedback && (
                                             <Box sx={{ mt: { xs: 2, sm: 3 }, pt: { xs: 2, sm: 3 }, borderTop: '1px solid #e2e8f0' }}>
                                                 <Typography variant="subtitle2" sx={{ color: '#64748b', mb: 1 }}>Comentarios del Evaluador</Typography>
                                                 <Typography variant="body2" sx={{ color: '#1e293b' }}>{ev.general_feedback}</Typography>
                                             </Box>
-                                        )}
+                                        )} */}
                                         {/* <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid #e2e8f0' }}>
                                             <Typography variant="caption" sx={{ color: '#64748b' }}>
                                                 Evaluado el: {new Date(ev.evaluated_at).toLocaleString('es-MX', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}

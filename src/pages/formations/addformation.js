@@ -171,10 +171,10 @@ const AddFormation = () => {
             Swal.fire({ icon: "error", title: "Error", text: "El nombre de la formación es obligatorio" });
             return false;
         }
-        // if (!isEditMode && !diplomaFile) {
-        //     Swal.fire({ icon: "error", title: "Error", text: "Debes subir el PDF del diploma" });
-        //     return false;
-        // }
+        if (!isEditMode && !diplomaFile) {
+            Swal.fire({ icon: "error", title: "Error", text: "Debes subir el PDF del diploma" });
+            return false;
+        }
         return true;
     };
 
@@ -187,7 +187,7 @@ const AddFormation = () => {
         try {
             const fd = new FormData();
             fd.append("name", formData.name.trim());
-            // if (diplomaFile) fd.append("diploma", diplomaFile);
+            if (diplomaFile) fd.append("diploma", diplomaFile);
 
             if (isEditMode) {
                 await updateFormation(id, fd);
