@@ -272,13 +272,13 @@ const VideoCard = ({ video, index, total, onRemove, onChange, onUploadSingle, on
                 </>
               ) : (
                 <>
-                  <button
+                  {/* <button
                     type="button"
                     onClick={handleEdit}
                     style={styles.editBtn}
                   >
                     ✏️ Editar
-                  </button>
+                  </button> */}
                   <button
                     type="button"
                     onClick={handleDelete}
@@ -419,14 +419,14 @@ const ExistingVideoCard = ({ video, onDeleteExisting, onEditExisting }) => {
           <>
             <p style={styles.existingTitle}>{video.title || 'Sin título'}</p>
             <span style={styles.fileChip}>⏱ {formatDuration(video.durationSeconds)}</span>
-            <button
+            {/* <button
               type="button"
               onClick={handleEdit}
               style={styles.editExistingBtn}
               title="Editar video"
             >
               ✏️
-            </button>
+            </button> */}
             <button
               type="button"
               onClick={handleDelete}
