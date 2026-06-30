@@ -61,6 +61,7 @@ import Swal from "sweetalert2";
 import LiveContext from "../../context/LiveContext/LiveContext";
 import io from "socket.io-client";
 import useLiveComments from "./useLiveComments";
+import AuthContext from "../../context/AuthContext/AuthContext";
 
 const useStyles = makeStyles(() => ({
     filterContainer: {
@@ -102,6 +103,10 @@ const Live = () => {
         cargando,
         eliminarLive
     } = useContext(LiveContext);
+
+    const { usuario } = useContext(AuthContext);
+
+    const roleId = usuario?.roleId;
 
     // MODAL DE ADMIN LIVE
     const [openAdminModal, setOpenAdminModal] = useState(false);
@@ -1310,35 +1315,46 @@ const Live = () => {
                                                         </IconButton>
                                                     </Tooltip>
 
-                                                    <Tooltip title="Editar" arrow>
-                                                        <IconButton
-                                                            size="small"
-                                                            onClick={() => history.push(`/lives/editlive/${l.id}`)}
-                                                            sx={{
-                                                                color: '#FF69B4',
-                                                                backgroundColor: '#FFF0F5',
-                                                                '&:hover': { backgroundColor: '#FFE1EE', transform: 'scale(1.05)' },
-                                                                transition: 'all 0.2s',
-                                                            }}
-                                                        >
-                                                            <EditIcon fontSize="small" />
-                                                        </IconButton>
-                                                    </Tooltip>
+                                                    {/* Editar y eliminar (solo rol 1) */}
+                                                    {roleId === 1 && (
+                                                        <>
+                                                            <Tooltip title="Editar" arrow>
+                                                                <IconButton
+                                                                    size="small"
+                                                                    onClick={() => history.push(`/lives/editlive/${l.id}`)}
+                                                                    sx={{
+                                                                        color: '#FF69B4',
+                                                                        backgroundColor: '#FFF0F5',
+                                                                        '&:hover': {
+                                                                            backgroundColor: '#FFE1EE',
+                                                                            transform: 'scale(1.05)',
+                                                                        },
+                                                                        transition: 'all 0.2s',
+                                                                    }}
+                                                                >
+                                                                    <EditIcon fontSize="small" />
+                                                                </IconButton>
+                                                            </Tooltip>
 
-                                                    <Tooltip title="Eliminar" arrow>
-                                                        <IconButton
-                                                            size="small"
-                                                            onClick={() => handleDelete(l.id)}
-                                                            sx={{
-                                                                color: '#EF5350',
-                                                                backgroundColor: '#FFEBEE',
-                                                                '&:hover': { backgroundColor: '#FFCDD2', transform: 'scale(1.05)' },
-                                                                transition: 'all 0.2s',
-                                                            }}
-                                                        >
-                                                            <DeleteIcon fontSize="small" />
-                                                        </IconButton>
-                                                    </Tooltip>
+                                                            <Tooltip title="Eliminar" arrow>
+                                                                <IconButton
+                                                                    size="small"
+                                                                    onClick={() => handleDelete(l.id)}
+                                                                    sx={{
+                                                                        color: '#EF5350',
+                                                                        backgroundColor: '#FFEBEE',
+                                                                        '&:hover': {
+                                                                            backgroundColor: '#FFCDD2',
+                                                                            transform: 'scale(1.05)',
+                                                                        },
+                                                                        transition: 'all 0.2s',
+                                                                    }}
+                                                                >
+                                                                    <DeleteIcon fontSize="small" />
+                                                                </IconButton>
+                                                            </Tooltip>
+                                                        </>
+                                                    )}
                                                 </Box>
                                             </TableCell>
                                         </TableRow>

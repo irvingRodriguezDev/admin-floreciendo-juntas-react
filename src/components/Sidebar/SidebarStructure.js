@@ -166,6 +166,18 @@ export const useSidebarStructure = () => {
     return structure.filter(item => item.label === "Tareas");
   }
 
+  // 🔹 Rol 6 - Administrador de Lives
+  if (parseInt(roleId) === 6) {
+    return structure
+      .filter(item => item.label === "Lives")
+      .map(item => ({
+        ...item,
+        children: item.children.filter(
+          child => child.label === "Lista de lives"
+        ),
+      }));
+  }
+
   if (parseInt(roleId) === 1) {
     // Mostrar todo excepto Escáner y Tareas
     return structure.filter(

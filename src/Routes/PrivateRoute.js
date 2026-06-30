@@ -9,58 +9,87 @@ export const PrivateRouter = ({
     allowedRoles = [],
     ...rest
 }) => {
-    const roleId = localStorage.getItem("roleId"); // string o null
+
+    const roleId = localStorage.getItem("roleId");
 
     return (
         <Route
             {...rest}
             render={(props) => {
+
                 const path = props.location.pathname;
 
-                // 1️⃣ Usuario no autenticado → login
-                if (!isAuthenticated) return <Redirect to="/login" />;
-
-                if (!roleId) return null;
-
-                // 2️⃣ Reglas de rutas por rol (solo accesibles)
-                const rutasPermitidasPorRol = {
-                    "3": ["/task"],              // Tareas
-                    "5": ["/scanner"],           // Scanner
-                };
-
-                // 3️⃣ Exclusión para role 1: NO puede acceder a Task
-                const rutasExcluidasRole1 = ["/task"];
-                if (parseInt(roleId) === 1 && rutasExcluidasRole1.includes(path)) {
-                    Swal.fire({
-                        icon: "error",
-                        title: "Acceso denegado",
-                        text: "No tienes permiso para esta sección",
-                        timer: 2000,
-                        showConfirmButton: false,
-                    });
-                    return <Redirect to="/" />; // dashboard
+                // Si no hay sesión
+                if (!isAuthenticated) {
+                    return <Redirect to="/login" />;
                 }
 
-                // 4️⃣ Roles con rutas restringidas: solo pueden sus rutas permitidas
-                //    Role 1 se excluye aquí porque tiene acceso amplio (más scanner)
-                const permitidas = rutasPermitidasPorRol[roleId];
-                if (permitidas && !permitidas.includes(path)) {
-                    Swal.fire({
-                        icon: "error",
-                        title: "Acceso denegado",
-                        text: "No tienes permiso para esta sección",
-                        timer: 2000,
-                        showConfirmButton: false,
-                    });
-                    return <Redirect to={permitidas[0]} />;
+                // Mientras carga usuario no dejar pantalla blanca
+                if (!roleId) {
+                    return <Redirect to="/login" />;
                 }
 
-                // 5️⃣ Rutas que requieren roles específicos (ej: /scanner → solo 1 y 5)
-                const rutasConRolesEspecificos = {
-                    "/scanner": ["1", "5"],
-                };
-                const rolesPermitidosParaRuta = rutasConRolesEspecificos[path];
-                if (rolesPermitidosParaRuta && !rolesPermitidosParaRuta.includes(roleId)) {
+
+                // ADMIN ROL 1
+                // Puede todo menos task
+                if (roleId === "1") {
+
+                    if (path.startsWith("/task")) {
+                        Swal.fire({
+                            icon: "error",
+                            title: "Acceso denegado",
+                            text: "No tienes permiso para esta sección",
+                            timer: 2000,
+                            showConfirmButton: false,
+                        });
+
+                        return <Redirect to="/dashboard" />;
+                    }
+
+                    return <Component {...props} />;
+                }
+
+
+                // ROL 3 - SOLO TASK
+                if (roleId === "3") {
+
+                    if (!path.startsWith("/task")) {
+                        return <Redirect to="/task" />;
+                    }
+
+                    return <Component {...props} />;
+                }
+
+
+                // ROL 5 - SOLO SCANNER
+                if (roleId === "5") {
+
+                    if (!path.startsWith("/scanner")) {
+                        return <Redirect to="/scanner" />;
+                    }
+
+                    return <Component {...props} />;
+                }
+
+
+                // ROL 6 - SOLO VER LIVES
+                if (roleId === "6") {
+
+                    if (!path.startsWith("/lives/live_playlist")) {
+
+                        return <Redirect to="/lives/live_playlist" />;
+                    }
+
+                    return <Component {...props} />;
+                }
+
+
+                // Validación extra por allowedRoles
+                if (
+                    allowedRoles.length > 0 &&
+                    !allowedRoles.includes(roleId)
+                ) {
+
                     Swal.fire({
                         icon: "error",
                         title: "Acceso denegado",
@@ -68,30 +97,20 @@ export const PrivateRouter = ({
                         timer: 2000,
                         showConfirmButton: false,
                     });
+
                     return <Redirect to="/" />;
                 }
 
-                // 6️⃣ AllowedRoles opcional
-                if (allowedRoles.length > 0 && !allowedRoles.includes(roleId)) {
-                    Swal.fire({
-                        icon: "error",
-                        title: "Acceso denegado",
-                        text: "No tienes permiso para esta sección",
-                        timer: 2000,
-                        showConfirmButton: false,
-                    });
-                    return <Redirect to="/" />;
-                }
 
-                // 7️⃣ Todo OK → renderiza componente
                 return <Component {...props} />;
             }}
         />
     );
 };
 
+
 PrivateRouter.propTypes = {
     isAuthenticated: PropTypes.bool.isRequired,
-    component: PropTypes.func.isRequired,
+    component: PropTypes.elementType.isRequired,
     allowedRoles: PropTypes.array,
 };

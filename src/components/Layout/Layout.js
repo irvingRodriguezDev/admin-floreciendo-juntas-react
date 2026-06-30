@@ -196,7 +196,13 @@ function Layout(props) {
           />
 
           {/* Página de lista de lives */}
-          <Route path="/lives/live_playlist" component={Live} />
+          <PrivateRouter
+            exact
+            path="/lives/live_playlist"
+            component={Live}
+            isAuthenticated={autenticado}
+            allowedRoles={["6", "1"]}
+          />
           <Route path="/lives/addlive" component={AddLive} />
           <Route path="/lives/editlive/:id" component={AddLive} />
 

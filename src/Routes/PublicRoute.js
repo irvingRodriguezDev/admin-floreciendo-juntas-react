@@ -13,6 +13,7 @@ export const PublicRouter = ({
     if (roleId === "1") return "/dashboard";
     if (roleId === "5") return "/scanner";
     if (roleId === "3") return "/task";
+    if (roleId === "6") return "/lives/live_playlist";
     return null; // todavía no tenemos roleId
   };
 
