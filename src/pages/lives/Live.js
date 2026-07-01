@@ -731,7 +731,7 @@ const Live = () => {
                                                                         {comment.message}
                                                                     </Typography>
                                                                 </Box>
-                                                                <IconButton
+                                                                {/* <IconButton
                                                                     size="small"
                                                                     onClick={() => handleDeleteComment(comment.id)}
                                                                     sx={{
@@ -742,7 +742,7 @@ const Live = () => {
                                                                     }}
                                                                 >
                                                                     <DeleteIcon sx={{ fontSize: 16 }} />
-                                                                </IconButton>
+                                                                </IconButton> */}
                                                             </Box>
                                                         </Box>
                                                     </Grow>
@@ -929,7 +929,7 @@ const Live = () => {
                                                                 {comment.message}
                                                             </Typography>
                                                         </Box>
-                                                        <IconButton
+                                                        {/* <IconButton
                                                             size="small"
                                                             onClick={() => handleDeleteComment(comment.id)}
                                                             sx={{
@@ -943,7 +943,7 @@ const Live = () => {
                                                             }}
                                                         >
                                                             <DeleteIcon fontSize="small" />
-                                                        </IconButton>
+                                                        </IconButton> */}
                                                     </Box>
                                                 </Paper>
                                             </Zoom>
