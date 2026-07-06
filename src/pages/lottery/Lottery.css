@@ -1311,6 +1311,45 @@
     box-shadow: 0 8px 25px rgba(128, 128, 128, 0.4) !important;
 }
 
+.card-footer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 12px;
+    background: #FFF;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.footer-text {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: #010101;
+    color: #fff;
+    font-weight: 600;
+    font-size: 15px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow:
+        -2px 0 #25F4EE,
+        2px 0 #FE2C55;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.footer-text:hover {
+    transform: translateY(-2px);
+    box-shadow:
+        -3px 0 #25F4EE,
+        3px 0 #FE2C55,
+        0 6px 16px rgba(0, 0, 0, 0.35);
+}
+
+/* .footer-text::before {
+    content: ${<TikTokIcon />} !important;
+    font-size: 16px;
+} */
+
 /* Animación para el ícono de wifi */
 @keyframes wifiPulse {
 

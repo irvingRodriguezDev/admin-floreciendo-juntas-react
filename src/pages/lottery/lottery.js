@@ -3,6 +3,7 @@ import MethodGet, { MethodPost } from "../../config/Service";
 import Swal from 'sweetalert2';
 import * as ExcelJS from 'exceljs';
 import './Lottery.css';
+import TiktokIcon from './TiktokIcon';
 
 const Lottery = () => {
     const [participants, setParticipants] = useState([]);
@@ -657,44 +658,44 @@ const Lottery = () => {
                                     <div className="table-container">
                                         <table className="participants-table">
                                             <thead><tr><th>ID</th><th>Nombre</th><th>Email</th><th>Teléfono</th><th>Estado</th></tr></thead>
-                                                    <tbody>
-                                                        {participants.map(participant => {
-                                                            // 🔍 LOG PARA DEPURAR - MUESTRA EL ESTADO DE CADA PARTICIPANTE
-                                                            // console.log('📊 Participante:', participant.name, 'Status:', participant.subscriptions?.status);
+                                            <tbody>
+                                                {participants.map(participant => {
+                                                    // 🔍 LOG PARA DEPURAR - MUESTRA EL ESTADO DE CADA PARTICIPANTE
+                                                    // console.log('📊 Participante:', participant.name, 'Status:', participant.subscriptions?.status);
 
-                                                            const isWinner = currentWinners.some(w => w.id === participant.id);
-                                                            const wInfo = isWinner ? currentWinners.find(w => w.id === participant.id) : null;
-                                                            return (
-                                                                <tr key={participant.id} className={isWinner ? 'winner-row' : ''}>
-                                                                    <td className="id-cell">{participant.id}</td>
-                                                                    <td className="name-cell">
-                                                                        <div className="user-info">
-                                                                            <span className="user-name">{participant.name}</span>
-                                                                            {isWinner && <span className="winner-badge" title={`Premio: ${wInfo.prize}`}>🏆 GANADOR</span>}
-                                                                        </div>
-                                                                    </td>
-                                                                    <td className="email-cell">{participant.email}</td>
-                                                                    <td className="phone-cell">{participant.phone || 'N/A'}</td>
-                                                                    <td className="status-cell">
-                                                                        <span
-                                                                            className={`status-badge ${isWinner
-                                                                                    ? 'winner'
-                                                                                    : (participant["subscriptions.status"] === 'past_due'
-                                                                                        ? 'past-due'
-                                                                                        : 'active')
-                                                                                }`}
-                                                                        >
-                                                                            {isWinner
-                                                                                ? 'Premiado'
-                                                                                : (participant["subscriptions.status"] === 'past_due'
-                                                                                    ? 'Vencido'
-                                                                                    : 'Activo')}
-                                                                        </span>
-                                                                    </td>
-                                                                </tr>
-                                                            );
-                                                        })}
-                                                    </tbody>
+                                                    const isWinner = currentWinners.some(w => w.id === participant.id);
+                                                    const wInfo = isWinner ? currentWinners.find(w => w.id === participant.id) : null;
+                                                    return (
+                                                        <tr key={participant.id} className={isWinner ? 'winner-row' : ''}>
+                                                            <td className="id-cell">{participant.id}</td>
+                                                            <td className="name-cell">
+                                                                <div className="user-info">
+                                                                    <span className="user-name">{participant.name}</span>
+                                                                    {isWinner && <span className="winner-badge" title={`Premio: ${wInfo.prize}`}>🏆 GANADOR</span>}
+                                                                </div>
+                                                            </td>
+                                                            <td className="email-cell">{participant.email}</td>
+                                                            <td className="phone-cell">{participant.phone || 'N/A'}</td>
+                                                            <td className="status-cell">
+                                                                <span
+                                                                    className={`status-badge ${isWinner
+                                                                        ? 'winner'
+                                                                        : (participant["subscriptions.status"] === 'past_due'
+                                                                            ? 'past-due'
+                                                                            : 'active')
+                                                                        }`}
+                                                                >
+                                                                    {isWinner
+                                                                        ? 'Premiado'
+                                                                        : (participant["subscriptions.status"] === 'past_due'
+                                                                            ? 'Vencido'
+                                                                            : 'Activo')}
+                                                                </span>
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })}
+                                            </tbody>
                                         </table>
                                         {currentWinners.length > 0 && (
                                             <div className="winners-section">
@@ -853,6 +854,14 @@ const Lottery = () => {
                                 <div className="result-card winner-card">
                                     <div className="card-header"><span className="card-icon">👑</span><h3>GANADOR</h3></div>
                                     <div className="card-body"><div className="winner-profile"><div className="profile-avatar">{winner.name.charAt(0)}</div><div className="profile-info"><h6 className="winner-name">{winner.name}</h6></div></div></div>
+                                    {winner.tiktokusername !== null && (
+                                        <div className="card-footer">
+                                            <span className="footer-text">
+                                                <TiktokIcon width="24" />
+                                                @{winner.tiktokUsername}
+                                            </span>
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="result-card prize-card">
                                     <div className="card-header"><span className="card-icon">🎁</span><h3>PREMIO GANADO</h3></div>
