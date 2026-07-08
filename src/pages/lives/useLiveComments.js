@@ -28,7 +28,6 @@ const useLiveComments = (liveId) => {
 
     socket.on('load_comments', (data) => {
       setComments(data);
-      // console.log("Comments loaded:", data);
     });
 
     socket.on('new_comment', (comment) => {
@@ -38,10 +37,10 @@ const useLiveComments = (liveId) => {
       });
     });
 
-    // AQUÍ ESTABA EL ERROR
-    socket.on('delete_comment', ({ liveId, message_id }) => {
+    // ✅ Escuchar 'remove_comment' (evento que emite el servidor)
+    socket.on('remove_comment', ({ id }) => {
       setComments((prev) =>
-        prev.filter((comment) => comment.id !== message_id),
+        prev.filter((comment) => comment.id !== id),
       );
     });
 
@@ -59,12 +58,16 @@ const useLiveComments = (liveId) => {
     });
   };
 
-  // ELIMINAR MENSAJE
+  // ✅ Función para eliminar comentarios (solo admin)
   const deleteComment = (messageId) => {
-    socketRef.current?.emit('delete_comment', {
+    if (!socketRef.current) return;
+
+    socketRef.current.emit('delete_comment', {
       message_id: messageId,
       liveId,
     });
+
+    // Eliminación optimista (se elimina localmente antes de confirmación del servidor)
     setComments((prev) => prev.filter((comment) => comment.id !== messageId));
   };
 
