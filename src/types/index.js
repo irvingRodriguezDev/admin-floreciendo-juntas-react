@@ -21,9 +21,8 @@ export const RESET_PASSWORD = "RESET_PASSWORD";
 //Errors API
 export const SHOW_ERRORS_API = "SHOW_ERRORS_API";
 
-// ========================
+
 // Systems
-// ========================
 export const GET_SYSTEMS = "GET_SYSTEMS";
 export const ADD_SYSTEM = "ADD_SYSTEM";
 export const UPDATE_SYSTEM = "UPDATE_SYSTEM";
@@ -31,7 +30,6 @@ export const DELETE_SYSTEM = "DELETE_SYSTEM";
 export const SYSTEM_ERROR = "SYSTEM_ERROR";
 
 // COURSES
-// ====================
 export const OBTENER_COURSES = "OBTENER_COURSES";
 export const OBTENER_COURSE = "OBTENER_COURSE";
 export const AGREGAR_COURSE = "AGREGAR_COURSE";
@@ -101,7 +99,7 @@ export const ACTUALIZAR_CERTIFICATION = "ACTUALIZAR_CERTIFICATION";
 export const ELIMINAR_CERTIFICATION = "ELIMINAR_CERTIFICATION";
 export const OBTENER_CERTIFICATION = "OBTENER_CERTIFICATION";
 
-//Formaciones
+// Formaciones
 export const GET_FORMATIONS = "GET_FORMATIONS";
 export const ADD_FORMATION = "ADD_FORMATION";
 export const UPDATE_FORMATION = "UPDATE_FORMATION";
@@ -111,3 +109,8 @@ export const SET_LOADING = "SET_LOADING";
 export const GET_PENDING_DELIVERIES = "GET_PENDING_DELIVERIES";
 export const REVIEW_DELIVERY = "REVIEW_DELIVERY";
 export const DELIVERY_ERROR = "DELIVERY_ERROR";
+
+// Suscripciones
+export const SUBSCRIPTIONS_ACTIVE = "SUBSCRIPTIONS_ACTIVE";
+export const SUBSCRIPTIONS_PASTDUE = "SUBSCRIPTIONS_PASTDUE";
+export const SUBSCRIPTIONS_ERROR = "SUBSCRIPTIONS_ERROR";

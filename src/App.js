@@ -12,35 +12,38 @@ import OrdersState from "./context/OrdersContext/OrdersState";
 import LiveState from "./context/LiveContext/LiveState";
 import CertificationState from "./context/CertificationContext/CertificationState";
 import FormationState from "./context/FormationContext/FormationState";
+import SubscriptionsState from "./context/SubscriptionsContext/SubscriptionsState";
 // import SecretsState from "./context/SecretsContext/SecretsState";
 
 const App = () => {
   return (
     <AuthState>
-     <ResetPasswordState>
-      <SystemState>
-        <CoursesState>
-         <UserState>
-          <EventState>
-           <ProductState>
-            <OrdersState>
-             <LiveState>
-              <CertificationState>
-               <FormationState>
-              {/* <SecretsState> */}
-               <Router>
-                 <AppRouter />
-               </Router>
-              {/* </SecretsState> */}
-               </FormationState>
-              </CertificationState>
-             </LiveState>
-            </OrdersState>
-           </ProductState>
-          </EventState>
-         </UserState>
-        </CoursesState>
-       </SystemState>
+      <ResetPasswordState>
+        <SystemState>
+          <CoursesState>
+            <UserState>
+              <EventState>
+                <ProductState>
+                  <OrdersState>
+                    <LiveState>
+                      <CertificationState>
+                        <FormationState>
+                          {/* <SecretsState> */}
+                          <SubscriptionsState>
+                            <Router>
+                              <AppRouter />
+                            </Router>
+                            {/* </SecretsState> */}
+                          </SubscriptionsState>
+                        </FormationState>
+                      </CertificationState>
+                    </LiveState>
+                  </OrdersState>
+                </ProductState>
+              </EventState>
+            </UserState>
+          </CoursesState>
+        </SystemState>
       </ResetPasswordState>
     </AuthState>
   );
