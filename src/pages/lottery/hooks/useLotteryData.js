@@ -13,6 +13,10 @@ export const useLotteryData = () => {
     const [availableMonths, setAvailableMonths] = useState([]);
     const [selectedMonth, setSelectedMonth] = useState('');
 
+    // useEffect(() => {
+    //     console.log("LotteryData montado");
+    // }, []);
+
     const hasLoadedRef = useRef(false);
 
     const getCurrentMonth = useCallback(() => {
@@ -21,6 +25,7 @@ export const useLotteryData = () => {
     }, []);
 
     const fetchParticipants = useCallback(async () => {
+        // console.log("fetchParticipants");
         try {
             setLoadingParticipants(true);
             const response = await MethodGet('/admin/user-eligible');
@@ -167,27 +172,30 @@ export const useLotteryData = () => {
 
     // ⭐ CARGA INICIAL - SOLO participantes y premios
     useEffect(() => {
-        if (hasLoadedRef.current) {
-            return;
+    if (hasLoadedRef.current) return;
+
+    // Marcar inmediatamente
+    hasLoadedRef.current = true;
+
+    console.log("🔄 Cargando datos iniciales...");
+
+    const loadInitialData = async () => {
+        try {
+            await Promise.all([
+                fetchParticipants(),
+                fetchPrizes(),
+                fetchAvailableMonths()
+            ]);
+        } catch (error) {
+            console.error(error);
+
+            // opcional: permitir reintento si falló
+            hasLoadedRef.current = false;
         }
+    };
 
-        console.log('🔄 Cargando datos iniciales...');
-        const loadInitialData = async () => {
-            try {
-                await Promise.all([
-                    fetchParticipants(),
-                    fetchPrizes(),
-                    fetchAvailableMonths()
-                ]);
-                hasLoadedRef.current = true;
-                console.log('✅ Datos iniciales cargados correctamente');
-            } catch (error) {
-                console.error('❌ Error cargando datos iniciales:', error);
-            }
-        };
-
-        loadInitialData();
-    }, [fetchParticipants, fetchPrizes, fetchAvailableMonths]);
+    loadInitialData();
+}, [fetchParticipants, fetchPrizes, fetchAvailableMonths]);
 
     // ⭐ Función para cargar ganadores de un mes (SIEMPRE al entrar a Ganadores)
     const loadWinnersByMonth = useCallback(async (month) => {
