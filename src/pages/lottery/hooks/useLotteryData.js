@@ -86,7 +86,7 @@ export const useLotteryData = () => {
                 name: w.user?.name || w.name || 'N/A',
                 email: w.user?.email || w.email || 'N/A',
                 phone: w.user?.phone || w.phone || 'N/A',
-                prize_name: w.prize?.prize_name || w.prize_name || 'N/A',
+                prize_name: w.prize?.name || 'N/A',
                 position: w.position,
                 month: w.raffle_month || month,
                 createdAt: w.createdAt
