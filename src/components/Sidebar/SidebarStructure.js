@@ -57,16 +57,16 @@ export const useSidebarStructure = () => {
     //     { label: 'Agregar screto', link: '/secrets/addsecret' }
     //   ]
     // },
-    {
-      id: 102,
-      label: 'Eventos',
-      link: '/event',
-      icon: <EventIcon />,
-      children: [
-        { label: 'Lista de eventos', link: '/events/list' },
-        { label: 'Agregar evento', link: '/events/addevent' }
-      ]
-    },
+    // {
+    //   id: 102,
+    //   label: 'Eventos',
+    //   link: '/event',
+    //   icon: <EventIcon />,
+    //   children: [
+    //     { label: 'Lista de eventos', link: '/events/list' },
+    //     { label: 'Agregar evento', link: '/events/addevent' }
+    //   ]
+    // },
     { id: 103, label: 'Escáner', link: '/scanner', icon: <CameraIcon /> },
     // { id: 0, label: 'Dashboard', link: '/dashboard', icon: <HomeIcon /> },
     {
