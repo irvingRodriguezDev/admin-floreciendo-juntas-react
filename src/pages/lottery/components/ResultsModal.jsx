@@ -1,7 +1,13 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import TiktokIcon from '../TiktokIcon';
+import { launchSuccessConfetti } from '../launchSuccessConfetti';
 
 const ResultsModal = ({ winner, selectedPrize, raffleResult, onClose }) => {
+
+    useEffect(() => {
+        launchSuccessConfetti();
+    }, []);
+
     return (
         <div className="results-overlay">
             <div className="results-modal">
