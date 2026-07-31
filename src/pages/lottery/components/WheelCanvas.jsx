@@ -25,6 +25,40 @@ const WheelCanvas = ({
         drawWheel();
     }, [prizes, rotation, winningIndex, selectedPrize, isFullscreen]);
 
+    // Dibuja un pétalo de flor (versión redondeada, sin punta afilada)
+    const drawFlowerPetal = (ctx, petalLength, pHalfWidth, baseR) => {
+        ctx.beginPath();
+
+        // Arranca en el borde superior de la base (redondeada, sin V)
+        ctx.moveTo(baseR * 0.4, -baseR * 0.9);
+
+        // Lado superior: se ensancha rápido y se curva suavemente hacia la punta
+        ctx.bezierCurveTo(
+            petalLength * 0.22, -pHalfWidth * 1.0,
+            petalLength * 0.55, -pHalfWidth * 1.05,
+            petalLength * 0.82, -pHalfWidth * 0.55
+        );
+
+        // Punta redonda y ancha (antes convergía casi a un punto)
+        ctx.bezierCurveTo(
+            petalLength * 0.98, -pHalfWidth * 0.28,
+            petalLength * 0.98, pHalfWidth * 0.28,
+            petalLength * 0.82, pHalfWidth * 0.55
+        );
+
+        // Lado inferior, simétrico, de vuelta a la base
+        ctx.bezierCurveTo(
+            petalLength * 0.55, pHalfWidth * 1.05,
+            petalLength * 0.22, pHalfWidth * 1.0,
+            baseR * 0.4, baseR * 0.9
+        );
+
+        // Cierra la base con un arco suave (sin punta dura en el centro)
+        ctx.quadraticCurveTo(-baseR * 0.35, 0, baseR * 0.4, -baseR * 0.9);
+
+        ctx.closePath();
+    };
+
     const drawWheel = () => {
         const canvas = canvasRef.current;
         if (!canvas) return;
@@ -40,6 +74,12 @@ const WheelCanvas = ({
         const totalPetals = Math.max(MIN_PETALS, prizes.length);
         const sliceAngle = (2 * Math.PI) / totalPetals;
 
+        // Ancho de pétalo
+        const gap = 0.86; // <1 deja un pequeño espacio entre pétalos
+        const maxHalfWidthByAngle = Math.tan((sliceAngle * gap) / 2) * petalLength;
+        const pHalfWidth = Math.min(maxHalfWidthByAngle, petalLength * 0.34);
+        const baseR = Math.max(12, petalLength * 0.05);
+
         ctx.clearRect(0, 0, SIZE, SIZE);
 
         for (let index = 0; index < totalPetals; index++) {
@@ -51,24 +91,9 @@ const WheelCanvas = ({
             ctx.translate(centerX, centerY);
             ctx.rotate(petalAngle);
 
-            const visualSliceAngle = totalPetals === 1 ? Math.PI * 0.75 : sliceAngle;
-            const pHalfWidth = Math.min(Math.tan(visualSliceAngle / 2) * petalLength * 0.68, petalLength * 0.44);
             const isWinning = hasPrize && winningIndex === index && selectedPrize?.id === prize.id;
 
-            // Dibujar pétalo
-            ctx.beginPath();
-            ctx.moveTo(18, 0);
-            ctx.bezierCurveTo(
-                petalLength * 0.28, -pHalfWidth * 1.15,
-                petalLength * 0.68, -pHalfWidth,
-                petalLength, 0
-            );
-            ctx.bezierCurveTo(
-                petalLength * 0.68, pHalfWidth,
-                petalLength * 0.28, pHalfWidth * 1.15,
-                18, 0
-            );
-            ctx.closePath();
+            drawFlowerPetal(ctx, petalLength, pHalfWidth, baseR);
 
             // Gradiente
             const gradient = ctx.createLinearGradient(0, -pHalfWidth, petalLength, pHalfWidth);
@@ -100,10 +125,18 @@ const WheelCanvas = ({
             ctx.stroke();
             ctx.shadowBlur = 0;
 
+            // Nervadura central sutil (como una vena de pétalo real)
+            ctx.beginPath();
+            ctx.moveTo(baseR * 0.6, 0);
+            ctx.lineTo(petalLength * 0.82, 0);
+            ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+            ctx.lineWidth = 1.2;
+            ctx.stroke();
+
             // Brillo interno
             if (hasPrize) {
                 ctx.beginPath();
-                ctx.moveTo(22, 0);
+                ctx.moveTo(baseR * 0.8, 0);
                 ctx.bezierCurveTo(
                     petalLength * 0.25, -pHalfWidth * 0.55,
                     petalLength * 0.55, -pHalfWidth * 0.5,
@@ -112,41 +145,13 @@ const WheelCanvas = ({
                 ctx.bezierCurveTo(
                     petalLength * 0.55, -pHalfWidth * 0.28,
                     petalLength * 0.25, -pHalfWidth * 0.28,
-                    22, 0
+                    baseR * 0.8, 0
                 );
                 ctx.fillStyle = 'rgba(255,255,255,0.22)';
                 ctx.fill();
             }
 
-            // Texto del premio
-            if (hasPrize) {
-                ctx.save();
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillStyle = '#FFFFFF';
-                const fontSize = isFullscreen
-                    ? Math.max(14, Math.min(22, petalLength / 6.5))
-                    : Math.max(13, Math.min(18, petalLength / 7));
-                ctx.font = `bold ${fontSize}px 'Segoe UI', Arial, sans-serif`;
-                ctx.shadowColor = 'rgba(0,0,0,0.75)';
-                ctx.shadowBlur = 4;
-                ctx.shadowOffsetX = 1;
-                ctx.shadowOffsetY = 1;
-
-                const textX = petalLength * 0.6;
-                const prizeName = (prize.prize_name || prize.name || '').trim();
-                const words = prizeName.split(' ');
-                const lineH = fontSize + 4;
-
-                if (words.length <= 2 || prizeName.length <= 12) {
-                    ctx.fillText(prizeName, textX, 0);
-                } else {
-                    const mid = Math.ceil(words.length / 2);
-                    ctx.fillText(words.slice(0, mid).join(' '), textX, -lineH / 2);
-                    ctx.fillText(words.slice(mid).join(' '), textX, lineH / 2);
-                }
-                ctx.restore();
-            } else {
+            if (!hasPrize) {
                 ctx.save();
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
@@ -160,7 +165,41 @@ const WheelCanvas = ({
             ctx.restore();
         }
 
-        // Centro dorado
+        for (let index = 0; index < prizes.length; index++) {
+            const prize = prizes[index];
+            const petalAngle = index * sliceAngle + sliceAngle / 2 + rotation;
+
+            ctx.save();
+            ctx.translate(centerX, centerY);
+            ctx.rotate(petalAngle);
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#FFFFFF';
+            const fontSize = isFullscreen
+                ? Math.max(13, Math.min(20, pHalfWidth * 0.85))
+                : Math.max(11, Math.min(16, pHalfWidth * 0.8));
+            ctx.font = `bold ${fontSize}px 'Segoe UI', Arial, sans-serif`;
+            ctx.shadowColor = 'rgba(0,0,0,0.75)';
+            ctx.shadowBlur = 4;
+            ctx.shadowOffsetX = 1;
+            ctx.shadowOffsetY = 1;
+
+            const textX = petalLength * 0.7;
+            const prizeName = (prize.prize_name || prize.name || '').trim();
+            const words = prizeName.split(' ');
+            const lineH = fontSize + 4;
+
+            if (words.length <= 2 || prizeName.length <= 12) {
+                ctx.fillText(prizeName, textX, 0);
+            } else {
+                const mid = Math.ceil(words.length / 2);
+                ctx.fillText(words.slice(0, mid).join(' '), textX, -lineH / 2);
+                ctx.fillText(words.slice(mid).join(' '), textX, lineH / 2);
+            }
+            ctx.restore();
+        }
+
+        // Centro dorado (corazón de la flor)
         const centerRadius = isFullscreen ? 42 : 34;
         const centerGrad = ctx.createRadialGradient(
             centerX - 7, centerY - 7, 3,
@@ -180,6 +219,18 @@ const WheelCanvas = ({
         ctx.lineWidth = 3;
         ctx.stroke();
         ctx.shadowBlur = 0;
+
+        // Pequeños puntos de polen alrededor del centro para reforzar el look floral
+        const pollenCount = 8;
+        for (let p = 0; p < pollenCount; p++) {
+            const a = (p / pollenCount) * Math.PI * 2;
+            const px = centerX + Math.cos(a) * (centerRadius * 0.55);
+            const py = centerY + Math.sin(a) * (centerRadius * 0.55);
+            ctx.beginPath();
+            ctx.arc(px, py, centerRadius * 0.06, 0, 2 * Math.PI);
+            ctx.fillStyle = 'rgba(255,255,255,0.55)';
+            ctx.fill();
+        }
 
         // Brillo central
         ctx.beginPath();
