@@ -182,7 +182,7 @@ const UsersTable = () => {
 
   return (
     <Box>
-      <Widget disableWidgetMenu>
+      {/* <Widget disableWidgetMenu> */}
         {/* FILTROS */}
         {filterItems.length > 0 && (
           <Fade in={showFilters || filterItems.length > 0}>
@@ -506,17 +506,19 @@ const UsersTable = () => {
                             />
                           ) : (
                             <Chip
-                              label={user.isSubscribed ? 'Activa' : 'Inactiva'}
+                              label={user?.Subscriptions?.[0]?.status === 'active' ? 'Activa' : 'Inactiva'}
                               size="small"
                               sx={{
                                 fontWeight: '600',
                                 color: '#fff',
-                                background: user.isSubscribed
-                                  ? 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)'
-                                  : 'linear-gradient(135deg, #FF6B9D 0%, #FF8AB4 100%)',
-                                boxShadow: user.isSubscribed
-                                  ? '0 2px 8px rgba(76, 175, 80, 0.3)'
-                                  : '0 2px 8px rgba(255, 107, 157, 0.3)',
+                                background:
+                                  user?.Subscriptions?.[0]?.status === 'active'
+                                    ? 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)'
+                                    : 'linear-gradient(135deg, #FF6B9D 0%, #FF8AB4 100%)',
+                                boxShadow:
+                                  user?.Subscriptions?.[0]?.status === 'active'
+                                    ? '0 2px 8px rgba(76, 175, 80, 0.3)'
+                                    : '0 2px 8px rgba(255, 107, 157, 0.3)',
                               }}
                             />
                           )}
@@ -577,7 +579,7 @@ const UsersTable = () => {
             </Box>
           )}
         </Paper>
-      </Widget>
+      {/* </Widget> */}
 
       {/* MODAL */}
       <Dialog
