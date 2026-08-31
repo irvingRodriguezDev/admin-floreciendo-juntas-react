@@ -8,7 +8,7 @@ import FacebookIcon from '@mui/icons-material/Facebook';
 import TwitterIcon from '@mui/icons-material/Twitter';
 
 import { Fab, IconButton } from '@mui/material';
-import { connect } from 'react-redux';
+// import { connect } from 'react-redux';
 // styles
 import useStyles from './styles';
 
@@ -17,18 +17,14 @@ import Header from '../Header';
 import Sidebar from '../Sidebar';
 import Footer from '../Footer';
 import { Link } from '../Wrappers';
-import ColorChangeThemePopper from './components/ColorChangeThemePopper';
-
-import EditUser from '../../pages/user/EditUser';
+// import ColorChangeThemePopper from './components/ColorChangeThemePopper';
 
 // pages
-import Dashboard from '../../pages/dashboard';
+import Dashboard from '../../pages/dashboard/Dashboard';
 import Profile from '../../pages/profile'
 
-import Ecommerce from '../../pages/ecommerce'
 import Product from '../../pages/products/Product';
 import ProductsGrid from '../../pages/ecommerce/ProductsGrid'
-import CreateProduct from '../../pages/ecommerce/CreateProduct'
 
 // import MapsGoogle from '../../pages/maps'
 // import VectorMaps from '../../pages/maps/VectorMap'
@@ -38,7 +34,6 @@ import AddSystem from '../../pages/systems/AddSystem';
 
 // context
 import { useLayoutState } from '../../context/LayoutContext';
-import { ProductsProvider } from '../../context/ProductContext'
 
 // import UsersFormPage from 'pages/CRUD/Users/form/UsersFormPage';
 // import UsersTablePage from 'pages/CRUD/Users/table/UsersTablePage';
@@ -110,7 +105,6 @@ function Layout(props) {
           />
           <Route path='/dashboard' component={Dashboard} />
           <Route path="/profile" component={Profile} />
-          <Route path='/user/edit' component={EditUser} />
 
           <PrivateRouter
             path="/scanner"
@@ -225,21 +219,6 @@ function Layout(props) {
 
 
 
-          <Route path="/ecommerce/management" exact>
-            <ProductsProvider>
-              <Ecommerce />
-            </ProductsProvider>
-          </Route>
-          <Route path="/ecommerce/management/edit/:id" exact>
-            <ProductsProvider>
-              <CreateProduct />
-            </ProductsProvider>
-          </Route>
-          <Route path="/ecommerce/management/create">
-            <ProductsProvider>
-              <CreateProduct />
-            </ProductsProvider>
-          </Route>
           <Route path="/ecommerce/product/:id" component={Product} />
           <Route path="/ecommerce/product" component={Product} />
           <Route path="/ecommerce/gridproducts" component={ProductsGrid} />
@@ -250,7 +229,7 @@ function Layout(props) {
           <Route path={'/users/list'} exact component={UsersTablePage} />
           <Route path={'/users/useradd'} exact component={UserAdd} />
         </Switch>
-        <ColorChangeThemePopper id={id} open={open} anchorEl={anchorEl} />
+        {/* <ColorChangeThemePopper id={id} open={open} anchorEl={anchorEl} /> */}
         {/* <Footer>
           <div>
             <Link
@@ -304,4 +283,4 @@ function Layout(props) {
   );
 }
 
-export default withRouter(connect()(Layout));
+export default withRouter(Layout);
