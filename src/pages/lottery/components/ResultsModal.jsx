@@ -1,11 +1,17 @@
 import React, { useEffect } from 'react';
 import TiktokIcon from '../TiktokIcon';
 import { launchSuccessConfetti } from '../launchSuccessConfetti';
+import { launchRoseConfetti } from '../launchsucessText';
+import { launchFireworks } from '../lauchSuccessFireworks';
+import { launchEmojiRain } from '../launchEmojiRain';
 
 const ResultsModal = ({ winner, selectedPrize, raffleResult, onClose }) => {
 
     useEffect(() => {
         launchSuccessConfetti();
+        // launchRoseConfetti();
+        launchFireworks();
+        // launchEmojiRain();
     }, []);
 
     return (
@@ -35,7 +41,7 @@ const ResultsModal = ({ winner, selectedPrize, raffleResult, onClose }) => {
                                 <strong className="rm-row-value">{winner.name}</strong>
                                 {winner.tiktokUsername !== null && (
                                     <span className="rm-tiktok-badge">
-                                        <TiktokIcon width="16" />
+                                        <TiktokIcon width="40" />
                                         <span className="rm-tiktok-divider"></span>
                                         @{winner.tiktokUsername}
                                         {/* <span className="rm-tiktok-sparkle">✨</span> */}
@@ -231,7 +237,7 @@ const ResultsModal = ({ winner, selectedPrize, raffleResult, onClose }) => {
                     border: 1.5px solid #ff5fa2;
                     box-shadow: 0 0 10px rgba(255, 95, 162, 0.55), 0 0 3px rgba(255, 95, 162, 0.7);
                     color: #fff;
-                    font-size: 0.8rem;
+                    font-size: 1.2rem;
                     font-weight: 700;
                     line-height: 1;
                 }
@@ -282,7 +288,7 @@ const ResultsModal = ({ winner, selectedPrize, raffleResult, onClose }) => {
                 }
 
                 .rm-row-value {
-                    font-size: 1.12rem;
+                    font-size: 1.2rem;
                     color: #3f0f2c;
                     white-space: nowrap;
                     overflow: hidden;

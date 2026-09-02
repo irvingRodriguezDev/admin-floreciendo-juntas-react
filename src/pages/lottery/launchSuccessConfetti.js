@@ -1,7 +1,7 @@
 import React from "react";
 import confetti from "canvas-confetti";
 export const launchSuccessConfetti = () => {
-  const duration = 3 * 1000;
+  const duration = 7 * 1000;
   const end = Date.now() + duration;
 
   const frame = () => {
