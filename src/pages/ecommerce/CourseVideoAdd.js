@@ -348,10 +348,11 @@ const ExistingVideoCard = ({ video, onDeleteExisting, onEditExisting }) => {
       cancelButtonText: 'Cancelar'
     }).then((result) => {
       if (result.isConfirmed) {
-        onDeleteExisting(video._id);
+        onDeleteExisting(video.id);
       }
     });
   };
+
 
   const handleEdit = () => {
     setEditTitle(video.title || '');
@@ -529,8 +530,12 @@ const CourseVideoAdd = () => {
 
   const handleDeleteExisting = async (videoId) => {
     try {
-      await clienteAxios.delete(`/videos/${videoId}`);
-      setExistingVideos((prev) => prev.filter((v) => v._id !== videoId));
+      await clienteAxios.delete(`/videos/delete/${videoId}`);
+
+      setExistingVideos((prev) =>
+        prev.filter((v) => v.id !== videoId)
+      );
+
       Swal.fire({
         icon: 'success',
         title: 'Video eliminado',
@@ -538,20 +543,23 @@ const CourseVideoAdd = () => {
         showConfirmButton: false,
       });
     } catch (error) {
-      console.error(error);
+      console.error('Error al eliminar video:', error);
+
       Swal.fire({
         icon: 'error',
         title: 'Error',
-        text: 'No se pudo eliminar el video.',
+        text: error?.response?.data?.message || 'No se pudo eliminar el video.',
       });
     }
   };
+
+
 
   const handleEditExisting = async (videoId, title, order) => {
     try {
       await clienteAxios.put(`/videos/${videoId}`, { title, order });
       setExistingVideos((prev) =>
-        prev.map((v) => (v._id === videoId ? { ...v, title, order } : v))
+        prev.map((v) => (v.id === videoId ? { ...v, title, order } : v))
       );
       Swal.fire({
         icon: 'success',
@@ -793,12 +801,13 @@ const CourseVideoAdd = () => {
               .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
               .map((v, i) => (
                 <ExistingVideoCard
-                  key={v._id ?? i}
+                  key={v.id ?? i}
                   video={v}
                   onDeleteExisting={handleDeleteExisting}
                   onEditExisting={handleEditExisting}
                 />
               ))}
+
           </div>
         </section>
       )}
