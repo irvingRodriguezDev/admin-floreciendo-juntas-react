@@ -1,9 +1,8 @@
-import React, { useContext, useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import {
   Avatar,
   Box,
   Chip,
-  InputAdornment,
   LinearProgress,
   Paper,
   Stack,
@@ -16,10 +15,8 @@ import {
   TablePagination,
   TableRow,
   Tabs,
-  TextField,
   Typography,
 } from "@mui/material";
-import SearchIcon from "@mui/icons-material/Search";
 import CardMembershipIcon from "@mui/icons-material/CardMembership";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
@@ -61,7 +58,6 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState(0);
   const [pageActive, setPageActive] = useState(0);
   const [pagePastDue, setPagePastDue] = useState(0);
-  const [search, setSearch] = useState("");
 
   useEffect(() => {
     getSubscriptionsActive(pageActive + 1);
@@ -76,15 +72,6 @@ export default function Dashboard() {
   const subscriptions = (isActiveTab ? subscriptionsActive : subscriptionsPastDue) || [];
   const pagination = isActiveTab ? paginationActive : paginationPastDue;
   const page = isActiveTab ? pageActive : pagePastDue;
-
-  // Filtra solo los registros de la página que se está mostrando
-  const rows = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return subscriptions;
-    return subscriptions.filter((s) =>
-      [String(s.id), s.User?.name, s.User?.email].some((v) => v?.toLowerCase().includes(q))
-    );
-  }, [subscriptions, search]);
 
   const tabs = [
     { label: "Activas", total: paginationActive?.totalItems || 0, color: "#28a745" },
@@ -113,7 +100,7 @@ export default function Dashboard() {
         </Stack>
       </Box>
 
-      {/* Tabs + búsqueda */}
+      {/* Tabs */}
       <Stack
         direction={{ xs: "column", md: "row" }}
         justifyContent="space-between"
@@ -123,7 +110,7 @@ export default function Dashboard() {
       >
         <Tabs
           value={activeTab}
-          onChange={(_, value) => { setActiveTab(value); setSearch(""); }}
+          onChange={(_, value) => { setActiveTab(value); }}
           variant="scrollable"
           scrollButtons={false}
           sx={{
@@ -148,21 +135,6 @@ export default function Dashboard() {
             />
           ))}
         </Tabs>
-
-        <TextField
-          size="small"
-          placeholder="Buscar en esta página..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          sx={{ bgcolor: "#fff", borderRadius: 1, minWidth: { md: 280 }, mb: { md: 1 } }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon sx={{ color: "#757575", fontSize: 20 }} />
-              </InputAdornment>
-            ),
-          }}
-        />
       </Stack>
 
       {/* Tabla */}
@@ -180,19 +152,19 @@ export default function Dashboard() {
           </TableHead>
 
           <TableBody>
-            {rows.length === 0 ? (
+            {subscriptions.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={4} sx={{ border: 0 }}>
                   <Stack alignItems="center" spacing={1} sx={{ py: 8, color: "#9e9e9e" }}>
                     <InboxOutlinedIcon sx={{ fontSize: 56, color: "#e0e0e0" }} />
                     <Typography variant="subtitle1" color="text.secondary">
-                      {loading ? "Cargando suscripciones..." : search ? "Sin resultados para tu búsqueda" : "No hay suscripciones"}
+                      {loading ? "Cargando suscripciones..." : "No hay suscripciones"}
                     </Typography>
                   </Stack>
                 </TableCell>
               </TableRow>
             ) : (
-              rows.map((subscription) => (
+              subscriptions.map((subscription) => (
                 <TableRow
                   key={subscription.id}
                   hover
