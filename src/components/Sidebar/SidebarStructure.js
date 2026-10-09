@@ -1,193 +1,148 @@
 import React, { useContext } from 'react';
 import {
-  Home as HomeIcon,
-  ShoppingCart as ShoppingCartIcon,
-  Person as PersonIcon,
-  Category as CategoryIcon,
-  PrivacyTipSharp as SecretIcon,
+  Dashboard as DashboardIcon,
+  School as SchoolIcon,
+  AccountCircle as ProfileIcon,
+  Lock as SecretIcon,
   Event as EventIcon,
   CameraAlt as CameraIcon,
-  AccountCircle as ProfileIcon,
-  Store as StoreIcon,
-  Spa,
-  LiveTv,
-  Task as TaskIcon,
-  DocumentScanner,
-  RateReview,
+  Inventory2 as ProductsIcon,
+  Spa as SpaIcon,
+  LiveTv as LiveTvIcon,
+  TaskAlt as TaskIcon,
+  Verified as CertificationIcon,
+  MenuBook as FormationIcon,
+  People as UsersIcon,
+  ReceiptLong as OrdersIcon,
+  PendingActions as PendingTasksIcon,
 } from '@mui/icons-material';
+
 import AuthContext from '../../context/AuthContext/AuthContext';
 
 export const useSidebarStructure = () => {
   const { usuario } = useContext(AuthContext);
 
-  // 🔹 Obtenemos el roleId del usuario o del localStorage
-  const roleId = usuario?.roleId || localStorage.getItem("roleId");
+  const roleId = usuario?.roleId || localStorage.getItem('roleId');
 
-  // 🔹 Estructura completa del menú
   const structure = [
-    { id: 0, label: 'Dashboard', link: '/dashboard', icon: <HomeIcon /> },
-    { id: 100, label: 'Perfil', link: '/profile', icon: <ProfileIcon /> },
+    {
+      id: 0,
+      label: 'Dashboard',
+      link: '/dashboard',
+      icon: <DashboardIcon />,
+    },
+    {
+      id: 100,
+      label: 'Perfil',
+      link: '/profile',
+      icon: <ProfileIcon />,
+    },
     {
       id: 1,
       label: 'Cursos',
-      link: '/ecommerce',
-      icon: <ShoppingCartIcon />,
-      children: [
-        { label: 'Cursos', link: '/ecommerce/gridproducts' },
-        { label: 'Agregar Curso', link: '/ecommerce/courseadd' },
-      ],
+      link: '/ecommerce/gridproducts',
+      icon: <SchoolIcon />,
     },
     {
       id: 101,
       label: 'Secretos',
       link: '/system',
-      icon: <CategoryIcon />,
-      children: [
-        { label: 'Lista de secretos', link: '/system/list' },
-        { label: 'Agregar secreto', link: '/system/addsystem' }
-      ]
+      icon: <SecretIcon />,
     },
-    // {
-    //   id: 107,
-    //   label: 'Secretos',
-    //   link: '/secrets',
-    //   icon: <SecretIcon />,
-    //   children: [
-    //     { label: 'Lista de secretos', link: '/secrets/list' },
-    //     { label: 'Agregar screto', link: '/secrets/addsecret' }
-    //   ]
-    // },
-    // {
-    //   id: 102,
-    //   label: 'Eventos',
-    //   link: '/event',
-    //   icon: <EventIcon />,
-    //   children: [
-    //     { label: 'Lista de eventos', link: '/events/list' },
-    //     { label: 'Agregar evento', link: '/events/addevent' }
-    //   ]
-    // },
-    { id: 103, label: 'Escáner', link: '/scanner', icon: <CameraIcon /> },
-    // { id: 0, label: 'Dashboard', link: '/dashboard', icon: <HomeIcon /> },
     {
       id: 104,
       label: 'Productos',
-      link: '/product',
-      icon: <StoreIcon />,
-      children: [
-        { label: 'Lista de prodcutos', link: '/product/list' },
-        { label: 'Agregar producto', link: '/product/addproduct' }
-      ]
+      link: '/product/list',
+      icon: <ProductsIcon />,
     },
     {
       id: 105,
       label: 'Salón de tus sueños',
       link: '/salon_of_your_dreams',
-      icon: <Spa />,
-      children: [
-        { label: 'Ordenes', link: '/salon_of_your_dreams/orders' },
-        { label: 'Sorteo', link: '/salon_of_your_dreams/lottery' },
-
-        // { label: 'Agregar producto', link: '/product/addproduct' }
-      ]
+      icon: <SpaIcon />,
+    },
+    {
+      id: 111,
+      label: 'Ordenes',
+      link: '/orders',
+      icon: <OrdersIcon />,
     },
     {
       id: 106,
       label: 'Lives',
-      link: '/lives',
-      icon: <LiveTv />,
-      children: [
-        { label: 'Lista de lives', link: '/lives/live_playlist' },
-        { label: 'Crea un live', link: '/lives/addlive' },
-
-        // { label: 'Agregar producto', link: '/product/addproduct' }
-      ]
+      link: '/lives/live_playlist',
+      icon: <LiveTvIcon />,
     },
-    // {
-    //   id: 1,
-    //   label: 'Cursos',
-    //   link: '/ecommerce',
-    //   icon: <ShoppingCartIcon />,
-    //   children: [
-    //     { label: 'Cursos', link: '/ecommerce/gridproducts' },
-    //     { label: 'Agregar Curso', link: '/ecommerce/courseadd' },
-    //   ],
-    // },
     {
       id: 2,
       label: 'Usuarios',
-      link: '/user',
-      icon: <PersonIcon />,
-      children: [
-        { label: 'Lista de Usuarios', link: '/users/list' },
-        { label: 'Crear Usuario', link: '/users/useradd' },
-      ],
+      link: '/users/list',
+      icon: <UsersIcon />,
     },
-    { id: 107, label: 'Tareas', link: '/task', icon: <TaskIcon /> },
+    {
+      id: 107,
+      label: 'Tareas',
+      link: '/task',
+      icon: <TaskIcon />,
+    },
     {
       id: 108,
       label: 'Certificaciones',
-      link: '/certifications',
-      icon: < DocumentScanner />,
-      children: [
-        { label: 'Lista de certificaciones', link: '/certifications/list' },
-        { label: 'Crea una certificación', link: '/certifications/addcertificate' },
-        // { label: 'Agregar modulo', link: '/certifications/:certificationId/modules' },
-
-        // { label: 'Agregar producto', link: '/product/addproduct' }
-      ]
+      link: '/certifications/list',
+      icon: <CertificationIcon />,
     },
     {
       id: 110,
       label: 'Formaciones',
       link: '/formations',
-      icon: < RateReview />,
+      icon: <FormationIcon />,
       children: [
-        { label: 'Lista de formaciones', link: '/formations/list' },
-        { label: 'Crea una formación', link: '/formations/addformation' },
-        { label: 'Entregables', link: '/formations/deliverable' },
-        // { label: 'Agregar modulo', link: '/certifications/:certificationId/modules' },
-
-        // { label: 'Agregar producto', link: '/product/addproduct' }
-      ]
+        {
+          label: 'Lista de formaciones',
+          link: '/formations/list',
+        },
+        {
+          label: 'Entregables',
+          link: '/formations/deliverable',
+        },
+      ],
     },
-    { id: 109, label: 'Tareas Pendientes', link: '/pending-tasks', icon: <TaskIcon /> },
+    {
+      id: 109,
+      label: 'Tareas Pendientes',
+      link: '/pending-tasks',
+      icon: <PendingTasksIcon />,
+    },
   ];
 
-  // 🔹 Filtrado según rol
+  // Rol 5 - Escáner
   if (parseInt(roleId) === 5) {
-    // Solo mostrar Escáner
-    return structure.filter(item => item.label === "Escáner");
+    return structure.filter(item => item.label === 'Escáner');
   }
 
-  // 🔹 Filtrado según rol
+  // Rol 3 - Tareas
   if (parseInt(roleId) === 3) {
-    // Solo mostrar Tareas
-    return structure.filter(item => item.label === "Tareas");
+    return structure.filter(item => item.label === 'Tareas');
   }
 
-  // 🔹 Rol 6 - Administrador de Lives
+  // Rol 6 - Administrador de Lives
   if (parseInt(roleId) === 6) {
     return structure
-      .filter(item => item.label === "Lives")
+      .filter(item => item.label === 'Lives')
       .map(item => ({
         ...item,
-        children: item.children.filter(
-          child => child.label === "Lista de lives"
+        children: item.children?.filter(
+          child => child.label === 'Lista de lives'
         ),
       }));
   }
 
+  // Rol 1 - Mostrar todo
   if (parseInt(roleId) === 1) {
-    // Mostrar todo excepto Escáner y Tareas
     return structure.filter(
-      item => 
-      // item.label !== "Escáner" && 
-      item.label !== "Tareas"
+      item => item.label !== 'Tareas'
     );
   }
 
-
-  // Otros roles: mostrar todo
   return structure;
 };
