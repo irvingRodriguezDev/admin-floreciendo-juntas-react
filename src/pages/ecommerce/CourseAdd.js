@@ -23,7 +23,7 @@ import { PDFDocument } from 'pdf-lib';
 import CoursesContext from '../../context/CoursesContext/CoursesContext';
 import MethodGet from '../../config/Service';
 
-// ─── Tema local: la paleta y los estilos base viven aquí, no en cada sx ──────
+// ─── Tema local ──────────────────────────────────────────────────────────────
 const PINK = '#FF5C93';
 const PINK_DARK = '#E94E88';
 const PINK_SOFT = '#FFE6F0';
@@ -48,13 +48,17 @@ const theme = createTheme({
     MuiTextField: { defaultProps: { fullWidth: true } },
     MuiOutlinedInput: {
       styleOverrides: {
-        root: { backgroundColor: '#fff', '& fieldset': { borderColor: PINK_SOFT }, '&:hover fieldset': { borderColor: PINK } },
+        root: {
+          backgroundColor: '#fff',
+          '& fieldset': { borderColor: PINK_SOFT },
+          '&:hover fieldset': { borderColor: PINK },
+        },
       },
     },
   },
 });
 
-// ─── Constantes (fuera del componente para no recrearlas en cada render) ─────
+// ─── Constantes ──────────────────────────────────────────────────────────────
 const EMPTY_FORM = { title: '', description: '', level: '', system_id: '', hasCertificate: true };
 const LEVELS = ['principiante', 'intermedio', 'avanzado'];
 
@@ -75,7 +79,7 @@ const quillSx = {
   '& .ql-editor': { minHeight: 180 },
 };
 
-// Valida el archivo según su tipo; devuelve el mensaje de error o null
+// ─── Validación de archivos ──────────────────────────────────────────────────
 const validateFile = async (key, file) => {
   const isImage = key === 'coverImage';
   const maxMb = isImage ? 5 : 10;
@@ -87,7 +91,9 @@ const validateFile = async (key, file) => {
     try {
       const pdf = await PDFDocument.load(await file.arrayBuffer());
       const { width, height } = pdf.getPage(0).getSize();
-      if (Math.abs(width - 792) > 5 || Math.abs(height - 612) > 5) return 'El certificado debe ser tamaño carta horizontal';
+      if (Math.abs(width - 792) > 5 || Math.abs(height - 612) > 5) {
+        return 'El certificado debe ser tamaño carta horizontal';
+      }
     } catch {
       return 'No se pudo leer el PDF';
     }
@@ -109,7 +115,6 @@ const Section = ({ icon, title, subtitle, children }) => (
   </Paper>
 );
 
-// Los PDFs remotos se descargan como blob para poder mostrarlos en el iframe
 const PdfPreview = ({ url, title }) => {
   const [src, setSrc] = useState(null);
 
@@ -124,13 +129,17 @@ const PdfPreview = ({ url, title }) => {
   }, [url]);
 
   return (
-    <Box sx={{ width: '100%', height: 360, border: 1, borderColor: PINK_SOFT, borderRadius: 2, overflow: 'hidden', display: 'grid', placeItems: 'center' }}>
-      {src ? <Box component="iframe" src={src} title={title} sx={{ width: 1, height: 1, border: 0 }} /> : <CircularProgress size={28} />}
+    <Box sx={{
+      width: '100%', height: 360, border: 1, borderColor: PINK_SOFT,
+      borderRadius: 2, overflow: 'hidden', display: 'grid', placeItems: 'center',
+    }}>
+      {src
+        ? <Box component="iframe" src={src} title={title} sx={{ width: 1, height: 1, border: 0 }} />
+        : <CircularProgress size={28} />}
     </Box>
   );
 };
 
-// Zona de carga + vista previa + cambiar/eliminar (reemplaza 3 bloques duplicados)
 const FileField = ({ label, helper, icon, accept, preview, isImage, onSelect, onRemove }) => {
   const inputRef = useRef(null);
   const pick = () => inputRef.current.click();
@@ -161,7 +170,9 @@ const FileField = ({ label, helper, icon, accept, preview, isImage, onSelect, on
             '&:hover': { borderColor: 'primary.dark', boxShadow: '0 8px 24px rgba(255,92,147,0.15)' },
           }}
         >
-          <Avatar sx={{ bgcolor: '#fff', color: 'primary.main', width: 56, height: 56, border: 2, borderColor: PINK_SOFT }}>{icon}</Avatar>
+          <Avatar sx={{ bgcolor: '#fff', color: 'primary.main', width: 56, height: 56, border: 2, borderColor: PINK_SOFT }}>
+            {icon}
+          </Avatar>
           <Typography fontWeight={700} color="primary">Haz clic para subir</Typography>
           <Typography variant="caption" color="text.secondary">{helper}</Typography>
         </ButtonBase>
@@ -185,22 +196,41 @@ const CourseAdd = ({ onCancel }) => {
   const { crearCurso, actualizarCurso, obtenerCursoPorId } = useContext(CoursesContext);
 
   const [form, setForm] = useState(EMPTY_FORM);
-  const [files, setFiles] = useState({});       // { coverImage, certificate, workbook } → File
-  const [previews, setPreviews] = useState({}); // mismas llaves → URL (blob o remota)
+  const [files, setFiles] = useState({});
+  const [previews, setPreviews] = useState({});
   const [systems, setSystems] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  // Guard para no pisar ediciones del usuario si el fetch se re-ejecuta
+  const hydratedRef = useRef(false);
+
   const goBack = () => (onCancel ? onCancel() : history.push('/ecommerce/gridproducts'));
 
+  // Carga de sistemas (una sola vez)
   useEffect(() => {
     MethodGet('/systems').then((res) => setSystems(res.data)).catch(console.error);
   }, []);
 
+  // Carga del curso SOLO cuando cambia el id
   useEffect(() => {
-    if (!id) { setForm(EMPTY_FORM); setFiles({}); setPreviews({}); return; }
+    let cancelled = false;
+
+    // Reset al crear
+    if (!id) {
+      hydratedRef.current = false;
+      setForm(EMPTY_FORM);
+      setFiles({});
+      setPreviews({});
+      setLoading(false);
+      return;
+    }
+
+    hydratedRef.current = false;
     setLoading(true);
-    obtenerCursoPorId(id)
+
+    Promise.resolve(obtenerCursoPorId(id))
       .then((c) => {
+        if (cancelled || !c) return;
         setForm({
           title: c.title || '',
           description: c.description || '',
@@ -209,11 +239,19 @@ const CourseAdd = ({ onCancel }) => {
           hasCertificate: !!c.certificate_url,
         });
         setFiles({});
-        setPreviews({ coverImage: c.cover_image_url, certificate: c.certificate_url, workbook: c.workbookUrl });
+        setPreviews({
+          coverImage: c.cover_image_url || null,
+          certificate: c.certificate_url || null,
+          workbook: c.workbookUrl || null,
+        });
+        hydratedRef.current = true;
       })
       .catch(console.error)
-      .finally(() => setLoading(false));
-  }, [id, obtenerCursoPorId]);
+      .finally(() => { if (!cancelled) setLoading(false); });
+
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]); // ← clave: NO incluir obtenerCursoPorId para evitar re-ejecuciones
 
   // ── Handlers ──────────────────────────────────────────────────────────────
   const handleChange = (e) => setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
@@ -226,11 +264,18 @@ const CourseAdd = ({ onCancel }) => {
   const handleSelect = (key) => async (file) => {
     if (!file) return;
     const error = await validateFile(key, file);
-    error ? Swal.fire('Error', error, 'error') : setFile(key, file);
+    if (error) Swal.fire('Error', error, 'error');
+    else setFile(key, file);
+  };
+
+  const handleToggleCertificate = (checked) => {
+    setForm((p) => ({ ...p, hasCertificate: checked }));
+    if (!checked) setFile('certificate', null);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (form.hasCertificate && !previews.certificate) {
       return Swal.fire('Falta certificado', 'Debes subir un certificado', 'warning');
     }
@@ -256,16 +301,22 @@ const CourseAdd = ({ onCancel }) => {
   return (
     <ThemeProvider theme={theme}>
       <Box sx={{ maxWidth: 1100, mx: 'auto', p: { xs: 1.5, sm: 2, md: 3 } }}>
-        <Paper elevation={0} sx={{ borderRadius: 4, overflow: 'hidden', border: 1, borderColor: PINK_SOFT, boxShadow: '0 8px 24px rgba(255,92,147,0.08)' }}>
+        <Paper elevation={0} sx={{
+          borderRadius: 4, overflow: 'hidden', border: 1, borderColor: PINK_SOFT,
+          boxShadow: '0 8px 24px rgba(255,92,147,0.08)',
+        }}>
           {/* Header */}
-          <Stack direction="row" alignItems="center" spacing={2} sx={{ background: GRADIENT, color: '#fff', p: { xs: 2.5, sm: 3 } }}>
+          <Stack direction="row" alignItems="center" spacing={2}
+            sx={{ background: GRADIENT, color: '#fff', p: { xs: 2.5, sm: 3 } }}>
             <Tooltip title="Volver">
               <IconButton onClick={() => (onCancel ? onCancel() : history.goBack())}
                 sx={{ color: '#fff', bgcolor: 'rgba(255,255,255,0.15)', '&:hover': { bgcolor: 'rgba(255,255,255,0.25)' } }}>
                 <ArrowBackIcon />
               </IconButton>
             </Tooltip>
-            <Avatar sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: '#fff', width: 48, height: 48 }}><MenuBookOutlined /></Avatar>
+            <Avatar sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: '#fff', width: 48, height: 48 }}>
+              <MenuBookOutlined />
+            </Avatar>
             <Box>
               <Typography variant="h6" fontWeight={700}>{id ? 'Editar curso' : 'Nuevo curso'}</Typography>
               <Typography variant="body2" sx={{ opacity: 0.9 }}>
@@ -277,14 +328,17 @@ const CourseAdd = ({ onCancel }) => {
           {/* Formulario */}
           <Box component="form" onSubmit={handleSubmit} sx={{ p: { xs: 2, sm: 3 }, bgcolor: PINK_BG }}>
             <Stack spacing={3}>
-              <Section icon={<InfoOutlined fontSize="small" />} title="Información básica" subtitle="Título, nivel y sistema al que pertenece el curso">
+              <Section icon={<InfoOutlined fontSize="small" />} title="Información básica"
+                subtitle="Título, nivel y sistema al que pertenece el curso">
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={6}>
                     <TextField required label="Título" name="title" value={form.title} onChange={handleChange} />
                   </Grid>
                   <Grid item xs={12} sm={6}>
                     <TextField select required label="Nivel" name="level" value={form.level} onChange={handleChange}>
-                      {LEVELS.map((l) => <MenuItem key={l} value={l} sx={{ textTransform: 'capitalize' }}>{l}</MenuItem>)}
+                      {LEVELS.map((l) => (
+                        <MenuItem key={l} value={l} sx={{ textTransform: 'capitalize' }}>{l}</MenuItem>
+                      ))}
                     </TextField>
                   </Grid>
                   <Grid item xs={12} sm={6}>
@@ -292,33 +346,43 @@ const CourseAdd = ({ onCancel }) => {
                       {systems.map((s) => <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>)}
                     </TextField>
                   </Grid>
+
+                  {/* Checkbox de certificado — ahora estable y sin re-render que lo revierta */}
                   <Grid item xs={12} sm={6}>
-                    <Paper variant="outlined" sx={{ px: 1.5, height: 1, display: 'flex', alignItems: 'center', borderColor: PINK_SOFT, bgcolor: form.hasCertificate ? PINK_BG : '#fff' }}>
-                      <FormControlLabel
-                        control={
-                          <Checkbox
-                            checked={form.hasCertificate}
-                            onChange={(e) => {
-                              setForm((p) => ({ ...p, hasCertificate: e.target.checked }));
-                              if (!e.target.checked) setFile('certificate', null);
-                            }}
-                          />
-                        }
-                        label={
-                          <>
-                            <Typography fontWeight={700} color="primary.dark">Incluye certificado</Typography>
-                            <Typography variant="caption" color="text.secondary">Los estudiantes recibirán un PDF al completar</Typography>
-                          </>
-                        }
-                      />
-                    </Paper>
+                    <FormControlLabel
+                      sx={{
+                        m: 0, px: 1.5, height: 1, width: 1, cursor: 'pointer',
+                        border: 1, borderColor: PINK_SOFT, borderRadius: 2,
+                        bgcolor: form.hasCertificate ? PINK_BG : '#fff',
+                        transition: 'background-color .2s ease',
+                      }}
+                      control={
+                        <Checkbox
+                          checked={!!form.hasCertificate}
+                          onChange={(e) => handleToggleCertificate(e.target.checked)}
+                        />
+                      }
+                      label={
+                        <Box>
+                          <Typography fontWeight={700} color="primary.dark">Incluye certificado</Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            Los estudiantes recibirán un PDF al completar
+                          </Typography>
+                        </Box>
+                      }
+                    />
                   </Grid>
                 </Grid>
               </Section>
 
-              <Section icon={<DescriptionOutlined fontSize="small" />} title="Descripción del curso" subtitle="Editor con formato, listas, enlaces, etc.">
+              <Section icon={<DescriptionOutlined fontSize="small" />} title="Descripción del curso"
+                subtitle="Editor con formato, listas, enlaces, etc.">
                 <Box sx={quillSx}>
-                  <ReactQuill value={form.description} onChange={(v) => setForm((p) => ({ ...p, description: v }))} modules={QUILL_MODULES} />
+                  <ReactQuill
+                    value={form.description}
+                    onChange={(v) => setForm((p) => ({ ...p, description: v }))}
+                    modules={QUILL_MODULES}
+                  />
                 </Box>
               </Section>
 
@@ -335,7 +399,8 @@ const CourseAdd = ({ onCancel }) => {
                 />
               </Section>
 
-              <Section icon={<WorkspacePremiumOutlined fontSize="small" />} title="Documentos PDF" subtitle="Certificado (solo si aplica) y workbook del curso">
+              <Section icon={<WorkspacePremiumOutlined fontSize="small" />} title="Documentos PDF"
+                subtitle="Certificado (solo si aplica) y workbook del curso">
                 <Grid container spacing={3}>
                   {form.hasCertificate && (
                     <Grid item xs={12} md={6}>
