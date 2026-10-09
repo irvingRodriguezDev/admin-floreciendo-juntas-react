@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo, useCallback, useRef, memo } from 'react';
 import {
-    Alert, Avatar, Box, Button, Card, CardMedia, Chip, Dialog, DialogActions, DialogContent, DialogContentText,
-    DialogTitle, Divider, Fade, FormControl, FormHelperText, Grid, IconButton, InputAdornment, InputLabel,
+    Alert, Avatar, Box, Button, Card, CardMedia, Chip, Dialog, DialogContent, DialogTitle,
+    Divider, Fade, FormControl, FormHelperText, Grid, IconButton, InputAdornment, InputLabel,
     MenuItem, Pagination, Paper, Select, Skeleton, Snackbar, Stack, TextField, Tooltip, Typography,
     useMediaQuery, useTheme,
 } from '@mui/material';
@@ -11,13 +11,16 @@ import {
     Person as PersonIcon, CalendarToday as CalendarTodayIcon, ClearAll as ClearAllIcon,
     Visibility as VisibilityIcon, Email as EmailIcon, Badge as BadgeIcon, AccessTime as AccessTimeIcon,
 } from '@mui/icons-material';
+import Swal from 'sweetalert2';
 import clienteAxios from '../../config/Axios';
 
 // ─── Constantes y helpers ────────────────────────────────────────────────────
 const CDN = 'https://cdn.floreciendojuntas.com';
 const PINK = '#FF5C93';
+const PINK_DARK = '#E94E88';
 const GRADIENT = 'linear-gradient(135deg, #FF5C93 0%, #FF69B4 100%)';
 const CERT_COLORS = ['#FF6B9D', '#4CAF50', '#2196F3', '#FF9800', '#9C27B0', '#E91E63', '#00BCD4', '#795548'];
+const SEARCH_DEBOUNCE_MS = 600;
 
 const absFill = { position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' };
 const flexRow = { display: 'flex', alignItems: 'center', gap: 1 };
@@ -69,6 +72,25 @@ const transformTask = (task, certifications) => {
     };
 };
 
+// ─── SweetAlert: confirmación de eliminación ─────────────────────────────────
+const confirmDeleteTask = (task) =>
+    Swal.fire({
+        title: '¿Eliminar tarea?',
+        html: `Se eliminará la tarea de <strong>${task?.user?.name ?? 'este usuario'}</strong>. Esta acción no se puede deshacer.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#9E9E9E',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar',
+        reverseButtons: true,
+        focusCancel: true,
+    }).then((r) => r.isConfirmed);
+
+const toast = (icon, title) =>
+    Swal.fire({ icon, title, timer: 1800, showConfirmButton: false, toast: false });
+
+// ─── Componentes UI ──────────────────────────────────────────────────────────
 const PageHeader = ({ icon, title, subtitle, children }) => (
     <Box sx={{ background: GRADIENT, color: '#fff', p: { xs: 2.5, sm: 3 }, gap: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <Stack direction="row" alignItems="center" spacing={2}>
@@ -84,6 +106,15 @@ const PageHeader = ({ icon, title, subtitle, children }) => (
 
 const IconText = ({ icon, children, variant = 'caption', ...rest }) => (
     <Box sx={flexRow}>{icon}<Typography variant={variant} color="text.secondary" {...rest}>{children}</Typography></Box>
+);
+
+const Section = ({ icon, title, color = 'text.primary', sm, children }) => (
+    <Grid item xs={12} sm={sm}>
+        <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, height: '100%' }}>
+            <Typography variant="subtitle1" fontWeight={700} sx={{ ...flexRow, mb: 2, color }}>{icon} {title}</Typography>
+            {children}
+        </Paper>
+    </Grid>
 );
 
 // ─── ImageGrid ───────────────────────────────────────────────────────────────
@@ -139,7 +170,7 @@ const PendingTaskCard = memo(({ task, onDelete, onViewDetail }) => (
 
         <Stack direction="row" spacing={1} sx={{ p: 2, pt: 0 }}>
             <Button fullWidth variant="contained" startIcon={<VisibilityIcon />} onClick={() => onViewDetail(task)}
-                sx={{ bgcolor: PINK, color: '#fff', fontWeight: 600, boxShadow: 'none', '&:hover': { bgcolor: '#E94E88', boxShadow: 'none' } }}>
+                sx={{ bgcolor: PINK, color: '#fff', fontWeight: 600, boxShadow: 'none', '&:hover': { bgcolor: PINK_DARK, boxShadow: 'none' } }}>
                 Ver detalle
             </Button>
             <Tooltip title="Eliminar tarea">
@@ -153,15 +184,6 @@ const PendingTaskCard = memo(({ task, onDelete, onViewDetail }) => (
 ));
 
 // ─── TaskDetailDialog ────────────────────────────────────────────────────────
-const Section = ({ icon, title, color = 'text.primary', sm, children }) => (
-    <Grid item xs={12} sm={sm}>
-        <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, height: '100%' }}>
-            <Typography variant="subtitle1" fontWeight={700} sx={{ ...flexRow, mb: 2, color }}>{icon} {title}</Typography>
-            {children}
-        </Paper>
-    </Grid>
-);
-
 const TaskDetailDialog = ({ task, onClose, onOpenImage }) => {
     if (!task) return null;
     const n = task.images.length;
@@ -221,22 +243,6 @@ const TaskDetailDialog = ({ task, onClose, onOpenImage }) => {
         </Dialog>
     );
 };
-
-// ─── ConfirmDeleteDialog ─────────────────────────────────────────────────────
-const ConfirmDeleteDialog = ({ task, onCancel, onConfirm }) => (
-    <Dialog open={!!task} onClose={onCancel} PaperProps={{ sx: { borderRadius: 3 } }}>
-        <DialogTitle fontWeight={700}>¿Eliminar tarea?</DialogTitle>
-        <DialogContent>
-            <DialogContentText>
-                Se eliminará la tarea de <strong>{task?.user.name}</strong>. Esta acción no se puede deshacer.
-            </DialogContentText>
-        </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
-            <Button color="inherit" onClick={onCancel}>Cancelar</Button>
-            <Button color="error" variant="contained" onClick={onConfirm}>Sí, eliminar</Button>
-        </DialogActions>
-    </Dialog>
-);
 
 // ─── ImageViewer (zoom + arrastre) ───────────────────────────────────────────
 const ImageViewer = ({ url, onClose, isMobile }) => {
@@ -346,14 +352,12 @@ const PendingTask = () => {
 
     const [selectedImage, setSelectedImage] = useState(null);
     const [selectedTask, setSelectedTask] = useState(null);
-    const [toDelete, setToDelete] = useState(null);
-    const [snack, setSnack] = useState(null); // { severity, msg }
+    const [snack, setSnack] = useState(null);
 
     const hasActiveFilters = searchTerm || selectedCert !== 'all' || selectedModule !== 'all';
     const search = debouncedSearch.trim();
 
     // ─── Data ────────────────────────────────────────────────────────────────
-    // Lee los filtros del estado: cambia cuando cambia cualquiera y el efecto de abajo recarga.
     const fetchTasks = useCallback(async (page = 1) => {
         const params = {
             page: search ? 1 : page,
@@ -382,7 +386,10 @@ const PendingTask = () => {
             try {
                 setLoadingCerts(true);
                 const { data } = await clienteAxios.get('/certifications/active');
-                setCertifications(data.map((c, i) => ({ id: `cert_${c.id}`, originalId: c.id, name: c.name, color: CERT_COLORS[i % CERT_COLORS.length] })));
+                setCertifications(data.map((c, i) => ({
+                    id: `cert_${c.id}`, originalId: c.id, name: c.name,
+                    color: CERT_COLORS[i % CERT_COLORS.length],
+                })));
             } catch (e) {
                 console.error(e);
             } finally {
@@ -417,7 +424,7 @@ const PendingTask = () => {
         const { value } = e.target;
         setSearchTerm(value);
         clearTimeout(searchTimerRef.current);
-        searchTimerRef.current = setTimeout(() => setDebouncedSearch(value), 600);
+        searchTimerRef.current = setTimeout(() => setDebouncedSearch(value), SEARCH_DEBOUNCE_MS);
     };
 
     const clearSearch = () => {
@@ -435,17 +442,23 @@ const PendingTask = () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    const confirmDelete = async () => {
-        const task = toDelete;
-        setToDelete(null);
+    // ⭐ ELIMINAR: SweetAlert2 reemplaza al Dialog de MUI
+    const handleDeleteTask = async (task) => {
+        const confirmed = await confirmDeleteTask(task);
+        if (!confirmed) return;
+
         try {
             await clienteAxios.delete('/module-submission/delete', { data: { submissionId: task.id } });
             setTasks(prev => prev.filter(t => t.id !== task.id));
             setPageInfo(prev => ({ ...prev, total: prev.total - 1 }));
             if (selectedTask?.id === task.id) setSelectedTask(null);
-            setSnack({ severity: 'success', msg: 'Tarea eliminada correctamente.' });
+            toast('success', 'Tarea eliminada correctamente');
         } catch (error) {
-            setSnack({ severity: 'error', msg: error.response?.data?.message || 'No se pudo eliminar la tarea.' });
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: error.response?.data?.message || 'No se pudo eliminar la tarea.',
+            });
         }
     };
 
@@ -454,7 +467,9 @@ const PendingTask = () => {
         const q = search.toLowerCase();
         if (!q) return tasks;
         return tasks.filter(t =>
-            [t.user.name, t.user.email, String(t.id), t.moduleName, t.certificationName].some(v => v.toLowerCase().includes(q)));
+            [t.user.name, t.user.email, String(t.id), t.moduleName, t.certificationName]
+                .some(v => v.toLowerCase().includes(q))
+        );
     }, [tasks, search]);
 
     // ─── Render ──────────────────────────────────────────────────────────────
@@ -524,7 +539,7 @@ const PendingTask = () => {
                         </Typography>
                         {hasActiveFilters && (
                             <Button variant="outlined" onClick={clearFilters} startIcon={<ClearAllIcon />}
-                                sx={{ borderColor: PINK, color: PINK, borderRadius: 2, '&:hover': { borderColor: '#E94E88', bgcolor: '#FFF5FA' } }}>
+                                sx={{ borderColor: PINK, color: PINK, borderRadius: 2, '&:hover': { borderColor: PINK_DARK, bgcolor: '#FFF5FA' } }}>
                                 Limpiar filtros
                             </Button>
                         )}
@@ -536,7 +551,7 @@ const PendingTask = () => {
                         <Grid container spacing={{ xs: 2, md: 3 }}>
                             {displayRows.map(task => (
                                 <Grid item xs={12} sm={6} md={4} lg={3} key={task.id}>
-                                    <PendingTaskCard task={task} onDelete={setToDelete} onViewDetail={setSelectedTask} />
+                                    <PendingTaskCard task={task} onDelete={handleDeleteTask} onViewDetail={setSelectedTask} />
                                 </Grid>
                             ))}
                         </Grid>
@@ -563,7 +578,6 @@ const PendingTask = () => {
 
             <TaskDetailDialog task={selectedTask} onClose={() => setSelectedTask(null)} onOpenImage={setSelectedImage} />
             <ImageViewer url={selectedImage} onClose={() => setSelectedImage(null)} isMobile={isMobile} />
-            <ConfirmDeleteDialog task={toDelete} onCancel={() => setToDelete(null)} onConfirm={confirmDelete} />
 
             <Snackbar open={!!snack} autoHideDuration={2500} onClose={() => setSnack(null)}
                 anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
