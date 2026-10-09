@@ -23,7 +23,9 @@ import Swal from "sweetalert2";
 import LiveContext from "../../context/LiveContext/LiveContext";
 import AuthContext from "../../context/AuthContext/AuthContext";
 
-import useLiveComments from "./components/useLiveComments";
+// ❌ COMENTADO: hook de comentarios (era la causa del error "is not a function")
+// import useLiveComments from "./components/useLiveComments";
+
 import { DEFAULT_PAGE_SIZE } from "./components/constants";
 import { useLiveFilters } from "./hooks/useLiveFilters";
 import { useFullscreen } from "./hooks/useFullscreen";
@@ -31,14 +33,17 @@ import { useFullscreen } from "./hooks/useFullscreen";
 import LiveHeader from "./components/LiveHeader";
 import LiveFilters from "./components/LiveFilters";
 import LiveTable from "./components/LiveTable";
-import LiveAdminModal from "./components/LiveAdminModal";
+
+// ❌ COMENTADO: modal de administración del live
+// import LiveAdminModal from "./components/LiveAdminModal";
 
 const Live = () => {
     const history = useHistory();
 
-    const videoContainerRef = useRef(null);
-    const commentsContainerRef = useRef(null);
-    const fullscreenCommentsRef = useRef(null);
+    // ❌ COMENTADO: refs usados solo por el modal de admin / comentarios
+    // const videoContainerRef = useRef(null);
+    // const commentsContainerRef = useRef(null);
+    // const fullscreenCommentsRef = useRef(null);
 
     // CONTEXTOS
     const {
@@ -52,17 +57,17 @@ const Live = () => {
 
     const roleId = usuario?.user?.roleId;
 
-    // ESTADOS DEL MODAL
-    const [openAdminModal, setOpenAdminModal] = useState(false);
-    const [selectedLive, setSelectedLive] = useState(null);
-    const [commentText, setCommentText] = useState("");
+    // ❌ COMENTADO: estados del modal de admin
+    // const [openAdminModal, setOpenAdminModal] = useState(false);
+    // const [selectedLive, setSelectedLive] = useState(null);
+    // const [commentText, setCommentText] = useState("");
 
-    // HOOK DE COMENTARIOS
-    const {
-        comments,
-        sendComment,
-        deleteComment
-    } = useLiveComments(selectedLive?.id);
+    // ❌ COMENTADO: hook de comentarios (causaba el TypeError)
+    // const {
+    //     comments,
+    //     sendComment,
+    //     deleteComment
+    // } = useLiveComments(selectedLive?.id);
 
     // HOOK DE FILTROS
     const {
@@ -99,81 +104,83 @@ const Live = () => {
         obtenerLives();
     }, []);
 
-    // SCROLL AUTOMÁTICO PARA NUEVOS COMENTARIOS
-    useEffect(() => {
-        if (commentsContainerRef.current) {
-            commentsContainerRef.current.scrollTop = 0;
-        }
+    {/* Comentado por si después de ocupa*/}
+    
+    // scroll automático dependiente de comments
+    // useEffect(() => {
+    //     if (commentsContainerRef.current) {
+    //         commentsContainerRef.current.scrollTop = 0;
+    //     }
+    //
+    //     if (
+    //         fullscreenCommentsRef.current &&
+    //         showCommentsInFullscreen
+    //     ) {
+    //         fullscreenCommentsRef.current.scrollTop =
+    //             fullscreenCommentsRef.current.scrollHeight;
+    //     }
+    // }, [comments, showCommentsInFullscreen]);
 
-        if (
-            fullscreenCommentsRef.current &&
-            showCommentsInFullscreen
-        ) {
-            fullscreenCommentsRef.current.scrollTop =
-                fullscreenCommentsRef.current.scrollHeight;
-        }
-    }, [comments, showCommentsInFullscreen]);
+    // estadísticas del live dependientes de comments
+    // const liveStats = useMemo(() => ({
+    //     comments: comments.length,
+    // }), [comments]);
 
-    // ESTADÍSTICAS DEL LIVE
-    const liveStats = useMemo(() => ({
-        comments: comments.length,
-    }), [comments]);
+    // abrir modal de admin
+    // const handleOpenAdminModal = (live) => {
+    //     console.log("LIVE ABIERTO:", live.id);
+    //
+    //     setSelectedLive(live);
+    //     setOpenAdminModal(true);
+    // };
 
-    // ABRIR MODAL DE ADMIN
-    const handleOpenAdminModal = (live) => {
-        console.log("LIVE ABIERTO:", live.id);
+    // cerrar modal
+    // const handleCloseAdminModal = () => {
+    //     setOpenAdminModal(false);
+    //     setSelectedLive(null);
+    // };
 
-        setSelectedLive(live);
-        setOpenAdminModal(true);
-    };
+    // eliminar comentario
+    // const handleDeleteComment = (commentId) => {
+    //     console.log("Deleting message:", commentId);
+    //     deleteComment(commentId);
+    // };
 
-    // CERRAR MODAL
-    const handleCloseAdminModal = () => {
-        setOpenAdminModal(false);
-        setSelectedLive(null);
-    };
+    // enviar comentario
+    // const handleSendComment = () => {
+    //     if (!commentText.trim()) return;
+    //
+    //     sendComment(commentText);
+    //     setCommentText("");
+    // };
 
-    // ELIMINAR COMENTARIO
-    const handleDeleteComment = (commentId) => {
-        console.log("Deleting message:", commentId);
-        deleteComment(commentId);
-    };
+    // finalizar live (dependía de handleCloseAdminModal)
+    // const handleEndLive = () => {
+    //     Swal.fire({
+    //         title: '¿Finalizar transmisión?',
+    //         text: 'Esta acción terminará el live para todos los espectadores',
+    //         icon: 'warning',
+    //         showCancelButton: true,
+    //         confirmButtonColor: '#EF5350',
+    //         cancelButtonColor: '#9E9E9E',
+    //         confirmButtonText: 'Sí, finalizar',
+    //         cancelButtonText: 'Cancelar',
+    //     }).then((result) => {
+    //         if (result.isConfirmed) {
+    //             Swal.fire({
+    //                 title: '¡Finalizado!',
+    //                 text: 'La transmisión ha terminado exitosamente',
+    //                 icon: 'success',
+    //                 timer: 2000,
+    //                 showConfirmButton: false,
+    //             });
+    //
+    //             handleCloseAdminModal();
+    //         }
+    //     });
+    // };
 
-    // ENVIAR COMENTARIO
-    const handleSendComment = () => {
-        if (!commentText.trim()) return;
-
-        sendComment(commentText);
-        setCommentText("");
-    };
-
-    // FINALIZAR LIVE
-    const handleEndLive = () => {
-        Swal.fire({
-            title: '¿Finalizar transmisión?',
-            text: 'Esta acción terminará el live para todos los espectadores',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#EF5350',
-            cancelButtonColor: '#9E9E9E',
-            confirmButtonText: 'Sí, finalizar',
-            cancelButtonText: 'Cancelar',
-        }).then((result) => {
-            if (result.isConfirmed) {
-                Swal.fire({
-                    title: '¡Finalizado!',
-                    text: 'La transmisión ha terminado exitosamente',
-                    icon: 'success',
-                    timer: 2000,
-                    showConfirmButton: false,
-                });
-
-                handleCloseAdminModal();
-            }
-        });
-    };
-
-    // ELIMINAR LIVE
+    // ELIMINAR LIVE (se mantiene)
     const handleDelete = (id) => {
         Swal.fire({
             title: "¿Estás seguro?",
@@ -194,7 +201,7 @@ const Live = () => {
     return (
         <Box>
 
-            {/* MODAL DE ADMINISTRACIÓN */}
+            {/*
             <LiveAdminModal
                 open={openAdminModal}
                 selectedLive={selectedLive}
@@ -215,6 +222,7 @@ const Live = () => {
                 commentsContainerRef={commentsContainerRef}
                 fullscreenCommentsRef={fullscreenCommentsRef}
             />
+            */}
 
             {/* FILTROS ACTIVOS */}
             <LiveFilters
@@ -354,7 +362,7 @@ const Live = () => {
                     cargando={cargando}
                     rowsState={rowsState}
                     setRowsState={setRowsState}
-                    handleOpenAdminModal={handleOpenAdminModal}
+                    // handleOpenAdminModal={handleOpenAdminModal}
                     handleDelete={handleDelete}
                     roleId={roleId}
                 />
