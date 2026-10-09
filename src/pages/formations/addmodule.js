@@ -1,127 +1,58 @@
-import React, { useEffect, useReducer, useState, useContext, useMemo } from "react";
-import {
-    Grid,
-    Box,
-    Card,
-    TextField,
-    Paper,
-    Fade,
-    IconButton,
-    Typography,
-    Button,
-    Tooltip,
-    CircularProgress,
-    Chip,
-    InputAdornment,
-} from "@mui/material";
+import React, { useEffect, useState, useContext, useMemo } from "react";
 import { useParams, useHistory } from "react-router-dom";
 import {
-    AddOutlined,
-    Delete as DeleteIcon,
-    Edit as EditIcon,
-    Save as SaveIcon,
-    ArrowBack as ArrowBackIcon,
-    AssignmentOutlined,
-} from "@mui/icons-material";
+    Box, Container, Paper, Stack, TextField, Typography, Button, Avatar, Chip, IconButton,
+    Tooltip, CircularProgress, InputAdornment, ThemeProvider, createTheme, alpha,
+} from "@mui/material";
+import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
+import AssignmentRoundedIcon from "@mui/icons-material/AssignmentRounded";
+import AddRoundedIcon from "@mui/icons-material/AddRounded";
+import EditRoundedIcon from "@mui/icons-material/EditRounded";
+import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
+import SaveRoundedIcon from "@mui/icons-material/SaveRounded";
 import Swal from "sweetalert2";
 import MethodGet, { MethodDelete, MethodPost, MethodPut } from "../../config/Service";
 import FormationContext from "../../context/FormationContext/FormationContext";
 
-const initialState = {
-    modules: [],
-    loadingModules: false,
-    newModuleName: "",
-    savingModule: false,
-    editingModuleId: null,
-    editingModuleName: "",
-};
+const PINK = "#FF5C95";
 
-const reducer = (s, a) => ({ ...s, ...a });
+const theme = createTheme({
+    palette: {
+        primary: { main: PINK, contrastText: "#fff" },
+        background: { default: "#FFF6F9" },
+    },
+    shape: { borderRadius: 14 },
+    typography: { button: { textTransform: "none", fontWeight: 600 } },
+    components: {
+        MuiButton: { defaultProps: { disableElevation: true } },
+        MuiPaper: { defaultProps: { elevation: 0 } },
+    },
+});
 
-const AddModuleFormation = () => {
-    const { formationId } = useParams();
-    const history = useHistory();
-    const [state, dispatch] = useReducer(reducer, initialState);
-    const { formations } = useContext(FormationContext);
+// Los botones de editar/eliminar estaban comentados en el original.
+// Cambia a true para volver a mostrarlos (los handlers siguen funcionando).
+const ALLOW_EDIT = false;
 
-    useEffect(() => {
-        fetchModules();
-    }, [formationId]);
+const showError = (text) => Swal.fire("Error", text, "error");
 
-    const formation = useMemo(() => {
-        if (!formations.length) return null;
-        return formations.find((f) => f.id === Number(formationId));
-    }, [formations, formationId]);
+/* ── Fila de módulo ───────────────────────────────────────────────────────── */
+const ModuleRow = ({ module, index, onUpdate, onRemove }) => {
+    const [editingName, setEditingName] = useState(null); // null = no edita
+    const editing = editingName !== null;
 
-    const [formationName, setFormationName] = useState(
-        localStorage.getItem("formation_name") || ""
-    );
-
-    useEffect(() => {
-        if (formation?.name) {
-            localStorage.setItem("formation_name", formation.name);
-            setFormationName(formation.name);
-        }
-    }, [formation]);
-
-    // ── Fetch módulos ─────────────────────────────────────────────────────────
-    const fetchModules = async () => {
-        dispatch({ loadingModules: true });
+    const save = async () => {
+        if (!editingName.trim()) return;
         try {
-            const res = await MethodGet(`/formations/${formationId}/modules`);
-            const data = res.data;
-            const modules =
-                Array.isArray(data) ? data :
-                    Array.isArray(data.data) ? data.data :
-                        [];
-            dispatch({ modules, loadingModules: false });
+            const res = await MethodPut(`/module-formations/${module.id}`, { name: editingName.trim() });
+            onUpdate(res.data);
+            setEditingName(null);
         } catch {
-            dispatch({ loadingModules: false });
-            Swal.fire("Error", "No se pudieron cargar los módulos.", "error");
+            showError("No se pudo actualizar el módulo.");
         }
     };
 
-    // ── Crear módulo ──────────────────────────────────────────────────────────
-    const handleCreateModule = async () => {
-        if (!state.newModuleName.trim()) return;
-        dispatch({ savingModule: true });
-        try {
-            const res = await MethodPost("/module-formations/modules", {
-                formationId,
-                name: state.newModuleName.trim(),
-            });
-            dispatch({
-                modules: [...state.modules, res.data],
-                newModuleName: "",
-                savingModule: false,
-            });
-            Swal.fire({ icon: "success", title: "Módulo creado", timer: 1500, showConfirmButton: false });
-        } catch {
-            dispatch({ savingModule: false });
-            Swal.fire("Error", "No se pudo crear el módulo.", "error");
-        }
-    };
-
-    // ── Guardar edición de módulo ─────────────────────────────────────────────
-    const handleSaveModule = async (moduleId) => {
-        if (!state.editingModuleName.trim()) return;
-        try {
-            const res = await MethodPut(`/module-formations/${moduleId}`, {
-                name: state.editingModuleName.trim(),
-            });
-            dispatch({
-                modules: state.modules.map((m) => (m.id === moduleId ? res.data : m)),
-                editingModuleId: null,
-                editingModuleName: "",
-            });
-        } catch {
-            Swal.fire("Error", "No se pudo actualizar el módulo.", "error");
-        }
-    };
-
-    // ── Eliminar módulo ───────────────────────────────────────────────────────
-    const handleDeleteModule = (moduleId) => {
-        Swal.fire({
+    const remove = async () => {
+        const { isConfirmed } = await Swal.fire({
             title: "¿Eliminar módulo?",
             text: "Esta acción no se puede revertir.",
             icon: "warning",
@@ -130,182 +61,156 @@ const AddModuleFormation = () => {
             cancelButtonColor: "#3085d6",
             confirmButtonText: "Sí, eliminar",
             cancelButtonText: "Cancelar",
-        }).then(async (result) => {
-            if (result.isConfirmed) {
-                try {
-                    await MethodDelete(`/module-formations/${moduleId}`);
-                    dispatch({ modules: state.modules.filter((m) => m.id !== moduleId) });
-                } catch {
-                    Swal.fire("Error", "No se pudo eliminar el módulo.", "error");
-                }
-            }
         });
+        if (!isConfirmed) return;
+        try {
+            await MethodDelete(`/module-formations/${module.id}`);
+            onRemove(module.id);
+        } catch {
+            showError("No se pudo eliminar el módulo.");
+        }
     };
 
     return (
-        <Grid container spacing={3}>
-            {/* Header */}
-            <Grid item xs={12}>
-                <Paper
-                    elevation={0}
-                    sx={{
-                        p: 3,
-                        borderRadius: 4,
-                        background: "linear-gradient(135deg, rgba(240,244,248,0.9), rgba(255,255,255,0.95))",
-                        backdropFilter: "blur(6px)",
-                        border: "1px solid rgba(200,200,200,0.3)",
-                    }}
-                >
-                    <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={2}>
-                        <Box display="flex" alignItems="center" gap={1}>
-                            <IconButton onClick={() => history.goBack()} size="small">
-                                <ArrowBackIcon />
-                            </IconButton>
-                            <AssignmentOutlined color="primary" />
-                            <Typography variant="h6" fontWeight={700}>
-                                Módulos — {formationName}
-                            </Typography>
-                        </Box>
+        <Paper sx={{ p: 2, border: `1px solid ${alpha(PINK, 0.15)}` }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+                <Avatar sx={{ bgcolor: alpha(PINK, 0.15), color: PINK, width: 34, height: 34, fontWeight: 700, fontSize: 15 }}>
+                    {index + 1}
+                </Avatar>
 
-                        <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
-                            <TextField
-                                variant="outlined"
-                                size="small"
-                                placeholder="Nombre del módulo..."
-                                value={state.newModuleName}
-                                onChange={(e) => dispatch({ newModuleName: e.target.value })}
+                {editing ? (
+                    <TextField size="small" autoFocus sx={{ flex: 1 }} value={editingName}
+                        onChange={(e) => setEditingName(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter") save();
+                            if (e.key === "Escape") setEditingName(null);
+                        }} />
+                ) : (
+                    <Typography fontWeight={700} noWrap sx={{ flex: 1 }}>{module.name}</Typography>
+                )}
+
+                {editing ? (
+                    <Tooltip title="Guardar">
+                        <IconButton size="small" color="primary" onClick={save}><SaveRoundedIcon fontSize="small" /></IconButton>
+                    </Tooltip>
+                ) : ALLOW_EDIT && (
+                    <Tooltip title="Editar módulo">
+                        <IconButton size="small" color="primary" onClick={() => setEditingName(module.name)}>
+                            <EditRoundedIcon fontSize="small" />
+                        </IconButton>
+                    </Tooltip>
+                )}
+
+                {ALLOW_EDIT && (
+                    <Tooltip title="Eliminar módulo">
+                        <IconButton size="small" color="error" onClick={remove}><DeleteOutlineRoundedIcon fontSize="small" /></IconButton>
+                    </Tooltip>
+                )}
+            </Stack>
+        </Paper>
+    );
+};
+
+/* ── Página ───────────────────────────────────────────────────────────────── */
+const AddModuleFormation = () => {
+    const { formationId } = useParams();
+    const history = useHistory();
+    const { formations } = useContext(FormationContext);
+
+    const [modules, setModules] = useState([]);
+    const [loadingModules, setLoadingModules] = useState(false);
+    const [newName, setNewName] = useState("");
+    const [savingModule, setSavingModule] = useState(false);
+    const [formationName, setFormationName] = useState(localStorage.getItem("formation_name") || "");
+
+    const formation = useMemo(
+        () => (formations.length ? formations.find((f) => f.id === Number(formationId)) : null),
+        [formations, formationId]
+    );
+
+    // Nombre de la formación (con respaldo en localStorage)
+    useEffect(() => {
+        if (formation?.name) {
+            localStorage.setItem("formation_name", formation.name);
+            setFormationName(formation.name);
+        }
+    }, [formation]);
+
+    // Cargar módulos
+    useEffect(() => {
+        setLoadingModules(true);
+        MethodGet(`/formations/${formationId}/modules`)
+            .then(({ data }) => setModules(Array.isArray(data) ? data : Array.isArray(data.data) ? data.data : []))
+            .catch(() => showError("No se pudieron cargar los módulos."))
+            .finally(() => setLoadingModules(false));
+    }, [formationId]);
+
+    const handleCreateModule = async () => {
+        if (!newName.trim()) return;
+        setSavingModule(true);
+        try {
+            const res = await MethodPost("/module-formations/modules", { formationId, name: newName.trim() });
+            setModules((p) => [...p, res.data]);
+            setNewName("");
+            Swal.fire({ icon: "success", title: "Módulo creado", timer: 1500, showConfirmButton: false });
+        } catch {
+            showError("No se pudo crear el módulo.");
+        } finally {
+            setSavingModule(false);
+        }
+    };
+
+    return (
+        <ThemeProvider theme={theme}>
+            <Box sx={{ bgcolor: "background.default", minHeight: "100%", py: 4 }}>
+                <Container maxWidth="md">
+                    {/* Encabezado */}
+                    <Stack direction="row" alignItems="center" spacing={2} mb={3}>
+                        <Tooltip title="Volver">
+                            <IconButton onClick={() => history.goBack()}><ArrowBackRoundedIcon /></IconButton>
+                        </Tooltip>
+                        <Avatar sx={{ bgcolor: "primary.main", width: 52, height: 52 }}><AssignmentRoundedIcon /></Avatar>
+                        <Box flexGrow={1} minWidth={0}>
+                            <Typography variant="h5" fontWeight={800}>Módulos de la formación</Typography>
+                            <Typography variant="body2" color="text.secondary" noWrap>{formationName}</Typography>
+                        </Box>
+                        <Chip color="primary" variant="outlined" label={`${modules.length} módulos`} />
+                    </Stack>
+
+                    {/* Nuevo módulo */}
+                    <Paper sx={{ p: 2, mb: 3, border: `1px solid ${alpha(PINK, 0.15)}` }}>
+                        <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+                            <TextField fullWidth size="small" placeholder="Nombre del módulo..."
+                                value={newName} onChange={(e) => setNewName(e.target.value)}
                                 onKeyDown={(e) => e.key === "Enter" && handleCreateModule()}
-                                sx={{ backgroundColor: "white", borderRadius: 2, width: { xs: "100%", sm: 260 } }}
-                                InputProps={{
-                                    startAdornment: (
-                                        <InputAdornment position="start">
-                                            <AssignmentOutlined fontSize="small" color="action" />
-                                        </InputAdornment>
-                                    ),
-                                }}
-                            />
-                            <Button
-                                variant="contained"
-                                startIcon={state.savingModule ? <CircularProgress size={16} color="inherit" /> : <AddOutlined />}
-                                onClick={handleCreateModule}
-                                disabled={!state.newModuleName.trim() || state.savingModule}
-                                sx={{ borderRadius: 2, textTransform: "none", fontWeight: 600 }}
-                            >
+                                InputProps={{ startAdornment: <InputAdornment position="start"><AssignmentRoundedIcon fontSize="small" color="primary" /></InputAdornment> }} />
+                            <Button variant="contained" disabled={!newName.trim() || savingModule} onClick={handleCreateModule}
+                                startIcon={savingModule ? <CircularProgress size={16} color="inherit" /> : <AddRoundedIcon />}
+                                sx={{ flexShrink: 0, boxShadow: `0 6px 16px ${alpha(PINK, 0.35)}` }}>
                                 Agregar módulo
                             </Button>
-                        </Box>
-                    </Box>
-                </Paper>
-            </Grid>
+                        </Stack>
+                    </Paper>
 
-            {/* Lista de módulos */}
-            <Grid item xs={12}>
-                {state.loadingModules ? (
-                    <Box display="flex" justifyContent="center" py={6}>
-                        <CircularProgress />
-                    </Box>
-                ) : state.modules.length === 0 ? (
-                    <Typography align="center" color="text.secondary" py={6}>
-                        No hay módulos aún. ¡Agrega el primero!
-                    </Typography>
-                ) : (
-                    <Grid container spacing={2}>
-                        {state.modules.map((module, index) => (
-                            <Grid item xs={12} key={module.id}>
-                                <Fade in timeout={300 + index * 60}>
-                                    <Card
-                                        sx={{
-                                            borderRadius: 4,
-                                            boxShadow: "0px 4px 15px rgba(0,0,0,0.07)",
-                                            transition: "box-shadow 0.2s ease",
-                                            "&:hover": { boxShadow: "0px 6px 20px rgba(0,0,0,0.11)" },
-                                        }}
-                                    >
-                                        <Box
-                                            sx={{
-                                                p: 2,
-                                                display: "flex",
-                                                alignItems: "center",
-                                                justifyContent: "space-between",
-                                                flexWrap: "wrap",
-                                                gap: 1,
-                                            }}
-                                        >
-                                            <Box display="flex" alignItems="center" gap={1} flex={1} minWidth={0}>
-                                                <Chip
-                                                    label={index + 1}
-                                                    size="small"
-                                                    color="primary"
-                                                    sx={{ fontWeight: 700, minWidth: 32 }}
-                                                />
-                                                {state.editingModuleId === module.id ? (
-                                                    <TextField
-                                                        variant="outlined"
-                                                        size="small"
-                                                        value={state.editingModuleName}
-                                                        onChange={(e) => dispatch({ editingModuleName: e.target.value })}
-                                                        onKeyDown={(e) => {
-                                                            if (e.key === "Enter") handleSaveModule(module.id);
-                                                            if (e.key === "Escape") dispatch({ editingModuleId: null, editingModuleName: "" });
-                                                        }}
-                                                        autoFocus
-                                                        sx={{ flex: 1 }}
-                                                    />
-                                                ) : (
-                                                    <Typography variant="subtitle1" fontWeight={600} noWrap>
-                                                        {module.name}
-                                                    </Typography>
-                                                )}
-                                            </Box>
-
-                                            <Box display="flex" alignItems="center" gap={0.5}>
-                                                {state.editingModuleId === module.id ? (
-                                                    <Tooltip title="Guardar">
-                                                        <IconButton
-                                                            size="small"
-                                                            color="primary"
-                                                            onClick={() => handleSaveModule(module.id)}
-                                                        >
-                                                            <SaveIcon fontSize="small" />
-                                                        </IconButton>
-                                                    </Tooltip>
-                                                ) : (
-                                                    // <Tooltip title="Editar módulo">
-                                                    //     <IconButton
-                                                    //         size="small"
-                                                    //         color="primary"
-                                                    //         onClick={() =>
-                                                    //             dispatch({
-                                                    //                 editingModuleId: module.id,
-                                                    //                 editingModuleName: module.name
-                                                    //             })
-                                                    //         }
-                                                    //     >
-                                                    //         <EditIcon fontSize="small" />
-                                                    //     </IconButton>
-                                                    // </Tooltip>
-                                                    null
-                                                )}
-
-                                                {/* <Tooltip title="Eliminar módulo">
-                                                     <IconButton
-                                                         size="small"
-                                                         color="error"
-                                                         onClick={() => handleDeleteModule(module.id)}
-                                                         >
-                                                         <DeleteIcon fontSize="small" />
-                                                     </IconButton>
-                                                   </Tooltip> */}
-                                            </Box>
-                                        </Box>
-                                    </Card>
-                                </Fade>
-                            </Grid>
-                        ))}
-                    </Grid>
-                )}
-            </Grid>
-        </Grid>
+                    {/* Lista */}
+                    {loadingModules ? (
+                        <Stack alignItems="center" py={6}><CircularProgress /></Stack>
+                    ) : modules.length === 0 ? (
+                        <Typography align="center" color="text.secondary" py={6}>
+                            No hay módulos aún. ¡Agrega el primero!
+                        </Typography>
+                    ) : (
+                        <Stack spacing={2}>
+                            {modules.map((m, i) => (
+                                <ModuleRow key={m.id} module={m} index={i}
+                                    onUpdate={(updated) => setModules((p) => p.map((x) => (x.id === updated.id ? updated : x)))}
+                                    onRemove={(id) => setModules((p) => p.filter((x) => x.id !== id))} />
+                            ))}
+                        </Stack>
+                    )}
+                </Container>
+            </Box>
+        </ThemeProvider>
     );
 };
 

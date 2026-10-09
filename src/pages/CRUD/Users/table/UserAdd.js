@@ -1,1060 +1,238 @@
-import React, { useContext, useState } from 'react';
-
+import React, { useContext, useRef, useState } from "react";
+import { useHistory } from "react-router-dom";
 import {
-    Box,
-    Grid,
-    TextField,
-    Typography,
-    Button,
-    MenuItem,
-    Paper,
-    Avatar,
-    Stack,
-    Divider,
-    IconButton,
-    Tooltip,
-    CircularProgress,
-} from '@mui/material';
+    Box, Container, Paper, Grid, Stack, TextField, Typography, Button, MenuItem,
+    Avatar, IconButton, Tooltip, CircularProgress, ThemeProvider, createTheme, alpha,
+} from "@mui/material";
+import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
+import PersonAddRoundedIcon from "@mui/icons-material/PersonAddRounded";
+import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
+import CloudUploadRoundedIcon from "@mui/icons-material/CloudUploadRounded";
+import SwapHorizRoundedIcon from "@mui/icons-material/SwapHorizRounded";
+import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
+import SaveRoundedIcon from "@mui/icons-material/SaveRounded";
+import Swal from "sweetalert2";
+import UserContext from "../../../../context/UserContext/UserContext";
 
-import {
-    Save as SaveIcon,
-    ArrowBack as ArrowBackIcon,
-    CloudUploadOutlined,
-    SwapHorizOutlined,
-    DeleteOutline as DeleteOutlineIcon,
-    InfoOutlined,
-    PersonOutlined,
-    LockOutlined,
-    ImageOutlined,
-    AdminPanelSettingsOutlined,
-} from '@mui/icons-material';
+const PINK = "#FF5C95";
 
-import { useHistory } from 'react-router-dom';
-
-import Swal from 'sweetalert2';
-
-import UserContext from '../../../../context/UserContext/UserContext';
-
-// ─────────────────────────────────────────────────────────────────────────────
-// PALETA
-// ─────────────────────────────────────────────────────────────────────────────
-
-const PINK = '#FF5C93';
-const PINK_DARK = '#E94E88';
-const PINK_SOFT = '#FFE6F0';
-const PINK_BG = '#FFF5FA';
-const PINK_BG_SOFT = '#FFF0F7';
-
-const GRADIENT =
-    'linear-gradient(135deg, #FF5C93 0%, #FF69B4 100%)';
-
-const GRADIENT_HOVER =
-    'linear-gradient(135deg, #E94E88 0%, #FF5C93 100%)';
-
-const flexRow = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 1,
-};
-
-// ─────────────────────────────────────────────────────────────────────────────
-// ESTILOS
-// ─────────────────────────────────────────────────────────────────────────────
-
-const fieldSx = {
-    '& .MuiOutlinedInput-root': {
-        borderRadius: 2,
-        bgcolor: '#fff',
-        transition: 'all 0.25s ease',
-
-        '& fieldset': {
-            borderColor: PINK_SOFT,
-        },
-
-        '&:hover fieldset': {
-            borderColor: PINK,
-        },
-
-        '&.Mui-focused fieldset': {
-            borderColor: PINK,
-            borderWidth: 2,
-        },
+const theme = createTheme({
+    palette: {
+        primary: { main: PINK, contrastText: "#fff" },
+        background: { default: "#FFF6F9" },
     },
-
-    '& .MuiInputLabel-root.Mui-focused': {
-        color: PINK,
+    shape: { borderRadius: 14 },
+    typography: { button: { textTransform: "none", fontWeight: 600 } },
+    components: {
+        MuiButton: { defaultProps: { disableElevation: true } },
+        MuiPaper: { defaultProps: { elevation: 0 } },
     },
-};
+});
 
-const primaryBtnSx = {
-    py: 1.4,
-    px: 3,
-    borderRadius: 2,
-    fontWeight: 700,
-    color: '#fff',
-    background: GRADIENT,
-    boxShadow: 'none',
+const EMPTY_FORM = { name: "", email: "", phone: "", password: "", roleId: "", profileImage: null };
 
-    '&:hover': {
-        background: GRADIENT_HOVER,
-        boxShadow: 'none',
-    },
+const ROLES = [
+    { id: 3, label: "Evaluador" },
+    { id: 5, label: "Escaneador" },
+    { id: 6, label: "Administrador de Lives" },
+];
 
-    '&.Mui-disabled': {
-        background: '#F5C6D0',
-        color: '#fff',
-    },
-};
-
-const outlineBtnSx = {
-    py: 1.4,
-    px: 3,
-    borderRadius: 2,
-    fontWeight: 600,
-    color: PINK_DARK,
-    border: `1px solid ${PINK}`,
-
-    '&:hover': {
-        bgcolor: PINK_BG_SOFT,
-        borderColor: PINK_DARK,
-    },
-};
-
-const smallOutBtnSx = {
-    borderRadius: 2,
-    color: PINK_DARK,
-    borderColor: PINK,
-
-    '&:hover': {
-        bgcolor: PINK_BG_SOFT,
-        borderColor: PINK_DARK,
-    },
-};
-
-const smallErrBtnSx = {
-    borderRadius: 2,
-    borderColor: '#EF9A9A',
-    color: '#C62828',
-
-    '&:hover': {
-        bgcolor: '#FFEBEE',
-        borderColor: '#C62828',
-    },
-};
-
-// ─────────────────────────────────────────────────────────────────────────────
-// PAGE HEADER
-// ─────────────────────────────────────────────────────────────────────────────
-
-const PageHeader = ({
-    icon,
-    title,
-    subtitle,
-    onBack,
-}) => (
-    <Box
-        sx={{
-            background: GRADIENT,
-            color: '#fff',
-            p: {
-                xs: 2.5,
-                sm: 3,
-            },
-            gap: 2,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-        }}
-    >
-        <Stack
-            direction="row"
-            alignItems="center"
-            spacing={2}
-        >
-            {onBack && (
-                <Tooltip title="Volver">
-                    <IconButton
-                        onClick={onBack}
-                        sx={{
-                            color: '#fff',
-                            bgcolor: 'rgba(255,255,255,0.15)',
-
-                            '&:hover': {
-                                bgcolor:
-                                    'rgba(255,255,255,0.25)',
-                            },
-                        }}
-                    >
-                        <ArrowBackIcon />
-                    </IconButton>
-                </Tooltip>
-            )}
-
-            <Avatar
-                sx={{
-                    bgcolor: 'rgba(255,255,255,0.2)',
-                    color: '#fff',
-                    width: 48,
-                    height: 48,
-                }}
-            >
-                {icon}
-            </Avatar>
-
-            <Box>
-                <Typography
-                    variant="h6"
-                    fontWeight={700}
-                >
-                    {title}
-                </Typography>
-
-                {subtitle && (
-                    <Typography
-                        variant="body2"
-                        sx={{
-                            opacity: 0.9,
-                        }}
-                    >
-                        {subtitle}
-                    </Typography>
-                )}
-            </Box>
-        </Stack>
-    </Box>
-);
-
-// ─────────────────────────────────────────────────────────────────────────────
-// SECTION
-// ─────────────────────────────────────────────────────────────────────────────
-
-const Section = ({
-    icon,
-    title,
-    subtitle,
-    children,
-}) => (
-    <Paper
-        variant="outlined"
-        sx={{
-            p: {
-                xs: 2,
-                sm: 2.5,
-            },
-            borderRadius: 3,
-            border: `1px solid ${PINK_SOFT}`,
-            bgcolor: '#fff',
-        }}
-    >
-        <Box
-            sx={{
-                ...flexRow,
-                mb: subtitle ? 0.5 : 2,
-            }}
-        >
-            <Avatar
-                sx={{
-                    bgcolor: PINK_BG_SOFT,
-                    color: PINK,
-                    width: 32,
-                    height: 32,
-                }}
-            >
-                {icon}
-            </Avatar>
-
-            <Typography
-                variant="subtitle1"
-                fontWeight={700}
-                sx={{
-                    color: PINK,
-                }}
-            >
-                {title}
-            </Typography>
-        </Box>
-
-        {subtitle && (
-            <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{
-                    display: 'block',
-                    mb: 2,
-                    ml: 6,
-                }}
-            >
-                {subtitle}
-            </Typography>
-        )}
-
-        {children}
-    </Paper>
-);
-
-// ─────────────────────────────────────────────────────────────────────────────
-// DROP ZONE
-// ─────────────────────────────────────────────────────────────────────────────
-
-const DropZone = ({
-    id,
-    icon,
-    title,
-    helper,
-}) => (
-    <Box
-        onClick={() =>
-            document.getElementById(id)?.click()
-        }
-        sx={{
-            border: `2px dashed ${PINK}`,
-            borderRadius: 3,
-            p: {
-                xs: 3,
-                sm: 4,
-            },
-            textAlign: 'center',
-            cursor: 'pointer',
-            bgcolor: PINK_BG_SOFT,
-            transition: 'all 0.25s ease',
-
-            '&:hover': {
-                bgcolor: PINK_BG,
-                borderColor: PINK_DARK,
-                transform: 'translateY(-2px)',
-                boxShadow:
-                    '0 8px 24px rgba(255,92,147,0.15)',
-            },
-        }}
-    >
-        <Avatar
-            sx={{
-                bgcolor: '#fff',
-                color: PINK,
-                width: 56,
-                height: 56,
-                mx: 'auto',
-                mb: 1.5,
-                border: `2px solid ${PINK_SOFT}`,
-            }}
-        >
-            {React.cloneElement(icon, {
-                sx: {
-                    fontSize: 28,
-                },
-            })}
-        </Avatar>
-
-        <Typography
-            fontWeight={700}
-            gutterBottom
-            sx={{
-                color: PINK,
-            }}
-        >
-            {title}
-        </Typography>
-
-        <Typography
-            variant="caption"
-            color="text.secondary"
-            display="block"
-        >
-            {helper}
-        </Typography>
-    </Box>
-);
-
-// ─────────────────────────────────────────────────────────────────────────────
-// COMPONENTE
-// ─────────────────────────────────────────────────────────────────────────────
+const REQUIRED = [
+    ["name", "Nombre requerido", "Ingresa el nombre completo del usuario."],
+    ["email", "Correo requerido", "Ingresa el correo electrónico."],
+    ["password", "Contraseña requerida", "Ingresa una contraseña para el usuario."],
+    ["roleId", "Rol requerido", "Selecciona el rol del usuario."],
+];
 
 const UserAdd = ({ onCancel }) => {
     const { addUser } = useContext(UserContext);
-
     const history = useHistory();
+    const fileInput = useRef(null);
 
+    const [form, setForm] = useState(EMPTY_FORM);
     const [preview, setPreview] = useState(null);
-
     const [loading, setLoading] = useState(false);
 
-    const [form, setForm] = useState({
-        name: '',
-        email: '',
-        phone: '',
-        password: '',
-        roleId: '',
-        profileImage: null,
-    });
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // CAMBIOS
-    // ─────────────────────────────────────────────────────────────────────────
-
-    const handleChange = (e) => {
-        const {
-            name,
-            value,
-        } = e.target;
-
-        setForm((prev) => ({
-            ...prev,
-            [name]: value,
-        }));
-    };
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // IMAGEN
-    // ─────────────────────────────────────────────────────────────────────────
+    const goBack = () => (onCancel ? onCancel() : history.push("/users/list"));
+    const handleChange = (e) => setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
 
     const handleImageChange = (e) => {
         const file = e.target.files?.[0];
-
         if (!file) return;
 
-        if (!file.type.startsWith('image/')) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Archivo inválido',
-                text: 'Selecciona una imagen PNG, JPG o JPEG.',
-            });
+        const invalid =
+            (!file.type.startsWith("image/") && ["Archivo inválido", "Selecciona una imagen PNG, JPG o JPEG."]) ||
+            (file.size > 5 * 1024 * 1024 && ["Archivo muy grande", "La imagen no puede superar los 5MB."]);
 
-            e.target.value = '';
+        if (invalid) {
+            Swal.fire({ icon: "error", title: invalid[0], text: invalid[1] });
+            e.target.value = "";
             return;
         }
 
-        if (file.size > 5 * 1024 * 1024) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Archivo muy grande',
-                text: 'La imagen no puede superar los 5MB.',
-            });
-
-            e.target.value = '';
-            return;
-        }
-
-        setForm((prev) => ({
-            ...prev,
-            profileImage: file,
-        }));
-
+        setForm((p) => ({ ...p, profileImage: file }));
         const reader = new FileReader();
-
-        reader.onloadend = () => {
-            setPreview(reader.result);
-        };
-
+        reader.onloadend = () => setPreview(reader.result);
         reader.readAsDataURL(file);
     };
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // ELIMINAR IMAGEN
-    // ─────────────────────────────────────────────────────────────────────────
-
     const handleRemoveImage = () => {
-        setForm((prev) => ({
-            ...prev,
-            profileImage: null,
-        }));
-
+        setForm((p) => ({ ...p, profileImage: null }));
         setPreview(null);
-
-        const input =
-            document.getElementById(
-                'profile-image-input'
-            );
-
-        if (input) {
-            input.value = '';
-        }
+        if (fileInput.current) fileInput.current.value = "";
     };
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // VALIDACIÓN
-    // ─────────────────────────────────────────────────────────────────────────
 
     const validateForm = () => {
-        if (!form.name.trim()) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Nombre requerido',
-                text: 'Ingresa el nombre completo del usuario.',
-            });
-
-            return false;
-        }
-
-        if (!form.email.trim()) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Correo requerido',
-                text: 'Ingresa el correo electrónico.',
-            });
-
-            return false;
-        }
-
-        if (!form.password.trim()) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Contraseña requerida',
-                text: 'Ingresa una contraseña para el usuario.',
-            });
-
-            return false;
-        }
-
-        if (!form.roleId) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Rol requerido',
-                text: 'Selecciona el rol del usuario.',
-            });
-
-            return false;
-        }
-
-        return true;
+        const missing = REQUIRED.find(([key]) => !String(form[key]).trim());
+        if (missing) Swal.fire({ icon: "warning", title: missing[1], text: missing[2] });
+        return !missing;
     };
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // SUBMIT
-    // ─────────────────────────────────────────────────────────────────────────
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-
         if (!validateForm()) return;
 
         const formData = new FormData();
-
-        formData.append(
-            'name',
-            form.name
-        );
-
-        formData.append(
-            'email',
-            form.email
-        );
-
-        formData.append(
-            'phone',
-            form.phone
-        );
-
-        formData.append(
-            'password',
-            form.password
-        );
-
-        formData.append(
-            'roleId',
-            form.roleId
-        );
-
-        if (form.profileImage) {
-            formData.append(
-                'profileImage',
-                form.profileImage
-            );
-        }
+        ["name", "email", "phone", "password", "roleId"].forEach((k) => formData.append(k, form[k]));
+        if (form.profileImage) formData.append("profileImage", form.profileImage);
 
         try {
             setLoading(true);
-
             await addUser(formData);
 
             Swal.fire({
-                icon: 'success',
-                title: '¡Usuario creado!',
-                text: 'El usuario se creó correctamente.',
+                icon: "success",
+                title: "¡Usuario creado!",
+                text: "El usuario se creó correctamente.",
                 timer: 1500,
                 showConfirmButton: false,
             }).then(() => {
-                setForm({
-                    name: '',
-                    email: '',
-                    phone: '',
-                    password: '',
-                    roleId: '',
-                    profileImage: null,
-                });
-
+                setForm(EMPTY_FORM);
                 setPreview(null);
-
-                if (onCancel) {
-                    onCancel();
-                } else {
-                    history.push('/users/list');
-                }
+                goBack();
             });
         } catch (error) {
-            console.error(
-                'Error al crear usuario:',
-                error
-            );
-
+            console.error("Error al crear usuario:", error);
             Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text:
-                    error?.response?.data?.message ||
-                    'No se pudo crear el usuario. Intenta nuevamente.',
+                icon: "error",
+                title: "Error",
+                text: error?.response?.data?.message || "No se pudo crear el usuario. Intenta nuevamente.",
             });
         } finally {
             setLoading(false);
         }
     };
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // RENDER
-    // ─────────────────────────────────────────────────────────────────────────
-
     return (
-        <Box
-            sx={{
-                maxWidth: 1100,
-                mx: 'auto',
-                p: {
-                    xs: 1.5,
-                    sm: 2,
-                    md: 3,
-                },
-            }}
-        >
-            <Paper
-                elevation={0}
-                sx={{
-                    borderRadius: 4,
-                    overflow: 'hidden',
-                    border: `1px solid ${PINK_SOFT}`,
-                    boxShadow:
-                        '0 8px 24px rgba(255,92,147,0.08)',
-                }}
-            >
-                {/* HEADER */}
+        <ThemeProvider theme={theme}>
+            <Box sx={{ bgcolor: "background.default", minHeight: "100%", py: 4 }}>
+                <Container maxWidth="md" component="form" onSubmit={handleSubmit} encType="multipart/form-data">
+                    {/* Encabezado */}
+                    <Stack direction="row" alignItems="center" spacing={2} mb={4}>
+                        <Tooltip title="Volver">
+                            <IconButton onClick={() => (onCancel ? onCancel() : history.goBack())}>
+                                <ArrowBackRoundedIcon />
+                            </IconButton>
+                        </Tooltip>
+                        <Avatar sx={{ bgcolor: "primary.main", width: 52, height: 52 }}>
+                            <PersonAddRoundedIcon />
+                        </Avatar>
+                        <Box>
+                            <Typography variant="h5" fontWeight={800}>Nuevo usuario</Typography>
+                            <Typography variant="body2" color="text.secondary">
+                                Completa los datos para crear un nuevo usuario
+                            </Typography>
+                        </Box>
+                    </Stack>
 
-                <PageHeader
-                    icon={<PersonOutlined />}
-                    title="Nuevo usuario"
-                    subtitle="Completa los datos para crear un nuevo usuario"
-                    onBack={() =>
-                        onCancel
-                            ? onCancel()
-                            : history.goBack()
-                    }
-                />
-
-                {/* CONTENIDO */}
-
-                <Box
-                    sx={{
-                        p: {
-                            xs: 2,
-                            sm: 3,
-                        },
-                        bgcolor: PINK_BG,
-                    }}
-                >
-                    <form
-                        onSubmit={handleSubmit}
-                        encType="multipart/form-data"
-                    >
-                        <Stack spacing={3}>
-
-                            {/* INFORMACIÓN PERSONAL */}
-
-                            <Section
-                                icon={
-                                    <InfoOutlined fontSize="small" />
-                                }
-                                title="Información personal"
-                                subtitle="Ingresa los datos básicos del usuario"
-                            >
-                                <Grid
-                                    container
-                                    spacing={2}
-                                >
-                                    <Grid
-                                        item
-                                        xs={12}
-                                        md={6}
-                                    >
-                                        <TextField
-                                            label="Nombre completo *"
-                                            name="name"
-                                            fullWidth
-                                            required
-                                            value={
-                                                form.name
-                                            }
-                                            onChange={
-                                                handleChange
-                                            }
-                                            sx={fieldSx}
-                                            placeholder="Ej. Juan Pérez"
-                                        />
+                    <Paper sx={{ p: { xs: 2.5, md: 3.5 }, border: `1px solid ${alpha(PINK, 0.15)}` }}>
+                        <Grid container spacing={4}>
+                            {/* Datos */}
+                            <Grid item xs={12} md={7}>
+                                <Grid container spacing={3}>
+                                    <Grid item xs={12}>
+                                        <TextField label="Nombre completo" name="name" fullWidth required
+                                            placeholder="Ej. Juan Pérez" value={form.name} onChange={handleChange} />
                                     </Grid>
-
-                                    <Grid
-                                        item
-                                        xs={12}
-                                        md={6}
-                                    >
-                                        <TextField
-                                            label="Correo electrónico *"
-                                            name="email"
-                                            type="email"
-                                            fullWidth
-                                            required
-                                            value={
-                                                form.email
-                                            }
-                                            onChange={
-                                                handleChange
-                                            }
-                                            sx={fieldSx}
-                                            placeholder="correo@ejemplo.com"
-                                        />
+                                    <Grid item xs={12}>
+                                        <TextField label="Correo electrónico" name="email" type="email" fullWidth required
+                                            placeholder="correo@ejemplo.com" value={form.email} onChange={handleChange} />
                                     </Grid>
-
-                                    <Grid
-                                        item
-                                        xs={12}
-                                        md={6}
-                                    >
-                                        <TextField
-                                            label="Teléfono"
-                                            name="phone"
-                                            fullWidth
-                                            value={
-                                                form.phone
-                                            }
-                                            onChange={
-                                                handleChange
-                                            }
-                                            sx={fieldSx}
-                                            placeholder="Ej. 555 123 4567"
-                                        />
+                                    <Grid item xs={12} sm={6}>
+                                        <TextField label="Teléfono" name="phone" fullWidth
+                                            placeholder="Ej. 555 123 4567" value={form.phone} onChange={handleChange} />
                                     </Grid>
-                                </Grid>
-                            </Section>
-
-                            {/* ACCESO */}
-
-                            <Section
-                                icon={
-                                    <LockOutlined fontSize="small" />
-                                }
-                                title="Datos de acceso"
-                                subtitle="Configura la contraseña y el rol del usuario"
-                            >
-                                <Grid
-                                    container
-                                    spacing={2}
-                                >
-                                    <Grid
-                                        item
-                                        xs={12}
-                                        md={6}
-                                    >
-                                        <TextField
-                                            label="Contraseña *"
-                                            name="password"
-                                            type="password"
-                                            fullWidth
-                                            required
-                                            value={
-                                                form.password
-                                            }
-                                            onChange={
-                                                handleChange
-                                            }
-                                            sx={fieldSx}
-                                            placeholder="Ingresa una contraseña"
-                                        />
+                                    <Grid item xs={12} sm={6}>
+                                        <TextField label="Contraseña" name="password" type="password" fullWidth required
+                                            value={form.password} onChange={handleChange} />
                                     </Grid>
-
-                                    <Grid
-                                        item
-                                        xs={12}
-                                        md={6}
-                                    >
-                                        <TextField
-                                            select
-                                            label="Rol del usuario *"
-                                            name="roleId"
-                                            fullWidth
-                                            required
-                                            value={
-                                                form.roleId
-                                            }
-                                            onChange={
-                                                handleChange
-                                            }
-                                            sx={fieldSx}
-                                        >
-                                            <MenuItem value="">
-                                                Seleccionar rol
-                                            </MenuItem>
-
-                                            <MenuItem value={3}>
-                                                Evaluador
-                                            </MenuItem>
-
-                                            <MenuItem value={5}>
-                                                Escaneador
-                                            </MenuItem>
-
-                                            <MenuItem value={6}>
-                                                Administrador de Lives
-                                            </MenuItem>
+                                    <Grid item xs={12}>
+                                        <TextField select label="Rol del usuario" name="roleId" fullWidth required
+                                            value={form.roleId} onChange={handleChange}
+                                            helperText="El rol determina las funciones disponibles para el usuario">
+                                            <MenuItem value="">Seleccionar rol</MenuItem>
+                                            {ROLES.map((r) => <MenuItem key={r.id} value={r.id}>{r.label}</MenuItem>)}
                                         </TextField>
                                     </Grid>
                                 </Grid>
-                            </Section>
+                            </Grid>
 
-                            {/* ROL */}
+                            {/* Imagen de perfil */}
+                            <Grid item xs={12} md={5}>
+                                <Typography fontWeight={700}>Imagen de perfil</Typography>
+                                <Typography variant="caption" color="text.secondary">PNG, JPG o JPEG · Máx. 5 MB</Typography>
 
-                            <Section
-                                icon={
-                                    <AdminPanelSettingsOutlined fontSize="small" />
-                                }
-                                title="Rol y permisos"
-                                subtitle="El rol determina las funciones disponibles para el usuario"
-                            >
-                                <Paper
-                                    variant="outlined"
-                                    sx={{
-                                        p: 2,
-                                        borderRadius: 2,
-                                        border: `1px solid ${PINK_SOFT}`,
-                                        bgcolor: PINK_BG_SOFT,
-                                    }}
-                                >
-                                    <Stack
-                                        direction="row"
-                                        spacing={2}
-                                        alignItems="center"
-                                    >
-                                        <Avatar
-                                            sx={{
-                                                bgcolor:
-                                                    '#fff',
-                                                color:
-                                                    PINK,
-                                                border: `1px solid ${PINK_SOFT}`,
-                                            }}
-                                        >
-                                            <AdminPanelSettingsOutlined />
-                                        </Avatar>
+                                <input ref={fileInput} hidden type="file" accept="image/*" onChange={handleImageChange} />
 
-                                        <Box>
-                                            <Typography
-                                                fontWeight={700}
-                                                sx={{
-                                                    color:
-                                                        PINK_DARK,
-                                                }}
-                                            >
-                                                {form.roleId ===
-                                                    3
-                                                    ? 'Evaluador'
-                                                    : form.roleId ===
-                                                        5
-                                                        ? 'Escaneador'
-                                                        : form.roleId ===
-                                                            6
-                                                            ? 'Administrador de Lives'
-                                                            : 'Sin rol seleccionado'}
-                                            </Typography>
-
-                                            <Typography
-                                                variant="caption"
-                                                color="text.secondary"
-                                            >
-                                                Selecciona el rol
-                                                correspondiente
-                                                en el campo anterior.
-                                            </Typography>
-                                        </Box>
-                                    </Stack>
-                                </Paper>
-                            </Section>
-
-                            {/* IMAGEN */}
-
-                            <Section
-                                icon={
-                                    <ImageOutlined fontSize="small" />
-                                }
-                                title="Imagen de perfil"
-                                subtitle="PNG, JPG o JPEG · Máx. 5 MB"
-                            >
                                 {preview ? (
-                                    <Stack
-                                        spacing={2}
-                                        alignItems="center"
-                                    >
-                                        <Box
-                                            component="img"
-                                            src={preview}
-                                            alt="Vista previa del perfil"
-                                            sx={{
-                                                width: '100%',
-                                                maxWidth: 350,
-                                                height: 300,
-                                                objectFit:
-                                                    'contain',
-                                                borderRadius: 3,
-                                                border: `1px solid ${PINK_SOFT}`,
-                                                bgcolor:
-                                                    '#fff',
-                                                p: 1,
-                                            }}
-                                        />
-
-                                        <Stack
-                                            direction={{
-                                                xs: 'column',
-                                                sm: 'row',
-                                            }}
-                                            spacing={1.5}
-                                            flexWrap="wrap"
-                                            justifyContent="center"
-                                        >
-                                            <Button
-                                                variant="outlined"
-                                                size="small"
-                                                startIcon={
-                                                    <SwapHorizOutlined />
-                                                }
-                                                onClick={() =>
-                                                    document
-                                                        .getElementById(
-                                                            'profile-image-input'
-                                                        )
-                                                        ?.click()
-                                                }
-                                                sx={
-                                                    smallOutBtnSx
-                                                }
-                                            >
-                                                Cambiar imagen
+                                    <Stack alignItems="center" spacing={2} mt={2}>
+                                        <Avatar src={preview} alt="Vista previa del perfil"
+                                            sx={{ width: 160, height: 160, border: `3px solid ${alpha(PINK, 0.4)}` }} />
+                                        <Stack direction="row" spacing={1}>
+                                            <Button variant="outlined" size="small" startIcon={<SwapHorizRoundedIcon />}
+                                                onClick={() => fileInput.current.click()}>
+                                                Cambiar
                                             </Button>
-
-                                            <Button
-                                                variant="outlined"
-                                                color="error"
-                                                size="small"
-                                                startIcon={
-                                                    <DeleteOutlineIcon />
-                                                }
-                                                onClick={
-                                                    handleRemoveImage
-                                                }
-                                                sx={
-                                                    smallErrBtnSx
-                                                }
-                                            >
+                                            <Button variant="outlined" color="error" size="small"
+                                                startIcon={<DeleteOutlineRoundedIcon />} onClick={handleRemoveImage}>
                                                 Eliminar
                                             </Button>
                                         </Stack>
                                     </Stack>
                                 ) : (
-                                    <DropZone
-                                        id="profile-image-input"
-                                        icon={
-                                            <CloudUploadOutlined />
-                                        }
-                                        title="Haz clic para subir la imagen"
-                                        helper="PNG, JPG o JPEG · Máx. 5 MB"
-                                    />
+                                    <Box
+                                        onClick={() => fileInput.current.click()}
+                                        sx={{
+                                            mt: 2, p: 4, textAlign: "center", cursor: "pointer", borderRadius: 3,
+                                            border: `2px dashed ${alpha(PINK, 0.5)}`, bgcolor: alpha(PINK, 0.04), transition: ".2s",
+                                            "&:hover": { bgcolor: alpha(PINK, 0.1), borderColor: PINK },
+                                        }}
+                                    >
+                                        <Avatar sx={{ mx: "auto", mb: 1.5, width: 64, height: 64, bgcolor: alpha(PINK, 0.15), color: PINK }}>
+                                            <PersonRoundedIcon fontSize="large" />
+                                        </Avatar>
+                                        <CloudUploadRoundedIcon color="primary" />
+                                        <Typography fontWeight={600}>Haz clic para subir la imagen</Typography>
+                                    </Box>
                                 )}
+                            </Grid>
+                        </Grid>
+                    </Paper>
 
-                                <input
-                                    id="profile-image-input"
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={
-                                        handleImageChange
-                                    }
-                                    sx={{
-                                        display: 'none',
-                                    }}
-                                />
-                            </Section>
-
-                            <Divider
-                                sx={{
-                                    borderColor:
-                                        PINK_SOFT,
-                                }}
-                            />
-
-                            {/* BOTONES */}
-
-                            <Stack
-                                direction={{
-                                    xs: 'column-reverse',
-                                    sm: 'row',
-                                }}
-                                spacing={2}
-                                justifyContent="flex-end"
-                            >
-                                <Button
-                                    variant="outlined"
-                                    size="large"
-                                    onClick={() =>
-                                        onCancel
-                                            ? onCancel()
-                                            : history.push(
-                                                '/users/list'
-                                            )
-                                    }
-                                    disabled={loading}
-                                    sx={
-                                        outlineBtnSx
-                                    }
-                                >
-                                    Cancelar
-                                </Button>
-
-                                <Button
-                                    type="submit"
-                                    variant="contained"
-                                    size="large"
-                                    disabled={loading}
-                                    startIcon={
-                                        loading ? (
-                                            <CircularProgress
-                                                size={18}
-                                                sx={{
-                                                    color:
-                                                        '#fff',
-                                                }}
-                                            />
-                                        ) : (
-                                            <SaveIcon />
-                                        )
-                                    }
-                                    sx={{
-                                        ...primaryBtnSx,
-                                        minWidth: 220,
-                                    }}
-                                >
-                                    {loading
-                                        ? 'Guardando...'
-                                        : 'Guardar usuario'}
-                                </Button>
-                            </Stack>
-                        </Stack>
-                    </form>
-                </Box>
-            </Paper>
-        </Box>
+                    {/* Acciones */}
+                    <Stack direction={{ xs: "column-reverse", sm: "row" }} spacing={2} justifyContent="flex-end" mt={3}>
+                        <Button variant="outlined" size="large" onClick={goBack} disabled={loading} sx={{ minWidth: 140 }}>
+                            Cancelar
+                        </Button>
+                        <Button type="submit" variant="contained" size="large" disabled={loading}
+                            startIcon={loading ? <CircularProgress size={18} color="inherit" thickness={5} /> : <SaveRoundedIcon />}
+                            sx={{ minWidth: 200, boxShadow: `0 8px 20px ${alpha(PINK, 0.35)}` }}>
+                            {loading ? "Guardando..." : "Guardar usuario"}
+                        </Button>
+                    </Stack>
+                </Container>
+            </Box>
+        </ThemeProvider>
     );
 };
 

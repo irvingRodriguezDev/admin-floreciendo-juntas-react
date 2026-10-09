@@ -1,660 +1,355 @@
-import React, { useEffect, useReducer, useState, useContext, useMemo } from "react";
-import {
-    Grid,
-    Box,
-    Card,
-    TextField,
-    Paper,
-    Fade,
-    IconButton,
-    Typography,
-    Button,
-    Divider,
-    Collapse,
-    Tooltip,
-    CircularProgress,
-    Chip,
-    InputAdornment,
-} from "@mui/material";
+import React, { useEffect, useState, useContext, useMemo } from "react";
 import { useParams, useHistory } from "react-router-dom";
 import {
-    AddOutlined,
-    Delete as DeleteIcon,
-    Edit as EditIcon,
-    ExpandMore as ExpandMoreIcon,
-    ExpandLess as ExpandLessIcon,
-    Save as SaveIcon,
-    ArrowBack as ArrowBackIcon,
-    AssignmentOutlined,
-    ChecklistOutlined,
-} from "@mui/icons-material";
+    Box, Container, Paper, Stack, TextField, Typography, Button, Avatar, Chip, Collapse,
+    Divider, IconButton, Tooltip, CircularProgress, InputAdornment, ThemeProvider, createTheme, alpha,
+} from "@mui/material";
+import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
+import AssignmentRoundedIcon from "@mui/icons-material/AssignmentRounded";
+import ChecklistRoundedIcon from "@mui/icons-material/ChecklistRounded";
+import AddRoundedIcon from "@mui/icons-material/AddRounded";
+import EditRoundedIcon from "@mui/icons-material/EditRounded";
+import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
+import SaveRoundedIcon from "@mui/icons-material/SaveRounded";
+import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
+import ExpandLessRoundedIcon from "@mui/icons-material/ExpandLessRounded";
 import Swal from "sweetalert2";
 import clienteAxios from "../../config/Axios";
 import CertificationContext from "../../context/CertificationContext/CertificationContext";
 
-// ─── Estado inicial del reducer ──────────────────────────────────────────────
-const initialState = {
-    modules: [],          // Lista de módulos del certification
-    loadingModules: false,
+const PINK = "#FF5C95";
 
-    // Formulario nuevo módulo
-    newModuleTitle: "",
-    savingModule: false,
+const theme = createTheme({
+    palette: {
+        primary: { main: PINK, contrastText: "#fff" },
+        background: { default: "#FFF6F9" },
+    },
+    shape: { borderRadius: 14 },
+    typography: { button: { textTransform: "none", fontWeight: 600 } },
+    components: {
+        MuiButton: { defaultProps: { disableElevation: true } },
+        MuiPaper: { defaultProps: { elevation: 0 } },
+    },
+});
 
-    // Edición de módulo
-    editingModuleId: null,
-    editingModuleTitle: "",
+// Los botones de editar/eliminar estaban comentados en el original.
+// Cambia a true para volver a mostrarlos (los handlers siguen funcionando).
+const ALLOW_EDIT = false;
 
-    // Criterios por módulo: { [moduleId]: criterion[] }
-    criteria: {},
-    loadingCriteria: {},
+const showError = (text) => Swal.fire("Error", text, "error");
 
-    // Formulario nuevo criterio por módulo: { [moduleId]: { title, maxScore } }
-    newCriterion: {},
-    savingCriterion: {},
+const confirmDelete = (title, text) =>
+    Swal.fire({
+        title, text, icon: "warning", showCancelButton: true,
+        confirmButtonColor: "#d33", cancelButtonColor: "#3085d6",
+        confirmButtonText: "Sí, eliminar", cancelButtonText: "Cancelar",
+    }).then((r) => r.isConfirmed);
 
-    // Edición de criterio
-    editingCriterionId: null,
-    editingCriterion: {},
+const maxOf = (c) => c.maxScore ?? c.max_score;
 
-    // Módulos expandidos
-    expandedModules: {},
+const RowActions = ({ editing, onSave, onEdit, onDelete, label }) => (
+    <Stack direction="row" spacing={0.5}>
+        {editing ? (
+            <Tooltip title="Guardar">
+                <IconButton size="small" color="primary" onClick={onSave}><SaveRoundedIcon fontSize="small" /></IconButton>
+            </Tooltip>
+        ) : ALLOW_EDIT && (
+            <Tooltip title={`Editar ${label}`}>
+                <IconButton size="small" color="primary" onClick={onEdit}><EditRoundedIcon fontSize="small" /></IconButton>
+            </Tooltip>
+        )}
+        {ALLOW_EDIT && (
+            <Tooltip title={`Eliminar ${label}`}>
+                <IconButton size="small" color="error" onClick={onDelete}><DeleteOutlineRoundedIcon fontSize="small" /></IconButton>
+            </Tooltip>
+        )}
+    </Stack>
+);
+
+/* ── Módulo con sus criterios ─────────────────────────────────────────────── */
+const ModuleCard = ({ module, index, onUpdate, onRemove }) => {
+    const [open, setOpen] = useState(false);
+    const [editingTitle, setEditingTitle] = useState(null); // null = no edita
+
+    const [criteria, setCriteria] = useState(null); // null = aún no cargado
+    const [loadingCriteria, setLoadingCriteria] = useState(false);
+    const [newC, setNewC] = useState({ title: "", maxScore: "" });
+    const [savingC, setSavingC] = useState(false);
+    const [editingC, setEditingC] = useState(null); // { id, title, maxScore }
+
+    const fetchCriteria = async () => {
+        setLoadingCriteria(true);
+        try {
+            const { data } = await clienteAxios.get(`/module-criterion/${module.id}`);
+            setCriteria(data);
+        } catch {
+            /* sin mensaje, igual que antes */
+        } finally {
+            setLoadingCriteria(false);
+        }
+    };
+
+    const toggle = () => {
+        setOpen(!open);
+        if (!open && !criteria) fetchCriteria();
+    };
+
+    // Módulo
+    const saveModule = async () => {
+        if (!editingTitle?.trim()) return;
+        try {
+            const { data } = await clienteAxios.patch(`/module-certifications/${module.id}/`, { title: editingTitle.trim() });
+            onUpdate(data);
+            setEditingTitle(null);
+        } catch {
+            showError("No se pudo actualizar el módulo.");
+        }
+    };
+
+    const deleteModule = async () => {
+        if (!(await confirmDelete("¿Eliminar módulo?", "Se eliminarán también sus criterios."))) return;
+        try {
+            await clienteAxios.delete(`/module-certifications/${module.id}/`);
+            onRemove(module.id);
+        } catch {
+            showError("No se pudo eliminar el módulo.");
+        }
+    };
+
+    // Criterios
+    const createCriterion = async () => {
+        if (!newC.title.trim() || !newC.maxScore) return;
+        setSavingC(true);
+        try {
+            const { data } = await clienteAxios.post("/module-criterion/", {
+                moduleId: module.id, title: newC.title.trim(), maxScore: Number(newC.maxScore),
+            });
+            setCriteria((p) => [...(p || []), data]);
+            setNewC({ title: "", maxScore: "" });
+        } catch {
+            showError("No se pudo crear el criterio.");
+        } finally {
+            setSavingC(false);
+        }
+    };
+
+    const saveCriterion = async () => {
+        if (!editingC.title?.trim()) return;
+        try {
+            const { data } = await clienteAxios.patch(`/module-criterion/${editingC.id}/`, {
+                title: editingC.title.trim(), maxScore: Number(editingC.maxScore),
+            });
+            setCriteria((p) => p.map((c) => (c.id === editingC.id ? data : c)));
+            setEditingC(null);
+        } catch {
+            showError("No se pudo actualizar el criterio.");
+        }
+    };
+
+    const deleteCriterion = async (criterionId) => {
+        if (!(await confirmDelete("¿Eliminar criterio?"))) return;
+        try {
+            await clienteAxios.delete(`/module-criterion/${criterionId}/`);
+            setCriteria((p) => p.filter((c) => c.id !== criterionId));
+        } catch {
+            showError("No se pudo eliminar el criterio.");
+        }
+    };
+
+    const editingModule = editingTitle !== null;
+
+    return (
+        <Paper sx={{ border: `1px solid ${alpha(PINK, 0.15)}`, overflow: "hidden" }}>
+            {/* Cabecera del módulo */}
+            <Stack direction="row" alignItems="center" spacing={1.5} sx={{ p: 2 }}>
+                <Avatar sx={{ bgcolor: alpha(PINK, 0.15), color: PINK, width: 34, height: 34, fontWeight: 700, fontSize: 15 }}>
+                    {index + 1}
+                </Avatar>
+
+                {editingModule ? (
+                    <TextField size="small" autoFocus sx={{ flex: 1 }} value={editingTitle}
+                        onChange={(e) => setEditingTitle(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter") saveModule();
+                            if (e.key === "Escape") setEditingTitle(null);
+                        }} />
+                ) : (
+                    <Typography fontWeight={700} noWrap sx={{ flex: 1 }}>{module.title}</Typography>
+                )}
+
+                <RowActions label="módulo" editing={editingModule} onSave={saveModule}
+                    onEdit={() => setEditingTitle(module.title)} onDelete={deleteModule} />
+
+                <Tooltip title={open ? "Ocultar criterios" : "Ver criterios"}>
+                    <IconButton size="small" onClick={toggle}>
+                        {open ? <ExpandLessRoundedIcon /> : <ExpandMoreRoundedIcon />}
+                    </IconButton>
+                </Tooltip>
+            </Stack>
+
+            {/* Criterios */}
+            <Collapse in={open}>
+                <Divider />
+                <Box sx={{ p: 2, bgcolor: alpha(PINK, 0.03) }}>
+                    <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap" useFlexGap mb={2}>
+                        <ChecklistRoundedIcon fontSize="small" color="primary" />
+                        <Typography variant="body2" fontWeight={700} sx={{ mr: 1 }}>Criterios</Typography>
+                        <TextField size="small" placeholder="Título del criterio..." sx={{ flex: 1, minWidth: 160, bgcolor: "#fff" }}
+                            value={newC.title} onChange={(e) => setNewC((p) => ({ ...p, title: e.target.value }))} />
+                        <TextField size="small" type="number" placeholder="Puntaje máx." sx={{ width: 130, bgcolor: "#fff" }}
+                            inputProps={{ min: 0 }} value={newC.maxScore}
+                            onChange={(e) => setNewC((p) => ({ ...p, maxScore: e.target.value }))} />
+                        <Button variant="outlined" size="small"
+                            disabled={!newC.title.trim() || !newC.maxScore || savingC} onClick={createCriterion}
+                            startIcon={savingC ? <CircularProgress size={14} /> : <AddRoundedIcon />}>
+                            Agregar
+                        </Button>
+                    </Stack>
+
+                    {loadingCriteria ? (
+                        <Stack alignItems="center" py={2}><CircularProgress size={24} /></Stack>
+                    ) : !criteria?.length ? (
+                        <Typography variant="body2" color="text.disabled" align="center" py={1}>Sin criterios aún.</Typography>
+                    ) : (
+                        <Stack spacing={1}>
+                            {criteria.map((c, ci) => {
+                                const editing = editingC?.id === c.id;
+                                return (
+                                    <Stack key={c.id} direction="row" alignItems="center" spacing={1.5}
+                                        sx={{ p: 1.5, bgcolor: "#fff", borderRadius: 3, border: `1px solid ${alpha(PINK, 0.15)}` }}>
+                                        <Chip label={ci + 1} size="small" variant="outlined" color="primary" sx={{ minWidth: 28 }} />
+
+                                        {editing ? (
+                                            <>
+                                                <TextField size="small" autoFocus sx={{ flex: 1 }} value={editingC.title || ""}
+                                                    onChange={(e) => setEditingC((p) => ({ ...p, title: e.target.value }))} />
+                                                <TextField size="small" type="number" sx={{ width: 110 }} inputProps={{ min: 0 }}
+                                                    value={editingC.maxScore || ""}
+                                                    onChange={(e) => setEditingC((p) => ({ ...p, maxScore: e.target.value }))} />
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Typography variant="body2" fontWeight={500} noWrap sx={{ flex: 1 }}>{c.title}</Typography>
+                                                <Chip label={`Máx: ${maxOf(c)}`} size="small" color="primary" variant="outlined" sx={{ fontWeight: 600 }} />
+                                            </>
+                                        )}
+
+                                        <RowActions label="criterio" editing={editing} onSave={saveCriterion}
+                                            onEdit={() => setEditingC({ id: c.id, title: c.title, maxScore: maxOf(c) })}
+                                            onDelete={() => deleteCriterion(c.id)} />
+                                    </Stack>
+                                );
+                            })}
+                        </Stack>
+                    )}
+                </Box>
+            </Collapse>
+        </Paper>
+    );
 };
 
-const reducer = (s, a) => ({ ...s, ...a });
-
-// ─────────────────────────────────────────────────────────────────────────────
-
+/* ── Página ───────────────────────────────────────────────────────────────── */
 const AddModules = () => {
     const { certificationId } = useParams();
     const history = useHistory();
-    const [state, dispatch] = useReducer(reducer, initialState);
     const { certifications } = useContext(CertificationContext);
 
-    // ── Cargar módulos al montar ──────────────────────────────────────────────
-    useEffect(() => {
-        fetchModules();
-    }, [certificationId]);
+    const [modules, setModules] = useState([]);
+    const [loadingModules, setLoadingModules] = useState(false);
+    const [newTitle, setNewTitle] = useState("");
+    const [savingModule, setSavingModule] = useState(false);
+    const [certificationName, setCertificationName] = useState(localStorage.getItem("certification_name") || "");
 
-    const certification = useMemo(() => {
-        if (!certifications.length) return null;
+    const certification = useMemo(
+        () => (certifications?.length ? certifications.find((c) => c.id === Number(certificationId)) : null),
+        [certifications, certificationId]
+    );
 
-        return certifications.find(
-            (c) => c.id === Number(certificationId)
-        );
-    }, [certifications, certificationId]);
-
+    // Nombre de la certificación (con respaldo en localStorage)
     useEffect(() => {
         if (certification?.name) {
             localStorage.setItem("certification_name", certification.name);
-        }
-    }, [certification]);
-
-
-    const [certificationName, setCertificationName] = useState(
-        localStorage.getItem("certification_name") || ""
-    );
-
-    useEffect(() => {
-        if (certification?.name) {
             setCertificationName(certification.name);
         }
     }, [certification]);
 
+    // Cargar módulos
+    useEffect(() => {
+        setLoadingModules(true);
+        clienteAxios.get(`/module-certifications/${certificationId}`)
+            .then(({ data }) => setModules(data))
+            .catch(() => showError("No se pudieron cargar los módulos."))
+            .finally(() => setLoadingModules(false));
+    }, [certificationId]);
 
-
-
-    const fetchModules = async () => {
-        dispatch({ loadingModules: true });
-        try {
-            const { data } = await clienteAxios.get(`/module-certifications/${certificationId}`);
-            dispatch({ modules: data, loadingModules: false });
-        } catch {
-            dispatch({ loadingModules: false });
-            Swal.fire("Error", "No se pudieron cargar los módulos.", "error");
-        }
-    };
-
-    // ── Cargar criterios de un módulo ─────────────────────────────────────────
-    const fetchCriteria = async (moduleId) => {
-        dispatch({ loadingCriteria: { ...state.loadingCriteria, [moduleId]: true } });
-        try {
-            const { data } = await clienteAxios.get(`/module-criterion/${moduleId}`);
-            dispatch({
-                criteria: { ...state.criteria, [moduleId]: data },
-                loadingCriteria: { ...state.loadingCriteria, [moduleId]: false },
-            });
-        } catch {
-            dispatch({ loadingCriteria: { ...state.loadingCriteria, [moduleId]: false } });
-        }
-    };
-
-    // ── Toggle expansión de módulo ────────────────────────────────────────────
-    const toggleExpand = (moduleId) => {
-        const isExpanded = state.expandedModules[moduleId];
-        dispatch({ expandedModules: { ...state.expandedModules, [moduleId]: !isExpanded } });
-        if (!isExpanded && !state.criteria[moduleId]) {
-            fetchCriteria(moduleId);
-        }
-    };
-
-    // ── Crear módulo ──────────────────────────────────────────────────────────
     const handleCreateModule = async () => {
-        if (!state.newModuleTitle.trim()) return;
-        dispatch({ savingModule: true });
+        if (!newTitle.trim()) return;
+        setSavingModule(true);
         try {
             const { data } = await clienteAxios.post("/module-certifications/", {
-                certificationId,
-                title: state.newModuleTitle.trim(),
+                certificationId, title: newTitle.trim(),
             });
-            dispatch({
-                modules: [...state.modules, data],
-                newModuleTitle: "",
-                savingModule: false,
-            });
+            setModules((p) => [...p, data]);
+            setNewTitle("");
             Swal.fire({ icon: "success", title: "Módulo creado", timer: 1500, showConfirmButton: false });
         } catch {
-            dispatch({ savingModule: false });
-            Swal.fire("Error", "No se pudo crear el módulo.", "error");
+            showError("No se pudo crear el módulo.");
+        } finally {
+            setSavingModule(false);
         }
     };
 
-    // ── Guardar edición de módulo ─────────────────────────────────────────────
-    const handleSaveModule = async (moduleId) => {
-        if (!state.editingModuleTitle.trim()) return;
-        try {
-            const { data } = await clienteAxios.patch(`/module-certifications/${moduleId}/`, {
-                title: state.editingModuleTitle.trim(),
-            });
-            dispatch({
-                modules: state.modules.map((m) => (m.id === moduleId ? data : m)),
-                editingModuleId: null,
-                editingModuleTitle: "",
-            });
-        } catch {
-            Swal.fire("Error", "No se pudo actualizar el módulo.", "error");
-        }
-    };
-
-    // ── Eliminar módulo ───────────────────────────────────────────────────────
-    const handleDeleteModule = (moduleId) => {
-        Swal.fire({
-            title: "¿Eliminar módulo?",
-            text: "Se eliminarán también sus criterios.",
-            icon: "warning",
-            showCancelButton: true,
-            confirmButtonColor: "#d33",
-            cancelButtonColor: "#3085d6",
-            confirmButtonText: "Sí, eliminar",
-            cancelButtonText: "Cancelar",
-        }).then(async (result) => {
-            if (result.isConfirmed) {
-                try {
-                    await clienteAxios.delete(`/module-certifications/${moduleId}/`);
-                    dispatch({ modules: state.modules.filter((m) => m.id !== moduleId) });
-                } catch {
-                    Swal.fire("Error", "No se pudo eliminar el módulo.", "error");
-                }
-            }
-        });
-    };
-
-    // ── Crear criterio ────────────────────────────────────────────────────────
-    const handleCreateCriterion = async (moduleId) => {
-        const criterion = state.newCriterion[moduleId] || {};
-        if (!criterion.title?.trim() || !criterion.maxScore) return;
-        dispatch({ savingCriterion: { ...state.savingCriterion, [moduleId]: true } });
-        try {
-            const { data } = await clienteAxios.post("/module-criterion/", {
-                moduleId,
-                title: criterion.title.trim(),
-                maxScore: Number(criterion.maxScore),
-            });
-            const existing = state.criteria[moduleId] || [];
-            dispatch({
-                criteria: { ...state.criteria, [moduleId]: [...existing, data] },
-                newCriterion: { ...state.newCriterion, [moduleId]: { title: "", maxScore: "" } },
-                savingCriterion: { ...state.savingCriterion, [moduleId]: false },
-            });
-        } catch {
-            dispatch({ savingCriterion: { ...state.savingCriterion, [moduleId]: false } });
-            Swal.fire("Error", "No se pudo crear el criterio.", "error");
-        }
-    };
-
-    // ── Guardar edición criterio ──────────────────────────────────────────────
-    const handleSaveCriterion = async (moduleId, criterionId) => {
-        const ec = state.editingCriterion;
-        if (!ec.title?.trim()) return;
-        try {
-            const { data } = await clienteAxios.patch(`/module-criterion/${criterionId}/`, {
-                title: ec.title.trim(),
-                maxScore: Number(ec.maxScore),
-            });
-            dispatch({
-                criteria: {
-                    ...state.criteria,
-                    [moduleId]: state.criteria[moduleId].map((c) => (c.id === criterionId ? data : c)),
-                },
-                editingCriterionId: null,
-                editingCriterion: {},
-            });
-        } catch {
-            Swal.fire("Error", "No se pudo actualizar el criterio.", "error");
-        }
-    };
-
-    // ── Eliminar criterio ─────────────────────────────────────────────────────
-    const handleDeleteCriterion = (moduleId, criterionId) => {
-        Swal.fire({
-            title: "¿Eliminar criterio?",
-            icon: "warning",
-            showCancelButton: true,
-            confirmButtonColor: "#d33",
-            cancelButtonColor: "#3085d6",
-            confirmButtonText: "Sí, eliminar",
-            cancelButtonText: "Cancelar",
-        }).then(async (result) => {
-            if (result.isConfirmed) {
-                try {
-                    await clienteAxios.delete(`/module-criterion/${criterionId}/`);
-                    dispatch({
-                        criteria: {
-                            ...state.criteria,
-                            [moduleId]: state.criteria[moduleId].filter((c) => c.id !== criterionId),
-                        },
-                    });
-                } catch {
-                    Swal.fire("Error", "No se pudo eliminar el criterio.", "error");
-                }
-            }
-        });
-    };
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // RENDER
-    // ─────────────────────────────────────────────────────────────────────────
     return (
-        <Grid container spacing={3}>
-            {/* Header / Navegación */}
-            <Grid item xs={12}>
-                <Paper
-                    elevation={0}
-                    sx={{
-                        p: 3,
-                        borderRadius: 4,
-                        background: "linear-gradient(135deg, rgba(240,244,248,0.9), rgba(255,255,255,0.95))",
-                        backdropFilter: "blur(6px)",
-                        border: "1px solid rgba(200,200,200,0.3)",
-                    }}
-                >
-                    <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={2}>
-                        <Box display="flex" alignItems="center" gap={1}>
-                            <IconButton onClick={() => history.goBack()} size="small">
-                                <ArrowBackIcon />
-                            </IconButton>
-                            <AssignmentOutlined color="primary" />
-                            <Typography variant="h6" fontWeight={700}>
-                                Módulos de la Certificación - {certificationName || ""}
-                            </Typography>
+        <ThemeProvider theme={theme}>
+            <Box sx={{ bgcolor: "background.default", minHeight: "100%", py: 4 }}>
+                <Container maxWidth="md">
+                    {/* Encabezado */}
+                    <Stack direction="row" alignItems="center" spacing={2} mb={3}>
+                        <Tooltip title="Volver">
+                            <IconButton onClick={() => history.goBack()}><ArrowBackRoundedIcon /></IconButton>
+                        </Tooltip>
+                        <Avatar sx={{ bgcolor: "primary.main", width: 52, height: 52 }}><AssignmentRoundedIcon /></Avatar>
+                        <Box flexGrow={1} minWidth={0}>
+                            <Typography variant="h5" fontWeight={800}>Módulos de la certificación</Typography>
+                            <Typography variant="body2" color="text.secondary" noWrap>{certificationName}</Typography>
                         </Box>
+                        <Chip color="primary" variant="outlined" label={`${modules.length} módulos`} />
+                    </Stack>
 
-                        {/* Formulario: Nuevo módulo */}
-                        <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
-                            <TextField
-                                variant="outlined"
-                                size="small"
-                                placeholder="Título del módulo..."
-                                value={state.newModuleTitle}
-                                onChange={(e) => dispatch({ newModuleTitle: e.target.value })}
+                    {/* Nuevo módulo */}
+                    <Paper sx={{ p: 2, mb: 3, border: `1px solid ${alpha(PINK, 0.15)}` }}>
+                        <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+                            <TextField fullWidth size="small" placeholder="Título del módulo..."
+                                value={newTitle} onChange={(e) => setNewTitle(e.target.value)}
                                 onKeyDown={(e) => e.key === "Enter" && handleCreateModule()}
-                                sx={{ backgroundColor: "white", borderRadius: 2, width: { xs: "100%", sm: 260 } }}
-                                InputProps={{
-                                    startAdornment: (
-                                        <InputAdornment position="start">
-                                            <AssignmentOutlined fontSize="small" color="action" />
-                                        </InputAdornment>
-                                    ),
-                                }}
-                            />
-                            <Button
-                                variant="contained"
-                                startIcon={state.savingModule ? <CircularProgress size={16} color="inherit" /> : <AddOutlined />}
-                                onClick={handleCreateModule}
-                                disabled={!state.newModuleTitle.trim() || state.savingModule}
-                                sx={{ borderRadius: 2, textTransform: "none", fontWeight: 600 }}
-                            >
+                                InputProps={{ startAdornment: <InputAdornment position="start"><AssignmentRoundedIcon fontSize="small" color="primary" /></InputAdornment> }} />
+                            <Button variant="contained" disabled={!newTitle.trim() || savingModule} onClick={handleCreateModule}
+                                startIcon={savingModule ? <CircularProgress size={16} color="inherit" /> : <AddRoundedIcon />}
+                                sx={{ flexShrink: 0, boxShadow: `0 6px 16px ${alpha(PINK, 0.35)}` }}>
                                 Agregar módulo
                             </Button>
-                        </Box>
-                    </Box>
-                </Paper>
-            </Grid>
+                        </Stack>
+                    </Paper>
 
-            {/* Lista de módulos */}
-            <Grid item xs={12}>
-                {state.loadingModules ? (
-                    <Box display="flex" justifyContent="center" py={6}>
-                        <CircularProgress />
-                    </Box>
-                ) : state.modules.length === 0 ? (
-                    <Typography align="center" color="text.secondary" py={6}>
-                        No hay módulos aún. ¡Agrega el primero!
-                    </Typography>
-                ) : (
-                    <Grid container spacing={2}>
-                        {state.modules.map((module, index) => (
-                            <Grid item xs={12} key={module.id}>
-                                <Fade in timeout={300 + index * 60}>
-                                    <Card
-                                        sx={{
-                                            borderRadius: 4,
-                                            boxShadow: "0px 4px 15px rgba(0,0,0,0.07)",
-                                            transition: "box-shadow 0.2s ease",
-                                            "&:hover": { boxShadow: "0px 6px 20px rgba(0,0,0,0.11)" },
-                                            overflow: "visible",
-                                        }}
-                                    >
-                                        {/* ── Cabecera del módulo ── */}
-                                        <Box
-                                            sx={{
-                                                p: 2,
-                                                display: "flex",
-                                                alignItems: "center",
-                                                justifyContent: "space-between",
-                                                flexWrap: "wrap",
-                                                gap: 1,
-                                            }}
-                                        >
-                                            {/* Título / Edición inline */}
-                                            <Box display="flex" alignItems="center" gap={1} flex={1} minWidth={0}>
-                                                <Chip
-                                                    label={index + 1}
-                                                    size="small"
-                                                    color="primary"
-                                                    sx={{ fontWeight: 700, minWidth: 32 }}
-                                                />
-                                                {state.editingModuleId === module.id ? (
-                                                    <TextField
-                                                        variant="outlined"
-                                                        size="small"
-                                                        value={state.editingModuleTitle}
-                                                        onChange={(e) => dispatch({ editingModuleTitle: e.target.value })}
-                                                        onKeyDown={(e) => {
-                                                            if (e.key === "Enter") handleSaveModule(module.id);
-                                                            if (e.key === "Escape") dispatch({ editingModuleId: null, editingModuleTitle: "" });
-                                                        }}
-                                                        autoFocus
-                                                        sx={{ flex: 1 }}
-                                                    />
-                                                ) : (
-                                                    <Typography variant="subtitle1" fontWeight={600} noWrap>
-                                                        {module.title}
-                                                    </Typography>
-                                                )}
-                                            </Box>
-
-                                            {/* Acciones módulo */}
-                                            <Box display="flex" alignItems="center" gap={0.5}>
-                                                {state.editingModuleId === module.id ? (
-                                                    <Tooltip title="Guardar">
-                                                        <IconButton
-                                                            size="small"
-                                                            color="primary"
-                                                            onClick={() => handleSaveModule(module.id)}
-                                                        >
-                                                            <SaveIcon fontSize="small" />
-                                                        </IconButton>
-                                                    </Tooltip>
-                                                ) : (
-                                                    <Tooltip title="Editar módulo">
-                                                        {/* <IconButton
-                                                            size="small"
-                                                            color="primary"
-                                                            onClick={() =>
-                                                                dispatch({
-                                                                    editingModuleId: module.id,
-                                                                    editingModuleTitle: module.title,
-                                                                })
-                                                            }
-                                                        >
-                                                            <EditIcon fontSize="small" />
-                                                        </IconButton> */}
-                                                    </Tooltip>
-                                                )}
-                                                <Tooltip title="Eliminar módulo">
-                                                    {/* <IconButton
-                                                        size="small"
-                                                        color="error"
-                                                        onClick={() => handleDeleteModule(module.id)}
-                                                    >
-                                                        <DeleteIcon fontSize="small" />
-                                                    </IconButton> */}
-                                                </Tooltip>
-                                                <Tooltip title={state.expandedModules[module.id] ? "Ocultar criterios" : "Ver criterios"}>
-                                                    <IconButton size="small" onClick={() => toggleExpand(module.id)}>
-                                                        {state.expandedModules[module.id] ? (
-                                                            <ExpandLessIcon fontSize="small" />
-                                                        ) : (
-                                                            <ExpandMoreIcon fontSize="small" />
-                                                        )}
-                                                    </IconButton>
-                                                </Tooltip>
-                                            </Box>
-                                        </Box>
-
-                                        {/* ── Criterios (collapsible) ── */}
-                                        <Collapse in={!!state.expandedModules[module.id]}>
-                                            <Divider />
-                                            <Box sx={{ p: 2, bgcolor: "rgba(248,250,252,0.8)" }}>
-                                                {/* Formulario nuevo criterio */}
-                                                <Box
-                                                    display="flex"
-                                                    alignItems="center"
-                                                    gap={1}
-                                                    flexWrap="wrap"
-                                                    mb={2}
-                                                >
-                                                    <ChecklistOutlined fontSize="small" color="action" />
-                                                    <Typography variant="body2" fontWeight={600} color="text.secondary" sx={{ mr: 1 }}>
-                                                        Criterios
-                                                    </Typography>
-                                                    <TextField
-                                                        variant="outlined"
-                                                        size="small"
-                                                        placeholder="Título del criterio..."
-                                                        value={state.newCriterion[module.id]?.title || ""}
-                                                        onChange={(e) =>
-                                                            dispatch({
-                                                                newCriterion: {
-                                                                    ...state.newCriterion,
-                                                                    [module.id]: {
-                                                                        ...state.newCriterion[module.id],
-                                                                        title: e.target.value,
-                                                                    },
-                                                                },
-                                                            })
-                                                        }
-                                                        sx={{ backgroundColor: "white", borderRadius: 2, flex: 1, minWidth: 160 }}
-                                                    />
-                                                    <TextField
-                                                        variant="outlined"
-                                                        size="small"
-                                                        placeholder="Puntaje máx."
-                                                        type="number"
-                                                        value={state.newCriterion[module.id]?.maxScore || ""}
-                                                        onChange={(e) =>
-                                                            dispatch({
-                                                                newCriterion: {
-                                                                    ...state.newCriterion,
-                                                                    [module.id]: {
-                                                                        ...state.newCriterion[module.id],
-                                                                        maxScore: e.target.value,
-                                                                    },
-                                                                },
-                                                            })
-                                                        }
-                                                        sx={{ backgroundColor: "white", borderRadius: 2, width: 130 }}
-                                                        inputProps={{ min: 0 }}
-                                                    />
-                                                    <Button
-                                                        variant="outlined"
-                                                        size="small"
-                                                        startIcon={
-                                                            state.savingCriterion[module.id] ? (
-                                                                <CircularProgress size={14} />
-                                                            ) : (
-                                                                <AddOutlined />
-                                                            )
-                                                        }
-                                                        onClick={() => handleCreateCriterion(module.id)}
-                                                        disabled={
-                                                            !state.newCriterion[module.id]?.title?.trim() ||
-                                                            !state.newCriterion[module.id]?.maxScore ||
-                                                            state.savingCriterion[module.id]
-                                                        }
-                                                        sx={{ borderRadius: 2, textTransform: "none", fontWeight: 600 }}
-                                                    >
-                                                        Agregar
-                                                    </Button>
-                                                </Box>
-
-                                                {/* Lista de criterios */}
-                                                {state.loadingCriteria[module.id] ? (
-                                                    <Box display="flex" justifyContent="center" py={2}>
-                                                        <CircularProgress size={24} />
-                                                    </Box>
-                                                ) : !state.criteria[module.id] || state.criteria[module.id].length === 0 ? (
-                                                    <Typography variant="body2" color="text.disabled" align="center" py={1}>
-                                                        Sin criterios aún.
-                                                    </Typography>
-                                                ) : (
-                                                    <Box display="flex" flexDirection="column" gap={1}>
-                                                        {state.criteria[module.id].map((criterion, ci) => (
-                                                            <Fade in key={criterion.id} timeout={200 + ci * 50}>
-                                                                <Paper
-                                                                    elevation={0}
-                                                                    sx={{
-                                                                        p: 1.5,
-                                                                        borderRadius: 3,
-                                                                        border: "1px solid rgba(0,0,0,0.07)",
-                                                                        display: "flex",
-                                                                        alignItems: "center",
-                                                                        justifyContent: "space-between",
-                                                                        flexWrap: "wrap",
-                                                                        gap: 1,
-                                                                        bgcolor: "white",
-                                                                        transition: "box-shadow 0.15s",
-                                                                        "&:hover": { boxShadow: "0 2px 8px rgba(0,0,0,0.08)" },
-                                                                    }}
-                                                                >
-                                                                    <Box display="flex" alignItems="center" gap={1} flex={1} minWidth={0}>
-                                                                        <Chip
-                                                                            label={ci + 1}
-                                                                            size="small"
-                                                                            variant="outlined"
-                                                                            sx={{ fontSize: 11, minWidth: 28 }}
-                                                                        />
-                                                                        {state.editingCriterionId === criterion.id ? (
-                                                                            <>
-                                                                                <TextField
-                                                                                    variant="outlined"
-                                                                                    size="small"
-                                                                                    value={state.editingCriterion.title || ""}
-                                                                                    onChange={(e) =>
-                                                                                        dispatch({
-                                                                                            editingCriterion: { ...state.editingCriterion, title: e.target.value },
-                                                                                        })
-                                                                                    }
-                                                                                    autoFocus
-                                                                                    sx={{ flex: 1 }}
-                                                                                />
-                                                                                <TextField
-                                                                                    variant="outlined"
-                                                                                    size="small"
-                                                                                    type="number"
-                                                                                    value={state.editingCriterion.maxScore || ""}
-                                                                                    onChange={(e) =>
-                                                                                        dispatch({
-                                                                                            editingCriterion: { ...state.editingCriterion, maxScore: e.target.value },
-                                                                                        })
-                                                                                    }
-                                                                                    sx={{ width: 110 }}
-                                                                                    inputProps={{ min: 0 }}
-                                                                                />
-                                                                            </>
-                                                                        ) : (
-                                                                            <>
-                                                                                <Typography variant="body2" fontWeight={500} noWrap flex={1}>
-                                                                                    {criterion.title}
-                                                                                </Typography>
-                                                                                <Chip
-                                                                                    label={`Máx: ${criterion.maxScore ?? criterion.max_score}`}
-                                                                                    size="small"
-                                                                                    color="secondary"
-                                                                                    variant="outlined"
-                                                                                    sx={{ fontWeight: 600 }}
-                                                                                />
-                                                                            </>
-                                                                        )}
-                                                                    </Box>
-
-                                                                    {/* Acciones criterio */}
-                                                                    <Box display="flex" gap={0.5}>
-                                                                        {state.editingCriterionId === criterion.id ? (
-                                                                            <Tooltip title="Guardar">
-                                                                                <IconButton
-                                                                                    size="small"
-                                                                                    color="primary"
-                                                                                    onClick={() => handleSaveCriterion(module.id, criterion.id)}
-                                                                                >
-                                                                                    <SaveIcon fontSize="small" />
-                                                                                </IconButton>
-                                                                            </Tooltip>
-                                                                        ) : (
-                                                                            <Tooltip title="Editar criterio">
-                                                                                {/* <IconButton
-                                                                                    size="small"
-                                                                                    color="primary"
-                                                                                    onClick={() =>
-                                                                                        dispatch({
-                                                                                            editingCriterionId: criterion.id,
-                                                                                            editingCriterion: {
-                                                                                                title: criterion.title,
-                                                                                                maxScore: criterion.maxScore ?? criterion.max_score,
-                                                                                            },
-                                                                                        })
-                                                                                    }
-                                                                                >
-                                                                                    <EditIcon fontSize="small" />
-                                                                                </IconButton> */}
-                                                                            </Tooltip>
-                                                                        )}
-                                                                        <Tooltip title="Eliminar criterio">
-                                                                            {/* <IconButton
-                                                                                size="small"
-                                                                                color="error"
-                                                                                onClick={() => handleDeleteCriterion(module.id, criterion.id)}
-                                                                            >
-                                                                                <DeleteIcon fontSize="small" />
-                                                                            </IconButton> */}
-                                                                        </Tooltip>
-                                                                    </Box>
-                                                                </Paper>
-                                                            </Fade>
-                                                        ))}
-                                                    </Box>
-                                                )}
-                                            </Box>
-                                        </Collapse>
-                                    </Card>
-                                </Fade>
-                            </Grid>
-                        ))}
-                    </Grid>
-                )}
-            </Grid>
-        </Grid>
+                    {/* Lista */}
+                    {loadingModules ? (
+                        <Stack alignItems="center" py={6}><CircularProgress /></Stack>
+                    ) : modules.length === 0 ? (
+                        <Typography align="center" color="text.secondary" py={6}>
+                            No hay módulos aún. ¡Agrega el primero!
+                        </Typography>
+                    ) : (
+                        <Stack spacing={2}>
+                            {modules.map((m, i) => (
+                                <ModuleCard key={m.id} module={m} index={i}
+                                    onUpdate={(updated) => setModules((p) => p.map((x) => (x.id === updated.id ? updated : x)))}
+                                    onRemove={(id) => setModules((p) => p.filter((x) => x.id !== id))} />
+                            ))}
+                        </Stack>
+                    )}
+                </Container>
+            </Box>
+        </ThemeProvider>
     );
 };
 
