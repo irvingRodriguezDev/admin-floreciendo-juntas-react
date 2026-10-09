@@ -1,285 +1,376 @@
-import React, { useEffect, useContext } from 'react';
-import { Route, Switch, withRouter, Redirect } from 'react-router-dom';
-import classnames from 'classnames';
+import React, { useContext } from "react";
+import {
+  Route,
+  Switch,
+  withRouter,
+  Redirect,
+} from "react-router-dom";
+import { Box } from "@mui/material";
 
-import SettingsIcon from '@mui/icons-material/Settings';
-import GithubIcon from '@mui/icons-material/GitHub';
-import FacebookIcon from '@mui/icons-material/Facebook';
-import TwitterIcon from '@mui/icons-material/Twitter';
+// Components
+import Header from "../Header/Header";
+import Sidebar from "../Sidebar/Sidebar";
 
-import { Fab, IconButton } from '@mui/material';
-// import { connect } from 'react-redux';
-// styles
-import useStyles from './styles';
+// Pages
+import Dashboard from "../../pages/dashboard/Dashboard";
+import Profile from "../../pages/profile/Profile";
 
-// components
-import Header from '../Header';
-import Sidebar from '../Sidebar';
-import Footer from '../Footer';
-import { Link } from '../Wrappers';
-// import ColorChangeThemePopper from './components/ColorChangeThemePopper';
+import Product from "../../pages/products/Product";
+import ProductsGrid from "../../pages/ecommerce/ProductsGrid";
 
-// pages
-import Dashboard from '../../pages/dashboard/Dashboard';
-import Profile from '../../pages/profile'
+import System from "../../pages/systems/System";
+import AddSystem from "../../pages/systems/AddSystem";
 
-import Product from '../../pages/products/Product';
-import ProductsGrid from '../../pages/ecommerce/ProductsGrid'
+import UsersTablePage from "../../pages/CRUD/Users/table/UsersTablePage";
+import UserAdd from "../../pages/CRUD/Users/table/UserAdd";
 
-// import MapsGoogle from '../../pages/maps'
-// import VectorMaps from '../../pages/maps/VectorMap'
+import CourseAdd from "../../pages/ecommerce/CourseAdd";
+import CourseVideoAdd from "../../pages/ecommerce/CourseVideoAdd";
 
-import System from '../../pages/systems/System';
-import AddSystem from '../../pages/systems/AddSystem';
+import EventAdd from "../../pages/events/EventAdd";
+import Event from "../../pages/events/Event";
 
-// context
-import { useLayoutState } from '../../context/LayoutContext';
+import ScannerComponent from "../../pages/scanner/scanner";
 
-// import UsersFormPage from 'pages/CRUD/Users/form/UsersFormPage';
-// import UsersTablePage from 'pages/CRUD/Users/table/UsersTablePage';
-import UsersTable from '../../pages/CRUD/Users/table/UsersTable';
+import AddProduct from "../../pages/products/AddProduct";
+import Order from "../../pages/orders/Order";
+import Lottery from "../../pages/lottery/lottery";
 
-//Sidebar structure
-import { useSidebarStructure } from '../Sidebar/SidebarStructure';
-import CourseAdd from '../../pages/ecommerce/CourseAdd';
-import CourseVideoAdd from '../../pages/ecommerce/CourseVideoAdd';
-import EventAdd from '../../pages/events/EventAdd';
-import Event from '../../pages/events/Event';
-import UserAdd from '../../pages/CRUD/Users/table/UserAdd';
-import ScannerComponent from '../../pages/scanner/scanner';
-import UsersTablePage from '../../pages/CRUD/Users/table/UsersTablePage';
-import AddProduct from '../../pages/products/AddProduct';
-import Order from '../../pages/orders/Order';
-import Lottery from '../../pages/lottery/lottery';
-import Live from '../../pages/lives/Live';
-import AddLive from '../../pages/lives/AddLive';
-import Task from '../../pages/task/Task';
-import { PrivateRouter } from '../../Routes/PrivateRoute';
-import AuthContext from '../../context/AuthContext/AuthContext';
-import AddCertificate from '../../pages/certifications/AddCertificate';
-import Certification from '../../pages/certifications/Certification';
-import AddModules from '../../pages/certifications/AddModules';
-import PendingTask from '../../pages/task/PendingTask';
-import Formation from '../../pages/formations/formation';
-import AddModuleFormation from '../../pages/formations/addmodule';
-import AddFormation from '../../pages/formations/addformation';
-import Deliverable from '../../pages/formations/deliverable';
-// import Secrets from '../../pages/secretsComponent/secrets';
-// import AddSecret from '../../pages/secretsComponent/Addsecret';
+import Live from "../../pages/lives/Live";
+import AddLive from "../../pages/lives/AddLive";
 
-// const Redirect = (props) => {
-//   useEffect(() => window.location.replace(props.url));
-//   return <span>Redirecting...</span>;
-// };
+import Task from "../../pages/task/Task";
+import PendingTask from "../../pages/task/PendingTask";
+
+import AddCertificate from "../../pages/certifications/AddCertificate";
+import Certification from "../../pages/certifications/Certification";
+import AddModules from "../../pages/certifications/AddModules";
+
+import Formation from "../../pages/formations/formation";
+import AddModuleFormation from "../../pages/formations/addmodule";
+import AddFormation from "../../pages/formations/addformation";
+import Deliverable from "../../pages/formations/deliverable";
+
+// Context
+import { useLayoutState } from "../../context/LayoutContext";
+import AuthContext from "../../context/AuthContext/AuthContext";
+
+// Routes
+import { PrivateRouter } from "../../Routes/PrivateRoute";
+
+// Sidebar
+import { useSidebarStructure } from "../Sidebar/SidebarStructure";
 
 function Layout(props) {
-  const classes = useStyles();
-  const [anchorEl, setAnchorEl] = React.useState(null);
   const structure = useSidebarStructure();
-  const { autenticado, usuarioAutenticado, cargando } = useContext(AuthContext);
 
-  const open = Boolean(anchorEl);
-  const id = open ? 'add-section-popover' : undefined;
-  const handleClick = (event) => {
-    setAnchorEl(open ? null : event.currentTarget);
-  };
+  const {
+    autenticado,
+  } = useContext(AuthContext);
 
-  // global
-  let layoutState = useLayoutState();
+  const layoutState = useLayoutState();
 
   return (
-    <div className={classes.root}>
+    <Box
+      sx={{
+        display: "flex",
+        minHeight: "100vh",
+        width: "100%",
+        backgroundColor: "background.default",
+      }}
+    >
+      {/* Header */}
       <Header history={props.history} />
+
+      {/* Sidebar */}
       <Sidebar structure={structure} />
-      <div
-        className={classnames(classes.content, {
-          [classes.contentShift]: layoutState.isSidebarOpened,
-        })}
+
+      {/* Contenido principal */}
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          width: "100%",
+          minWidth: 0,
+
+          transition: (theme) =>
+            theme.transitions.create(["margin", "width"], {
+              easing: theme.transitions.easing.sharp,
+              duration: theme.transitions.duration.leavingScreen,
+            }),
+
+          ...(layoutState.isSidebarOpened && {
+            transition: (theme) =>
+              theme.transitions.create(["margin", "width"], {
+                easing: theme.transitions.easing.easeOut,
+                duration: theme.transitions.duration.enteringScreen,
+              }),
+          }),
+        }}
       >
-        <div className={classes.fakeToolbar} />
-        <Switch>
-          <Route
-            exact
-            path="/"
-            render={() => <Redirect to="/dashboard" />}
-          />
-          <Route path='/dashboard' component={Dashboard} />
-          <Route path="/profile" component={Profile} />
+        {/* Espacio reservado para el Header */}
+        <Box
+          sx={{
+            minHeight: {
+              xs: 56,
+              sm: 64,
+            },
+          }}
+        />
 
-          <PrivateRouter
-            path="/scanner"
-            component={ScannerComponent}
-            isAuthenticated={autenticado}
-            allowedRoles={["1"]}
-          />
+        {/* Contenido de las páginas */}
+        <Box
+          sx={{
+            width: "100%",
+            px: {
+              xs: 1.5,
+              sm: 2,
+              md: 3,
+            },
+            py: {
+              xs: 2,
+              sm: 2.5,
+              md: 3,
+            },
+            boxSizing: "border-box",
+          }}
+        >
+          <Switch>
+            {/* Dashboard */}
+            <Route
+              exact
+              path="/"
+              render={() => <Redirect to="/dashboard" />}
+            />
 
+            <Route
+              path="/dashboard"
+              component={Dashboard}
+            />
 
+            {/* Perfil */}
+            <Route
+              path="/profile"
+              component={Profile}
+            />
 
-          <Route
-            exact
-            path="/system"
-            render={() => <Redirect to="/system/list" />}
-          />
+            {/* Scanner */}
+            <PrivateRouter
+              path="/scanner"
+              component={ScannerComponent}
+              isAuthenticated={autenticado}
+              allowedRoles={["1"]}
+            />
 
-          <PrivateRouter
-            path="/task"
-            component={Task}
-            isAuthenticated={autenticado}
-            allowedRoles={["3"]}
-          />
+            {/* Sistema */}
+            <Route
+              exact
+              path="/system"
+              render={() => <Redirect to="/system/list" />}
+            />
 
+            <Route
+              path="/system/list"
+              component={System}
+            />
 
-          {/* Página de lista de sistemas */}
-          <Route path="/system/list" component={System} />
+            <Route
+              path="/system/addsystem"
+              component={AddSystem}
+            />
 
-          {/* Página para agregar un sistema */}
-          <Route path="/system/addsystem" component={AddSystem} />
-          <Route path="/system/editsystem/:id" component={AddSystem} />
+            <Route
+              path="/system/editsystem/:id"
+              component={AddSystem}
+            />
 
-          {/* Página de lista de certifiaciones */}
-          <Route path="/certifications/list" component={Certification} />
+            {/* Tareas */}
+            <PrivateRouter
+              path="/task"
+              component={Task}
+              isAuthenticated={autenticado}
+              allowedRoles={["3"]}
+            />
 
-          {/* Página para agregar una certificacion */}
-          <Route path="/certifications/addcertificate" component={AddCertificate} />
-          <Route path="/certifications/editcertificate/:id" component={AddCertificate} />
-          <Route path="/certifications/:certificationId/modules" component={AddModules} />
+            <Route
+              path="/pending-tasks"
+              component={PendingTask}
+            />
 
-          {/* Página de lista de formaciones */}
-          <Route path="/formations/list" component={Formation} />
+            {/* Certificaciones */}
+            <Route
+              path="/certifications/list"
+              component={Certification}
+            />
 
-          {/* Página para agregar una formacion */}
-          <Route path="/formations/addformation" component={AddFormation} />
-          <Route path="/formations/editformation/:id" component={AddFormation} />
-          <Route path="/formations/:formationId/modules" component={AddModuleFormation} />
-          <Route path="/formations/deliverable" component={Deliverable} />
+            <Route
+              path="/certifications/addcertificate"
+              component={AddCertificate}
+            />
 
-          <Route
-            exact
-            path="/secrets"
-            render={() => <Redirect to="/secrets/list" />}
-          />
+            <Route
+              path="/certifications/editcertificate/:id"
+              component={AddCertificate}
+            />
 
-          {/* Página de lista de secretos */}
-          {/* <Route path="/secrets/list" component={Secrets} /> */}
+            <Route
+              path="/certifications/:certificationId/modules"
+              component={AddModules}
+            />
 
-          {/* Página para agregar un secreto */}
-          {/* <Route path="/secrets/addsecret" component={AddSecret} /> */}
-          {/* <Route path="/secrets/editsecret/:id" component={} /> */}
+            {/* Formaciones */}
+            <Route
+              path="/formations/list"
+              component={Formation}
+            />
 
-          {/* Página de lista de productos */}
-          <Route path="/product/list" component={Product} />
+            <Route
+              path="/formations/addformation"
+              component={AddFormation}
+            />
 
-          {/* Página para agregar un sistema */}
-          <Route path="/product/addproduct" component={AddProduct} />
-          <Route path="/product/editproduct/:id" component={AddProduct} />
+            <Route
+              path="/formations/editformation/:id"
+              component={AddFormation}
+            />
 
-          <Route
-            exact
-            path="/salon_of_your_dreams"
-            render={() => <Redirect to="/salon_of_your_dreams/orders" />}
-          />
+            <Route
+              path="/formations/:formationId/modules"
+              component={AddModuleFormation}
+            />
 
-          {/* Página de lista de sistemas */}
-          <Route path="/salon_of_your_dreams/orders" component={Order} />
-          <Route path="/salon_of_your_dreams/lottery" component={Lottery} />
+            <Route
+              path="/formations/deliverable"
+              component={Deliverable}
+            />
 
-          <Route
-            exact
-            path="/lives"
-            render={() => <Redirect to="/lives/live_playlist" />}
-          />
+            {/* Productos */}
+            <Route
+              path="/product/list"
+              component={Product}
+            />
 
-          {/* Página de lista de lives */}
-          <PrivateRouter
-            exact
-            path="/lives/live_playlist"
-            component={Live}
-            isAuthenticated={autenticado}
-            allowedRoles={["6", "1"]}
-          />
-          <Route path="/lives/addlive" component={AddLive} />
-          <Route path="/lives/editlive/:id" component={AddLive} />
+            <Route
+              path="/product/addproduct"
+              component={AddProduct}
+            />
 
+            <Route
+              path="/product/editproduct/:id"
+              component={AddProduct}
+            />
 
-          <Route
-            exact
-            path="/event"
-            render={() => <Redirect to="/events/list" />}
-          />
+            {/* Órdenes */}
+            <Route
+              path="/orders"
+              component={Order}
+            />
 
-          {/* Página de lista de sistemas */}
-          <Route path="/events/list" component={Event} />
+            {/* Salón de tus sueños */}
+            <Route
+              path="/salon_of_your_dreams"
+              component={Lottery}
+            />
 
-          {/* Página para agregar un sistema */}
-          <Route path="/events/addevent" component={EventAdd} />
-          <Route path="/events/editevent/:id" component={EventAdd} />
+            {/* Lives */}
+            <Route
+              exact
+              path="/lives"
+              render={() => (
+                <Redirect to="/lives/live_playlist" />
+              )}
+            />
 
-          {/* Página para elimnar alguna tarea */}
-          <Route path="/pending-tasks" component={PendingTask} />
+            <PrivateRouter
+              exact
+              path="/lives/live_playlist"
+              component={Live}
+              isAuthenticated={autenticado}
+              allowedRoles={["6", "1"]}
+            />
 
+            <Route
+              path="/lives/addlive"
+              component={AddLive}
+            />
 
+            <Route
+              path="/lives/editlive/:id"
+              component={AddLive}
+            />
 
-          <Route path="/ecommerce/product/:id" component={Product} />
-          <Route path="/ecommerce/product" component={Product} />
-          <Route path="/ecommerce/gridproducts" component={ProductsGrid} />
-          <Route path="/ecommerce/courseadd" component={CourseAdd} />
-          <Route path="/ecommerce/coursevideoadd/:id" component={CourseVideoAdd} />
-          <Route exact path="/ecommerce/edit/:id" component={CourseAdd} />
+            {/* Eventos */}
+            <Route
+              exact
+              path="/event"
+              render={() => (
+                <Redirect to="/events/list" />
+              )}
+            />
 
-          <Route path={'/users/list'} exact component={UsersTablePage} />
-          <Route path={'/users/useradd'} exact component={UserAdd} />
-        </Switch>
-        {/* <ColorChangeThemePopper id={id} open={open} anchorEl={anchorEl} /> */}
-        {/* <Footer>
-          <div>
-            <Link
-              color={'primary'}
-              href={'https://flatlogic.com/'}
-              target={'_blank'}
-              className={classes.link}
-            >
-              Flatlogic
-            </Link>
-            <Link
-              color={'primary'}
-              href={'https://flatlogic.com/about'}
-              target={'_blank'}
-              className={classes.link}
-            >
-              About Us
-            </Link>
-            <Link
-              color={'primary'}
-              href={'https://flatlogic.com/blog'}
-              target={'_blank'}
-              className={classes.link}
-            >
-              Blog
-            </Link>
-          </div>
-          <div>
-            <Link href={'https://www.facebook.com/flatlogic'} target={'_blank'}>
-              <IconButton aria-label='facebook'>
-                <FacebookIcon style={{ color: '#6E6E6E99' }} />
-              </IconButton>
-            </Link>
-            <Link href={'https://twitter.com/flatlogic'} target={'_blank'}>
-              <IconButton aria-label='twitter'>
-                <TwitterIcon style={{ color: '#6E6E6E99' }} />
-              </IconButton>
-            </Link>
-            <Link href={'https://github.com/flatlogic'} target={'_blank'}>
-              <IconButton
-                aria-label='github'
-                style={{ padding: '12px 0 12px 12px' }}
-              >
-                <GithubIcon style={{ color: '#6E6E6E99' }} />
-              </IconButton>
-            </Link>
-          </div>
-        </Footer> */}
-      </div>
-    </div>
+            <Route
+              path="/events/list"
+              component={Event}
+            />
+
+            <Route
+              path="/events/addevent"
+              component={EventAdd}
+            />
+
+            <Route
+              path="/events/editevent/:id"
+              component={EventAdd}
+            />
+
+            {/* Ecommerce */}
+            <Route
+              path="/ecommerce/product/:id"
+              component={Product}
+            />
+
+            <Route
+              path="/ecommerce/product"
+              component={Product}
+            />
+
+            <Route
+              path="/ecommerce/gridproducts"
+              component={ProductsGrid}
+            />
+
+            <Route
+              path="/ecommerce/courseadd"
+              component={CourseAdd}
+            />
+
+            <Route
+              path="/ecommerce/coursevideoadd/:id"
+              component={CourseVideoAdd}
+            />
+
+            <Route
+              exact
+              path="/ecommerce/edit/:id"
+              component={CourseAdd}
+            />
+
+            {/* Usuarios */}
+            <Route
+              exact
+              path="/users/list"
+              component={UsersTablePage}
+            />
+
+            <Route
+              exact
+              path="/users/useradd"
+              component={UserAdd}
+            />
+          </Switch>
+        </Box>
+      </Box>
+    </Box>
   );
 }
 

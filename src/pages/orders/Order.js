@@ -1,5 +1,4 @@
 import React from 'react';
-import { makeStyles } from '@mui/styles';
 import { Box, Paper } from '@mui/material';
 
 import useOrders from './hooks/useOrders';
@@ -12,31 +11,12 @@ import ShippingCostModal from './components/ShippingCostModal';
 import TrackingModal from './components/TrackingModal';
 import SendConfirmModal from './components/SendConfirmModal';
 
-const useStyles = makeStyles(() => ({
-    filterContainer: {
-        padding: 24,
-        marginBottom: 24,
-        borderRadius: 16,
-        background: 'linear-gradient(135deg, #FFEEF8 0%, #FFE0F0 100%)',
-        border: '1px solid #FFD6EA',
-        boxShadow: '0 4px 20px rgba(255, 105, 180, 0.12)',
-    },
-    filterHeader: {
-        display: 'flex',
-        alignItems: 'center',
-        gap: 8,
-        marginBottom: 16,
-    },
-}));
-
 const Order = () => {
-    const classes = useStyles();
     const o = useOrders();
 
     return (
         <Box>
             <OrderFilters
-                classes={classes}
                 filterItems={o.filterItems}
                 showFilters={o.showFilters}
                 onChange={o.handleFilterFieldChange}
@@ -44,13 +24,23 @@ const Order = () => {
                 onReset={o.handleFilterReset}
             />
 
-            <Paper elevation={0} sx={{ borderRadius: 4, overflow: 'hidden', border: '1px solid #FFE6F0' }}>
+            <Paper
+                elevation={0}
+                sx={{
+                    borderRadius: 4,
+                    overflow: 'hidden',
+                    border: '1px solid #FFE6F0',
+                }}
+            >
                 <OrderTableHeader
                     activeTab={o.activeTab}
                     searchTerm={o.searchTerm}
                     onSearchChange={(e) => {
                         o.setSearchTerm(e.target.value);
-                        o.setRowsState((prev) => ({ ...prev, page: 0 }));
+                        o.setRowsState((prev) => ({
+                            ...prev,
+                            page: 0,
+                        }));
                     }}
                     onSearchClear={() => o.setSearchTerm('')}
                 />
@@ -102,9 +92,13 @@ const Order = () => {
                 onClose={o.closeTrackingModal}
                 order={o.selectedOrder}
                 trackingNumber={o.trackingNumberInput}
-                onTrackingNumberChange={(e) => o.setTrackingNumberInput(e.target.value)}
+                onTrackingNumberChange={(e) =>
+                    o.setTrackingNumberInput(e.target.value)
+                }
                 carrier={o.carrierInput}
-                onCarrierChange={(e) => o.setCarrierInput(e.target.value)}
+                onCarrierChange={(e) =>
+                    o.setCarrierInput(e.target.value)
+                }
                 onSave={o.handleSaveTrackingNumber}
             />
 

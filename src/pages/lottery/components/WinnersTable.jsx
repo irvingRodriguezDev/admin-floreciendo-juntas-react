@@ -1,76 +1,150 @@
 import React from 'react';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Chip from '@mui/material/Chip';
+import CircularProgress from '@mui/material/CircularProgress';
+import MenuItem from '@mui/material/MenuItem';
+import Stack from '@mui/material/Stack';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
+import RefreshRounded from '@mui/icons-material/RefreshRounded';
+import { gradients } from '../Theme';
 
-const WinnersTable = ({ winners, loading, selectedMonth, formatDisplayDate }) => {
-    if (loading) {
-        return (
-            <div className="loading-state">
-                <div className="spinner"></div>
-                <p>Cargando ganadores...</p>
-            </div>
-        );
-    }
-
-    if (winners.length === 0) {
-        return (
-            <div className="empty-state">
-                <span className="empty-icon">🏆</span>
-                <p>No hay ganadores para el mes seleccionado</p>
-                <div className="empty-info">
-                    <p>Selecciona otro mes o realiza nuevos sorteos</p>
-                </div>
-            </div>
-        );
-    }
-
-    return (
-        <div className="table-container">
-            <div className="table-header-info">
-                <span className="month-info">
-                    📅 Mes: <strong>{formatDisplayDate(selectedMonth)}</strong>
-                </span>
-                <span className="count-info">
-                    👥 Total ganadores: <strong>{winners.length}</strong>
-                </span>
-            </div>
-            <table className="historical-table">
-                <thead>
-                    <tr>
-                        <th>Posición</th>
-                        <th>Nombre</th>
-                        <th>Email</th>
-                        <th>Teléfono</th>
-                        <th>Premio</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {winners.map(w => (
-                        <tr key={w.id}>
-                            <td className="position-cell">
-                                <span className={`position-badge position-${w.position}`}>
-                                    {w.position}°
-                                </span>
-                            </td>
-                            <td className="name-cell">
-                                <div className="user-info">
-                                    <span className="user-name">{w.name}</span>
-                                </div>
-                            </td>
-                            <td className="email-cell">{w.email}</td>
-                            <td className="phone-cell">{w.phone}</td>
-                            <td className="prize-cell">
-                                <span className="prize-badge">🎁 {w.prize_name}</span>
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-            <div className="table-footer">
-                <p className="export-note">
-                    💡 Puedes exportar esta tabla a Excel usando el botón "Exportar Excel"
-                </p>
-            </div>
-        </div>
-    );
+const positionStyles = {
+    1: { background: gradients.gold, color: '#8B4513' },
+    2: { background: gradients.silver, color: '#333' },
+    3: { background: gradients.bronze, color: '#fff' }
 };
+
+const WinnersTable = ({
+    winners,
+    loading,
+    months = [],
+    selectedMonth,
+    formatDisplayDate,
+    onMonthChange,
+    onRefresh,
+    disabled
+}) => (
+    <Box>
+        {/* Barra: mes + total + actualizar */}
+        <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing={1.5}
+            alignItems={{ xs: 'stretch', sm: 'center' }}
+            justifyContent="space-between"
+            sx={{ px: 2, py: 1.25, mb: 2, bgcolor: '#fff5f9', borderRadius: 2 }}
+        >
+            <TextField
+                select
+                size="small"
+                label="Mes"
+                value={selectedMonth || ''}
+                onChange={(e) => onMonthChange(e.target.value)}
+                disabled={disabled}
+                sx={{ minWidth: 180 }}
+            >
+                {months.map((month) => (
+                    <MenuItem key={month} value={month}>
+                        {formatDisplayDate(month)}
+                    </MenuItem>
+                ))}
+            </TextField>
+
+            <Typography variant="body2">
+                👥 Total ganadores: <strong>{winners.length}</strong>
+            </Typography>
+
+            <Button
+                variant="gradient"
+                color="success"
+                onClick={onRefresh}
+                disabled={loading || disabled}
+                startIcon={
+                    loading ? <CircularProgress size={18} color="inherit" /> : <RefreshRounded />
+                }
+            >
+                {loading ? 'Actualizando...' : 'Actualizar'}
+            </Button>
+        </Stack>
+
+        {loading ? (
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 8, color: 'text.secondary' }}>
+                <CircularProgress color="primary" size={50} sx={{ mb: 2.5 }} />
+                <Typography>Cargando ganadores...</Typography>
+            </Box>
+        ) : winners.length === 0 ? (
+            <Box sx={{ textAlign: 'center', py: 8, color: 'text.secondary' }}>
+                <Typography sx={{ fontSize: '4rem', opacity: 0.5, mb: 2 }}>🏆</Typography>
+                <Typography>No hay ganadores para el mes seleccionado</Typography>
+                <Typography variant="body2" sx={{ mt: 1 }}>
+                    Selecciona otro mes o realiza nuevos sorteos
+                </Typography>
+            </Box>
+        ) : (
+            <>
+                <TableContainer>
+                    <Table stickyHeader sx={{ minWidth: 700 }}>
+                        <TableHead>
+                            <TableRow>
+                                <TableCell>Posición</TableCell>
+                                <TableCell>Nombre</TableCell>
+                                <TableCell>Email</TableCell>
+                                <TableCell>Teléfono</TableCell>
+                                <TableCell>Premio</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {winners.map((w) => (
+                                <TableRow key={w.id} hover sx={{ '&:hover': { bgcolor: '#fff5f9' } }}>
+                                    <TableCell>
+                                        <Chip
+                                            size="small"
+                                            label={`${w.position}°`}
+                                            sx={{
+                                                fontWeight: 700,
+                                                ...(positionStyles[w.position] || { bgcolor: 'grey.200' })
+                                            }}
+                                        />
+                                    </TableCell>
+                                    <TableCell>
+                                        <Typography noWrap sx={{ fontWeight: 600, minWidth: 150 }}>
+                                            {w.name}
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell>{w.email}</TableCell>
+                                    <TableCell>{w.phone}</TableCell>
+                                    <TableCell>
+                                        <Chip
+                                            size="small"
+                                            variant="outlined"
+                                            label={`🎁 ${w.prize_name}`}
+                                            sx={{
+                                                bgcolor: '#fff5f9',
+                                                color: 'secondary.main',
+                                                borderColor: 'primary.light',
+                                                fontWeight: 500
+                                            }}
+                                        />
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+
+                <Typography variant="body2" sx={{ mt: 2, p: 1.25, textAlign: 'center', color: 'text.secondary' }}>
+                    💡 Puedes exportar esta tabla a Excel usando el botón "Exportar Excel"
+                </Typography>
+            </>
+        )}
+    </Box>
+);
 
 export default WinnersTable;

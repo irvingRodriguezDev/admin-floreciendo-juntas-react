@@ -13,7 +13,7 @@ import useStyles from "./styles";
 
 //components
 import Widget from "../../../Widget";
-import { Typography } from "../../../Wrappers";
+import { Typography } from "@mui/material";
 
 // structure
 const rows = [
@@ -54,7 +54,7 @@ const Licences = () => {
               Extended License is required if the end user must pay to use the
               end product.
             </Typography>
-            <Table aria-label="licences table" style={{ marginTop: 48 }}>
+            <Table aria-label="licences table" sx={{ marginTop: 48 }}>
               <TableHead>
                 <TableRow>
                   <TableCell />

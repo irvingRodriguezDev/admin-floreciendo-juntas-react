@@ -1,50 +1,241 @@
-import React, { useState, useContext, useEffect } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
+import { useParams, useHistory } from "react-router-dom";
 import {
-    Grid,
-    Box,
-    Card,
-    TextField,
-    Button,
-    FormControlLabel,
-    Typography,
-    Paper,
-    Avatar,
-    Checkbox,
-    Stack,
+    Box, Grid, Stack, Paper, Typography, TextField, Button, Avatar,
+    Divider, IconButton, Tooltip, Chip, Checkbox, FormControlLabel,
     CircularProgress,
 } from "@mui/material";
-import { useHistory, useParams } from "react-router-dom";
 import {
-    CloudUpload as CloudUploadIcon,
-    Save as SaveIcon,
-    PictureAsPdf as PdfIcon,
+    CloudUpload as CloudUploadIcon, Save as SaveIcon, PictureAsPdf as PdfIcon,
+    ArrowBack as ArrowBackIcon, WorkspacePremiumOutlined,
+    DeleteOutline as DeleteOutlineIcon, SwapHorizOutlined, InfoOutlined,
+    CalendarTodayOutlined, EmojiEventsOutlined, ImageOutlined,
+    CheckCircleOutlined,
 } from "@mui/icons-material";
-import { Typography as MuiTypography } from "@mui/material";
 import Swal from "sweetalert2";
-import CertificationContext from "../../context/CertificationContext/CertificationContext";
 import { PDFDocument } from "pdf-lib";
+import CertificationContext from "../../context/CertificationContext/CertificationContext";
 
-/* ================================
-   HOOK: Convierte URL remota a blob
-================================= */
+/* ═══════════════════════════════════════════════════════════════
+   1. CONSTANTES
+   ═══════════════════════════════════════════════════════════════ */
+const PINK = "#FF5C93";
+const PINK_DARK = "#E94E88";
+const PINK_SOFT = "#FFE6F0";
+const PINK_BG = "#FFF5FA";
+const PINK_BG_SOFT = "#FFF0F7";
+const GRADIENT = "linear-gradient(135deg,#FF5C93,#FF69B4)";
+const GRADIENT_HOVER = "linear-gradient(135deg,#E94E88,#FF5C93)";
+
+const REDIRECT_PATH = "/certifications/list";
+const IMG_MAX_MB = 5;
+const PDF_MAX_MB = 10;
+const LETTER_W = 2550.83;
+const LETTER_H = 3300.66;
+const LETTER_TOL = 5;
+
+const INITIAL_FORM = {
+    name: "",
+    start_date: "",
+    end_date: "",
+    min_passing_score: "",
+    max_passing_score: "",
+    is_active: true,
+};
+
+const INITIAL_FILES = {
+    image: { file: null, preview: null, name: "" },
+    certificate: { file: null, preview: null, name: "" },
+    diploma: { file: null, preview: null, name: "" },
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   2. ESTILOS REUTILIZABLES
+   ═══════════════════════════════════════════════════════════════ */
+const sx = {
+    field: {
+        "& .MuiOutlinedInput-root": {
+            borderRadius: 2, bgcolor: "#fff",
+            "& fieldset": { borderColor: PINK_SOFT },
+            "&:hover fieldset": { borderColor: PINK },
+            "&.Mui-focused fieldset": { borderColor: PINK, borderWidth: 2 },
+        },
+        "& .MuiInputLabel-root.Mui-focused": { color: PINK },
+    },
+    primary: {
+        py: 1.4, borderRadius: 2, fontWeight: 700, color: "#fff",
+        background: GRADIENT, boxShadow: "none",
+        "&:hover": { background: GRADIENT_HOVER, boxShadow: "none" },
+        "&.Mui-disabled": { background: "#F5C6D0", color: "#fff" },
+    },
+    outline: {
+        py: 1.4, borderRadius: 2, fontWeight: 600,
+        color: PINK_DARK, border: `1px solid ${PINK}`,
+        "&:hover": { bgcolor: PINK_BG_SOFT, borderColor: PINK_DARK },
+    },
+    smallOutline: {
+        borderRadius: 2, color: PINK_DARK, borderColor: PINK,
+        "&:hover": { bgcolor: PINK_BG_SOFT, borderColor: PINK_DARK },
+    },
+    smallDanger: {
+        borderRadius: 2, borderColor: "#EF9A9A", color: "#C62828",
+        "&:hover": { bgcolor: "#FFEBEE", borderColor: "#C62828" },
+    },
+    section: {
+        p: 2.5, borderRadius: 3,
+        border: `1px solid ${PINK_SOFT}`, bgcolor: "#fff",
+    },
+    sectionHead: { display: "flex", alignItems: "center", gap: 1, mb: 2 },
+    avatarSm: { bgcolor: PINK_BG_SOFT, color: PINK, width: 32, height: 32 },
+    chip: {
+        bgcolor: PINK_BG_SOFT, color: PINK_DARK, fontWeight: 600,
+        border: `1px solid ${PINK_SOFT}`, maxWidth: "100%",
+    },
+    dropzone: {
+        border: `2px dashed ${PINK}`, borderRadius: 3, p: 4, textAlign: "center",
+        cursor: "pointer", bgcolor: PINK_BG_SOFT, transition: "all .25s ease",
+        "&:hover": {
+            bgcolor: PINK_BG, borderColor: PINK_DARK,
+            transform: "translateY(-2px)", boxShadow: "0 8px 24px rgba(255,92,147,.15)",
+        },
+    },
+    imgPreview: {
+        width: { xs: "100%", sm: 180 },
+        height: { xs: 200, sm: 180 },
+        objectFit: "cover", borderRadius: 2,
+        border: `1px solid ${PINK_SOFT}`,
+        boxShadow: "0 8px 24px rgba(255,92,147,.12)",
+    },
+    pdfBox: {
+        width: "100%", maxWidth: 360, aspectRatio: "8.5 / 11",
+        border: `1px solid ${PINK_SOFT}`, borderRadius: 2,
+        overflow: "hidden", boxShadow: "0 8px 24px rgba(255,92,147,.12)",
+        bgcolor: "#fff", display: "flex",
+        alignItems: "center", justifyContent: "center",
+    },
+    header: {
+        background: GRADIENT, color: "#fff", p: 3,
+        display: "flex", alignItems: "center", gap: 2,
+    },
+    headerBtn: {
+        color: "#fff", bgcolor: "rgba(255,255,255,.15)",
+        "&:hover": { bgcolor: "rgba(255,255,255,.25)" },
+    },
+    checkbox: { color: PINK, "&.Mui-checked": { color: PINK } },
+    card: {
+        borderRadius: 4, overflow: "hidden",
+        border: `1px solid ${PINK_SOFT}`,
+        boxShadow: "0 8px 24px rgba(255,92,147,.08)",
+    },
+    pageWrap: { maxWidth: 1100, mx: "auto", p: { xs: 1.5, sm: 2, md: 3 } },
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   3. HELPERS DE LÓGICA
+   ═══════════════════════════════════════════════════════════════ */
+
+const fireError = (text, title = "Error") =>
+    Swal.fire({ icon: "error", title, text });
+
+const pad = (n) => String(n).padStart(2, "0");
+
+/** ISO → "YYYY-MM-DD" para <input type="date"> */
+const toDateInput = (dateString) => {
+    if (!dateString) return "";
+    const d = new Date(dateString);
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+};
+
+/** Valida imagen: tipo y tamaño */
+const validateImage = (file) => {
+    if (!file.type.startsWith("image/"))
+        return "Selecciona una imagen (PNG, JPG o JPEG)";
+    if (file.size > IMG_MAX_MB * 1024 * 1024)
+        return `La imagen no debe superar los ${IMG_MAX_MB} MB`;
+    return null;
+};
+
+/** Valida PDF: tipo, tamaño y dimensiones carta vertical */
+const validatePdf = async (file, label) => {
+    if (file.type !== "application/pdf") return "Selecciona un archivo PDF";
+    if (file.size > PDF_MAX_MB * 1024 * 1024)
+        return `El PDF no debe superar los ${PDF_MAX_MB} MB`;
+    try {
+        const pdf = await PDFDocument.load(await file.arrayBuffer());
+        const { width, height } = pdf.getPage(0).getSize();
+        const offW = Math.abs(width - LETTER_W) > LETTER_TOL;
+        const offH = Math.abs(height - LETTER_H) > LETTER_TOL;
+        if (offW || offH)
+            return `El ${label} debe tener tamaño carta vertical (8.5 × 11 in)`;
+        return null;
+    } catch {
+        return "No se pudo leer el PDF";
+    }
+};
+
+/** Lee un archivo como dataURL (para imágenes) */
+const readAsDataURL = (file) =>
+    new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.readAsDataURL(file);
+    });
+
+/** Valida los campos requeridos del formulario */
+const validateForm = ({ formData, files, isEdit }) => {
+    const checks = [
+        [!formData.name.trim(), "El nombre de la certificación es obligatorio"],
+        [!formData.start_date, "La fecha de inicio es obligatoria"],
+        [!formData.end_date, "La fecha de fin es obligatoria"],
+        [
+            new Date(formData.end_date) < new Date(formData.start_date),
+            "La fecha de fin debe ser posterior a la fecha de inicio",
+        ],
+        [!formData.min_passing_score, "La puntuación mínima para aprobar es obligatoria"],
+        [!formData.max_passing_score, "La puntuación máxima es obligatoria"],
+        [
+            parseInt(formData.min_passing_score) > parseInt(formData.max_passing_score),
+            "La puntuación mínima no puede ser mayor que la máxima",
+        ],
+        [!isEdit && !files.image.file, "Debes subir una imagen para la certificación"],
+    ];
+    const failed = checks.find(([cond]) => cond);
+    if (failed) { fireError(failed[1]); return false; }
+    return true;
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   4. SUBCOMPONENTES DE PRESENTACIÓN
+   ═══════════════════════════════════════════════════════════════ */
+
+/** Card con icono + título + subtítulo + contenido */
+const Section = ({ icon, title, subtitle, children }) => (
+    <Paper variant="outlined" sx={sx.section}>
+        <Box sx={{ ...sx.sectionHead, mb: subtitle ? 0.5 : 2 }}>
+            <Avatar sx={sx.avatarSm}>{icon}</Avatar>
+            <Typography variant="subtitle1" fontWeight={700} color={PINK}>{title}</Typography>
+        </Box>
+        {subtitle && (
+            <Typography variant="caption" color="text.secondary"
+                sx={{ display: "block", mb: 2, ml: 6 }}>
+                {subtitle}
+            </Typography>
+        )}
+        {children}
+    </Paper>
+);
+
+/** Hook: convierte URL remota en blob URL para el <iframe> del PDF */
 const usePdfBlobUrl = (url) => {
     const [blobUrl, setBlobUrl] = useState(null);
     const [loadingPdf, setLoadingPdf] = useState(false);
 
     useEffect(() => {
-        if (!url) {
-            setBlobUrl(null);
-            return;
-        }
-
-        if (url.startsWith('blob:')) {
-            setBlobUrl(url);
-            return;
-        }
+        if (!url) { setBlobUrl(null); return; }
+        if (url.startsWith("blob:")) { setBlobUrl(url); return; }
 
         let objectUrl;
         setLoadingPdf(true);
-
         fetch(url)
             .then((res) => res.blob())
             .then((blob) => {
@@ -54,44 +245,22 @@ const usePdfBlobUrl = (url) => {
             .catch(() => setBlobUrl(null))
             .finally(() => setLoadingPdf(false));
 
-        return () => {
-            if (objectUrl) URL.revokeObjectURL(objectUrl);
-        };
+        return () => objectUrl && URL.revokeObjectURL(objectUrl);
     }, [url]);
 
     return { blobUrl, loadingPdf };
 };
 
-/* ============================
-   COMPONENTE: Preview PDF
-============================= */
+/** Preview de PDF embebido en un iframe */
 const PdfPreview = ({ url, title }) => {
     const { blobUrl, loadingPdf } = usePdfBlobUrl(url);
-
     return (
-        <Box
-            sx={{
-                width: '100%',
-                maxWidth: 420,
-                aspectRatio: '8.5 / 11',
-                border: '1px solid #ddd',
-                borderRadius: 1,
-                overflow: 'hidden',
-                boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
-                bgcolor: '#fff',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-            }}
-        >
+        <Box sx={sx.pdfBox}>
             {loadingPdf ? (
-                <CircularProgress size={28} />
+                <CircularProgress size={28} sx={{ color: PINK }} />
             ) : blobUrl ? (
-                <iframe
-                    src={blobUrl}
-                    title={title}
-                    style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
-                />
+                <Box component="iframe" src={blobUrl} title={title}
+                    sx={{ width: "100%", height: "100%", border: "none", display: "block" }} />
             ) : (
                 <Typography variant="body2" color="text.secondary">
                     No se pudo cargar el PDF.
@@ -101,681 +270,372 @@ const PdfPreview = ({ url, title }) => {
     );
 };
 
-/* ============================
-   COMPONENTE PRINCIPAL
-============================= */
-const AddCertificate = ({ onCancel }) => {
-    const initialFormData = {
-        name: "",
-        start_date: "",
-        end_date: "",
-        min_passing_score: "",
-        max_passing_score: "",
-        is_active: true,
-    };
+/** Selector de archivo: preview (imagen o PDF) con acciones, o dropzone */
+const UploadField = ({
+    label, helper, accept, preview, fileName, isImage,
+    icon, onPick, onRemove, required,
+}) => {
+    const inputRef = useRef(null);
+    const open = () => inputRef.current?.click();
 
-    const history = useHistory();
+    return (
+        <Box>
+            <Typography variant="subtitle2" fontWeight={700} color={PINK_DARK} sx={{ mb: 0.5 }}>
+                {label} {required && "*"}
+            </Typography>
+            {helper && (
+                <Typography variant="caption" color="text.secondary"
+                    sx={{ display: "block", mb: 1.5 }}>
+                    {helper}
+                </Typography>
+            )}
+
+            {preview ? (
+                <Stack spacing={2} alignItems="center">
+                    {isImage
+                        ? <Box component="img" src={preview} alt={label} sx={sx.imgPreview} />
+                        : <PdfPreview url={preview} title={`Vista previa de ${label}`} />}
+
+                    {fileName && (
+                        <Chip icon={<CheckCircleOutlined />} label={fileName}
+                            size="small" sx={sx.chip} />
+                    )}
+
+                    <Stack direction="row" spacing={1.5} flexWrap="wrap" justifyContent="center">
+                        <Button size="small" variant="outlined" startIcon={<SwapHorizOutlined />}
+                            onClick={open} sx={sx.smallOutline}>
+                            Cambiar
+                        </Button>
+                        <Button size="small" variant="outlined" color="error"
+                            startIcon={<DeleteOutlineIcon />} onClick={onRemove} sx={sx.smallDanger}>
+                            Eliminar
+                        </Button>
+                    </Stack>
+                </Stack>
+            ) : (
+                <Box sx={sx.dropzone} onClick={open}>
+                    <Avatar sx={{
+                        bgcolor: "#fff", color: PINK, width: 64, height: 64,
+                        mx: "auto", mb: 2, border: `2px solid ${PINK_SOFT}`,
+                    }}>
+                        {icon}
+                    </Avatar>
+                    <Typography fontWeight={700} color={PINK} gutterBottom>
+                        Haz clic para subir {label.toLowerCase()}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                        {helper}
+                    </Typography>
+                </Box>
+            )}
+
+            <input ref={inputRef} type="file" accept={accept} hidden onChange={onPick} />
+        </Box>
+    );
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   5. COMPONENTE PRINCIPAL
+   ═══════════════════════════════════════════════════════════════ */
+
+const AddCertificate = ({ onCancel }) => {
     const { id } = useParams();
-    const isEditMode = Boolean(id);
+    const history = useHistory();
+    const isEdit = Boolean(id);
 
     const {
-        certification: certificationActual,
+        certification: current,
         getCertificationById,
         createCertification,
         updateCertification,
         loading,
     } = useContext(CertificationContext);
 
-    const [formData, setFormData] = useState(initialFormData);
-
-    // --- IMAGEN ---
-    const [imageFile, setImageFile] = useState(null);
-    const [imagePreview, setImagePreview] = useState(null);
-
-    // --- PDF ---
-    const [pdfFile, setPdfFile] = useState(null);
-    const [pdfPreview, setPdfPreview] = useState(null);
-    const [pdfName, setPdfName] = useState("");
-
-    // --- DIPLOMA ---
-    const [diplomaFile, setDiplomaFile] = useState(null);
-    const [diplomaPreview, setDiplomaPreview] = useState(null);
-    const [diplomaName, setDiplomaName] = useState("");
-
+    const [formData, setFormData] = useState(INITIAL_FORM);
+    const [files, setFiles] = useState(INITIAL_FILES);
     const [submitting, setSubmitting] = useState(false);
 
-    /** CARGAR DATOS EN MODO EDICIÓN **/
+    /* Ref con las funciones del context para no meterlas en deps */
+    const ctxRef = useRef({ getCertificationById });
+    ctxRef.current = { getCertificationById };
+
+    const goBack = () => (onCancel ? onCancel() : history.push(REDIRECT_PATH));
+
+    /* ─── Cargar si es edición ─── */
     useEffect(() => {
-        if (isEditMode) {
-            getCertificationById(id);
-        }
-    }, [id]);
+        if (isEdit) ctxRef.current.getCertificationById(id);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [id, isEdit]);
 
+    /* ─── Sincronizar datos cargados ─── */
     useEffect(() => {
-        if (isEditMode && certificationActual && Object.keys(certificationActual).length > 0) {
-            setFormData({
-                name: certificationActual.certification.name || "",
-                start_date: certificationActual.certification.start_date
-                    ? formatDateForInput(certificationActual.certification.start_date)
-                    : "",
-                end_date: certificationActual.certification.end_date
-                    ? formatDateForInput(certificationActual.certification.end_date)
-                    : "",
-                min_passing_score: certificationActual.certification.min_passing_score || "",
-                max_passing_score: certificationActual.certification.max_passing_score || "",
-                is_active: certificationActual.certification.is_active !== undefined
-                    ? certificationActual.certification.is_active
-                    : true,
-            });
+        if (!isEdit || !current?.certification) return;
+        const c = current.certification;
 
-            if (certificationActual.image) {
-                setImagePreview(certificationActual.image);
-            }
-            if (certificationActual.certificate) {
-                setPdfPreview(certificationActual.certificate);
-                setPdfName("Certificado actual");
-            }
-            if (certificationActual.diploma) {
-                setDiplomaPreview(certificationActual.diploma);
-                setDiplomaName("Diploma actual");
-            }
-        }
-    }, [certificationActual]);
+        setFormData({
+            name: c.name || "",
+            start_date: toDateInput(c.start_date),
+            end_date: toDateInput(c.end_date),
+            min_passing_score: c.min_passing_score || "",
+            max_passing_score: c.max_passing_score || "",
+            is_active: c.is_active ?? true,
+        });
 
-    useEffect(() => {
-        if (!isEditMode) {
-            setFormData(initialFormData);
-            setImageFile(null);
-            setImagePreview(null);
-            setPdfFile(null);
-            setPdfPreview(null);
-            setPdfName("");
-            setDiplomaFile(null);
-            setDiplomaPreview(null);
-            setDiplomaName("");
-        }
-    }, [isEditMode]);
+        setFiles({
+            image: { file: null, preview: current.image || null, name: "" },
+            certificate: {
+                file: null, preview: current.certificate || null,
+                name: current.certificate ? "Certificado actual" : "",
+            },
+            diploma: {
+                file: null, preview: current.diploma || null,
+                name: current.diploma ? "Diploma actual" : "",
+            },
+        });
+    }, [isEdit, current]);
 
-    const formatDateForInput = (dateString) => {
-        if (!dateString) return "";
-        const date = new Date(dateString);
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, "0");
-        const day = String(date.getDate()).padStart(2, "0");
-        return `${year}-${month}-${day}`;
+    /* ─── Handlers ─── */
+    const onChange = ({ target: { name, value, checked, type } }) =>
+        setFormData((p) => ({ ...p, [name]: type === "checkbox" ? checked : value }));
+
+    const onNumberChange = ({ target: { name, value } }) => {
+        if (value === "" || /^\d+$/.test(value))
+            setFormData((p) => ({ ...p, [name]: value }));
     };
 
-    const handleChange = (e) => {
-        const { name, value, checked, type } = e.target;
-        setFormData((prev) => ({
-            ...prev,
-            [name]: type === "checkbox" ? checked : value,
-        }));
+    const setFileField = (key, patch) =>
+        setFiles((prev) => ({ ...prev, [key]: { ...prev[key], ...patch } }));
+
+    const onFileChange = (key, validator) => async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const error = await validator(file);
+        if (error) { fireError(error, "Archivo inválido"); e.target.value = ""; return; }
+
+        const preview = key === "image"
+            ? await readAsDataURL(file)
+            : URL.createObjectURL(file);
+
+        setFileField(key, { file, preview, name: file.name });
     };
 
-    const handleNumberChange = (e) => {
-        const { name, value } = e.target;
-        if (value === "" || /^\d+$/.test(value)) {
-            setFormData((prev) => ({ ...prev, [name]: value }));
-        }
-    };
+    const onRemoveFile = (key) => () =>
+        setFileField(key, {
+            file: null,
+            preview: isEdit ? current?.[key] || null : null,
+            name: isEdit && current?.[key] ? "Archivo actual" : "",
+        });
 
-    // --- HANDLERS IMAGEN ---
-    const handleImageChange = (e) => {
-        const selectedFile = e.target.files[0];
-        if (!selectedFile) return;
-
-        if (!selectedFile.type.startsWith("image/")) {
-            Swal.fire({ icon: "error", title: "Archivo inválido", text: "Selecciona una imagen (PNG, JPG o JPEG)" });
-            return;
-        }
-        if (selectedFile.size > 5 * 1024 * 1024) {
-            Swal.fire({ icon: "error", title: "Archivo muy grande", text: "La imagen no debe superar los 5MB" });
-            return;
-        }
-
-        setImageFile(selectedFile);
-        const reader = new FileReader();
-        reader.onloadend = () => setImagePreview(reader.result);
-        reader.readAsDataURL(selectedFile);
-    };
-
-    const handleRemoveImage = () => {
-        setImageFile(null);
-        setImagePreview(isEditMode ? certificationActual?.image || null : null);
-    };
-
-    // --- HANDLERS PDF ---
-    const handlePdfChange = async (e) => {
-        const selectedFile = e.target.files[0];
-        if (!selectedFile) return;
-
-        if (selectedFile.type !== "application/pdf") {
-            Swal.fire({ icon: "error", title: "Archivo inválido", text: "Selecciona un archivo PDF" });
-            return;
-        }
-
-        if (selectedFile.size > 10 * 1024 * 1024) {
-            Swal.fire({ icon: "error", title: "Archivo muy grande", text: "El PDF no debe superar los 10MB" });
-            return;
-        }
-
-        try {
-            const buffer = await selectedFile.arrayBuffer();
-            const pdf = await PDFDocument.load(buffer);
-            const { width, height } = pdf.getPage(0).getSize();
-
-            const expectedWidth = 2550.83;
-            const expectedHeight = 3300.66;
-            const tolerance = 5;
-
-            if (
-                Math.abs(width - expectedWidth) > tolerance ||
-                Math.abs(height - expectedHeight) > tolerance
-            ) {
-                Swal.fire({
-                    icon: "error",
-                    title: "Medidas incorrectas",
-                    text: "El certificado debe tener tamaño vertical 89.96 × 116.42 cm.",
-                });
-                e.target.value = "";
-                return;
-            }
-
-            setPdfFile(selectedFile);
-            setPdfName(selectedFile.name);
-            setPdfPreview(URL.createObjectURL(selectedFile));
-
-        } catch (err) {
-            console.error(err);
-            Swal.fire({ icon: "error", title: "Error", text: "No se pudo leer el PDF" });
-        }
-    };
-
-    const handleRemovePdf = () => {
-        setPdfFile(null);
-        setPdfName("");
-        setPdfPreview(isEditMode ? certificationActual?.certificate || null : null);
-    };
-
-    const handleDiplomaChange = async (e) => {
-        const selectedFile = e.target.files[0];
-        if (!selectedFile) return;
-
-        if (selectedFile.type !== "application/pdf") {
-            Swal.fire({ icon: "error", title: "Archivo inválido", text: "Selecciona un PDF" });
-            return;
-        }
-
-        if (selectedFile.size > 10 * 1024 * 1024) {
-            Swal.fire({ icon: "error", title: "Archivo muy grande", text: "Máx 10MB" });
-            return;
-        }
-
-        try {
-            const buffer = await selectedFile.arrayBuffer();
-            const pdf = await PDFDocument.load(buffer);
-            const { width, height } = pdf.getPage(0).getSize();
-
-            const expectedWidth = 2550.83;
-            const expectedHeight = 3300.66;
-
-            if (
-                Math.abs(width - expectedWidth) > 5 ||
-                Math.abs(height - expectedHeight) > 5
-            ) {
-                Swal.fire({
-                    icon: "error",
-                    title: "Medidas incorrectas",
-                    text: "El diploma debe ser vertical (8.5 × 11)",
-                });
-                e.target.value = "";
-                return;
-            }
-
-            setDiplomaFile(selectedFile);
-            setDiplomaName(selectedFile.name);
-            setDiplomaPreview(URL.createObjectURL(selectedFile));
-
-        } catch {
-            Swal.fire({ icon: "error", title: "Error", text: "No se pudo leer el PDF" });
-        }
-    };
-
-    const handleRemoveDiploma = () => {
-        setDiplomaFile(null);
-        setDiplomaName("");
-        setDiplomaPreview(isEditMode ? certificationActual?.diploma || null : null);
-    };
-
-    const validateForm = () => {
-        if (!formData.name.trim()) {
-            Swal.fire({ icon: "error", title: "Error", text: "El nombre de la certificación es obligatorio" });
-            return false;
-        }
-        if (!formData.start_date) {
-            Swal.fire({ icon: "error", title: "Error", text: "La fecha de inicio es obligatoria" });
-            return false;
-        }
-        if (!formData.end_date) {
-            Swal.fire({ icon: "error", title: "Error", text: "La fecha de fin es obligatoria" });
-            return false;
-        }
-        if (new Date(formData.end_date) < new Date(formData.start_date)) {
-            Swal.fire({ icon: "error", title: "Error", text: "La fecha de fin debe ser posterior a la fecha de inicio" });
-            return false;
-        }
-        if (!formData.min_passing_score) {
-            Swal.fire({ icon: "error", title: "Error", text: "La puntuación mínima para aprobar es obligatoria" });
-            return false;
-        }
-        if (!formData.max_passing_score) {
-            Swal.fire({ icon: "error", title: "Error", text: "La puntuación máxima es obligatoria" });
-            return false;
-        }
-        if (parseInt(formData.min_passing_score) > parseInt(formData.max_passing_score)) {
-            Swal.fire({ icon: "error", title: "Error", text: "La puntuación mínima no puede ser mayor que la puntuación máxima" });
-            return false;
-        }
-        if (!isEditMode && !imageFile) {
-            Swal.fire({ icon: "error", title: "Error", text: "Debes subir una imagen para la certificación" });
-            return false;
-        }
-        return true;
-    };
-
-    const handleSubmit = async (e) => {
+    /* ─── Submit ─── */
+    const onSubmit = async (e) => {
         e.preventDefault();
-        if (!validateForm()) return;
+        if (!validateForm({ formData, files, isEdit })) return;
 
         setSubmitting(true);
         try {
             const fd = new FormData();
-            fd.append("name", formData.name);
-            fd.append("start_date", formData.start_date);
-            fd.append("end_date", formData.end_date);
-            fd.append("min_passing_score", formData.min_passing_score);
-            fd.append("max_passing_score", formData.max_passing_score);
-            fd.append("is_active", formData.is_active);
-            if (imageFile) fd.append("image", imageFile);
-            if (pdfFile) fd.append("certificate", pdfFile);
-            if (diplomaFile) fd.append("diploma", diplomaFile);
-
-            if (isEditMode) {
-                await updateCertification(id, fd);
-            } else {
-                await createCertification(fd);
-            }
-
-            history.push("/certifications/list");
-        } catch (error) {
-            Swal.fire({
-                icon: "error",
-                title: "Error",
-                text: "Ocurrió un error al guardar la certificación. Intenta nuevamente.",
+            Object.entries(formData).forEach(([k, v]) => fd.append(k, v));
+            ["image", "certificate", "diploma"].forEach((k) => {
+                if (files[k].file) fd.append(k, files[k].file);
             });
+
+            if (isEdit) await updateCertification(id, fd);
+            else await createCertification(fd);
+
+            history.push(REDIRECT_PATH);
+        } catch {
+            fireError("Ocurrió un error al guardar la certificación. Intenta nuevamente.");
         } finally {
             setSubmitting(false);
         }
     };
 
-    if (isEditMode && loading && !certificationActual) {
+    /* ─── Loading inicial ─── */
+    if (isEdit && loading && !current) {
         return (
-            <Grid container spacing={3}>
-                <Grid item xs={12}>
-                    <Paper sx={{ p: 4, textAlign: "center" }}>
-                        <MuiTypography variant="h6">Cargando datos de la certificación...</MuiTypography>
-                    </Paper>
-                </Grid>
-            </Grid>
+            <Box sx={sx.pageWrap}>
+                <Paper elevation={0} sx={{ ...sx.card, p: 5, textAlign: "center", bgcolor: PINK_BG }}>
+                    <CircularProgress size={36} sx={{ color: PINK, mb: 2 }} />
+                    <Typography variant="h6" color="text.secondary">
+                        Cargando datos de la certificación...
+                    </Typography>
+                </Paper>
+            </Box>
         );
     }
 
+    /* ─── Textos derivados ─── */
+    const texts = isEdit
+        ? {
+            title: "Editar certificación",
+            subtitle: "Completa todos los campos requeridos para actualizar la certificación",
+            submit: "Actualizar certificación",
+            loading: "Actualizando...",
+        }
+        : {
+            title: "Crear nueva certificación",
+            subtitle: "Completa todos los campos requeridos para crear una nueva certificación",
+            submit: "Crear certificación",
+            loading: "Guardando...",
+        };
+
+    /* ─── Render ─── */
     return (
-        <Grid container spacing={3}>
-            <Grid item xs={12}>
-                <Paper
-                    elevation={0}
-                    sx={{
-                        p: 4,
-                        borderRadius: 4,
-                        background: "linear-gradient(135deg, rgba(240,244,248,0.9), rgba(255,255,255,0.95))",
-                        border: "1px solid rgba(200,200,200,0.3)",
-                    }}
-                >
-                    <MuiTypography variant="h4" fontWeight={600} gutterBottom>
-                        {isEditMode ? "Editar Certificación" : "Crear Nueva Certificación"}
-                    </MuiTypography>
+        <Box sx={sx.pageWrap}>
+            <Paper elevation={0} sx={sx.card}>
+                {/* Header */}
+                <Box sx={sx.header}>
+                    <Tooltip title="Volver">
+                        <IconButton onClick={goBack} sx={sx.headerBtn}>
+                            <ArrowBackIcon />
+                        </IconButton>
+                    </Tooltip>
+                    <Avatar sx={{ bgcolor: "rgba(255,255,255,.2)", width: 48, height: 48 }}>
+                        <WorkspacePremiumOutlined />
+                    </Avatar>
+                    <Box>
+                        <Typography variant="h6" fontWeight={700}>{texts.title}</Typography>
+                        <Typography variant="body2" sx={{ opacity: .9 }}>{texts.subtitle}</Typography>
+                    </Box>
+                </Box>
 
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
-                        Complete todos los campos requeridos para {isEditMode ? "actualizar la" : "crear una nueva"} certificación
-                    </Typography>
+                {/* Formulario */}
+                <Box sx={{ p: { xs: 2, sm: 3 }, bgcolor: PINK_BG }}>
+                    <Box component="form" onSubmit={onSubmit}>
+                        <Stack spacing={3}>
 
-                    <form onSubmit={handleSubmit}>
-                        <Grid container spacing={3}>
+                            {/* Información básica */}
+                            <Section icon={<InfoOutlined fontSize="small" />} title="Información básica"
+                                subtitle="Nombre descriptivo de la certificación">
+                                <TextField fullWidth label="Nombre de la certificación *" name="name"
+                                    value={formData.name} onChange={onChange} required
+                                    placeholder="Ej: Certificación en Desarrollo Web" sx={sx.field} />
+                            </Section>
 
-                            {/* NOMBRE */}
-                            <Grid item xs={12}>
-                                <TextField
-                                    fullWidth
-                                    label="Nombre de la Certificación *"
-                                    name="name"
-                                    value={formData.name}
-                                    onChange={handleChange}
-                                    placeholder="Ej: Certificación en Desarrollo Web"
-                                    helperText="Nombre descriptivo de la certificación"
-                                    required
-                                />
-                            </Grid>
+                            {/* Vigencia */}
+                            <Section icon={<CalendarTodayOutlined fontSize="small" />} title="Vigencia"
+                                subtitle="Periodo durante el cual estará disponible la certificación">
+                                <Grid container spacing={2}>
+                                    {[
+                                        { name: "start_date", label: "Fecha de inicio *", helper: "Fecha desde cuando estará disponible" },
+                                        { name: "end_date", label: "Fecha de fin *", helper: "Fecha hasta cuando estará disponible" },
+                                    ].map((f) => (
+                                        <Grid item xs={12} md={6} key={f.name}>
+                                            <TextField fullWidth type="date" label={f.label} name={f.name}
+                                                value={formData[f.name]} onChange={onChange}
+                                                InputLabelProps={{ shrink: true }} helperText={f.helper}
+                                                required sx={sx.field} />
+                                        </Grid>
+                                    ))}
+                                </Grid>
+                            </Section>
 
-                            {/* FECHAS */}
-                            <Grid item xs={12} md={6}>
-                                <TextField
-                                    fullWidth
-                                    type="date"
-                                    label="Fecha de Inicio *"
-                                    name="start_date"
-                                    value={formData.start_date}
-                                    onChange={handleChange}
-                                    InputLabelProps={{ shrink: true }}
-                                    helperText="Fecha desde cuando estará disponible"
-                                    required
-                                />
-                            </Grid>
+                            {/* Puntuaciones */}
+                            <Section icon={<EmojiEventsOutlined fontSize="small" />} title="Puntuaciones"
+                                subtitle="Rangos de calificación para aprobar la certificación">
+                                <Grid container spacing={2}>
+                                    {[
+                                        { name: "min_passing_score", label: "Puntuación mínima para aprobar *", placeholder: "Ej: 70", helper: "Puntaje mínimo requerido para aprobar" },
+                                        { name: "max_passing_score", label: "Puntuación máxima *", placeholder: "Ej: 100", helper: "Puntaje máximo posible" },
+                                    ].map((f) => (
+                                        <Grid item xs={12} md={6} key={f.name}>
+                                            <TextField fullWidth label={f.label} name={f.name}
+                                                value={formData[f.name]} onChange={onNumberChange}
+                                                placeholder={f.placeholder} helperText={f.helper}
+                                                inputProps={{ min: 0, pattern: "\\d*" }}
+                                                required sx={sx.field} />
+                                        </Grid>
+                                    ))}
+                                </Grid>
+                            </Section>
 
-                            <Grid item xs={12} md={6}>
-                                <TextField
-                                    fullWidth
-                                    type="date"
-                                    label="Fecha de Fin *"
-                                    name="end_date"
-                                    value={formData.end_date}
-                                    onChange={handleChange}
-                                    InputLabelProps={{ shrink: true }}
-                                    helperText="Fecha hasta cuando estará disponible"
-                                    required
-                                />
-                            </Grid>
-
-                            {/* PUNTUACIONES */}
-                            <Grid item xs={12} md={6}>
-                                <TextField
-                                    fullWidth
-                                    label="Puntuación Mínima para Aprobar *"
-                                    name="min_passing_score"
-                                    value={formData.min_passing_score}
-                                    onChange={handleNumberChange}
-                                    placeholder="Ej: 70"
-                                    helperText="Puntaje mínimo requerido para aprobar"
-                                    inputProps={{ min: 0, pattern: "\\d*" }}
-                                    required
-                                />
-                            </Grid>
-
-                            <Grid item xs={12} md={6}>
-                                <TextField
-                                    fullWidth
-                                    label="Puntuación Máxima *"
-                                    name="max_passing_score"
-                                    value={formData.max_passing_score}
-                                    onChange={handleNumberChange}
-                                    placeholder="Ej: 100"
-                                    helperText="Puntaje máximo posible"
-                                    inputProps={{ min: 0, pattern: "\\d*" }}
-                                    required
-                                />
-                            </Grid>
-
-                            {/* ESTADO ACTIVO */}
-                            <Grid item xs={12}>
-                                <Card sx={{ p: 2, backgroundColor: "#f8f9fa" }}>
-                                    <FormControlLabel
-                                        control={
-                                            <Checkbox
-                                                checked={formData.is_active}
-                                                onChange={handleChange}
-                                                name="is_active"
-                                                color="primary"
-                                            />
-                                        }
-                                        label={
-                                            <Box>
-                                                <MuiTypography fontWeight={600}>Certificación Activa</MuiTypography>
-                                                <MuiTypography variant="caption" color="text.secondary">
-                                                    Si está activa, los usuarios podrán ver y obtener esta certificación
-                                                </MuiTypography>
-                                            </Box>
-                                        }
-                                    />
-                                </Card>
-                            </Grid>
-
-                            {/* IMAGEN */}
-                            <Grid item xs={12}>
-                                <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
-                                    Imagen de la Certificación {!isEditMode && "*"}
-                                </Typography>
-
-                                <Card sx={{ p: 3, backgroundColor: "#f8f9fa" }}>
-                                    {!imagePreview ? (
-                                        <Box
-                                            sx={{
-                                                border: "2px dashed rgba(0,0,0,0.2)",
-                                                borderRadius: 2,
-                                                p: 4,
-                                                textAlign: "center",
-                                                cursor: "pointer",
-                                                transition: "all 0.3s ease",
-                                                "&:hover": {
-                                                    borderColor: "primary.main",
-                                                    backgroundColor: "rgba(25, 118, 210, 0.04)",
-                                                },
-                                            }}
-                                            onClick={() => document.getElementById("image-input").click()}
-                                        >
-                                            <CloudUploadIcon sx={{ fontSize: 60, mb: 2, color: "text.secondary" }} />
-                                            <Typography fontWeight={600} gutterBottom>
-                                                Haz clic para subir una imagen
+                            {/* Estado activo */}
+                            <Paper variant="outlined" sx={{
+                                p: 2, borderRadius: 3, border: `1px solid ${PINK_SOFT}`,
+                                bgcolor: formData.is_active ? PINK_BG_SOFT : "#fff",
+                                transition: "background .25s ease",
+                            }}>
+                                <FormControlLabel
+                                    control={<Checkbox checked={formData.is_active}
+                                        onChange={onChange} name="is_active" sx={sx.checkbox} />}
+                                    label={
+                                        <Box>
+                                            <Typography fontWeight={700} color={PINK_DARK}>
+                                                Certificación activa
                                             </Typography>
-                                            <Typography variant="caption" color="text.secondary" display="block">
-                                                PNG, JPG o JPEG (máx. 5MB)
-                                            </Typography>
-                                            <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
-                                                Recomendado: 800×600 píxeles
-                                            </Typography>
-                                        </Box>
-                                    ) : (
-                                        <Stack direction={{ xs: "column", sm: "row" }} spacing={3} alignItems="center">
-                                            <Avatar
-                                                src={imagePreview}
-                                                variant="rounded"
-                                                sx={{
-                                                    width: { xs: "100%", sm: 150 },
-                                                    height: { xs: 200, sm: 150 },
-                                                    objectFit: "cover",
-                                                }}
-                                            />
-                                            <Stack direction="row" spacing={2}>
-                                                <Button variant="outlined" color="error" size="medium" onClick={handleRemoveImage}>
-                                                    {imageFile ? "Eliminar" : "Quitar imagen"}
-                                                </Button>
-                                                <Button variant="outlined" size="medium" onClick={() => document.getElementById("image-input").click()}>
-                                                    Cambiar imagen
-                                                </Button>
-                                            </Stack>
-                                        </Stack>
-                                    )}
-                                    <input
-                                        id="image-input"
-                                        type="file"
-                                        accept="image/png, image/jpeg, image/jpg"
-                                        onChange={handleImageChange}
-                                        style={{ display: "none" }}
-                                    />
-                                </Card>
-                            </Grid>
-
-                            {/* PDF */}
-                            <Grid item xs={12} md={6}>
-                                <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 0.5 }}>
-                                    Certificado en PDF
-                                </Typography>
-
-                                <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 2 }}>
-                                    Opcional — tamaño carta vertical (8.5 × 11 in)
-                                </Typography>
-
-                                <Card sx={{ p: 3, backgroundColor: "#f8f9fa" }}>
-                                    {!pdfPreview ? (
-                                        <Box
-                                            sx={{
-                                                border: "2px dashed rgba(211, 47, 47, 0.3)",
-                                                borderRadius: 2,
-                                                p: 4,
-                                                textAlign: "center",
-                                                cursor: "pointer",
-                                                transition: "all 0.3s ease",
-                                                "&:hover": {
-                                                    borderColor: "error.main",
-                                                    backgroundColor: "rgba(211, 47, 47, 0.04)",
-                                                },
-                                            }}
-                                            onClick={() => document.getElementById("pdf-input").click()}
-                                        >
-                                            <PdfIcon sx={{ fontSize: 60, mb: 2, color: "error.light" }} />
-                                            <Typography fontWeight={600} gutterBottom>
-                                                Haz clic para subir el PDF del certificado
-                                            </Typography>
-                                            <Typography variant="caption" color="text.secondary" display="block">
-                                                Solo archivos PDF (máx. 10MB)
-                                            </Typography>
-                                        </Box>
-                                    ) : (
-                                        <Stack spacing={2} alignItems="center">
-                                            <PdfPreview url={pdfPreview} title="Vista previa del certificado PDF" />
-
                                             <Typography variant="caption" color="text.secondary">
-                                                {pdfName}
-                                            </Typography>
-
-                                            <Stack direction="row" spacing={2}>
-                                                <Button variant="outlined" color="error" size="medium" onClick={handleRemovePdf}>
-                                                    Eliminar PDF
-                                                </Button>
-                                                <Button variant="outlined" size="medium" onClick={() => document.getElementById("pdf-input").click()}>
-                                                    Cambiar PDF
-                                                </Button>
-                                            </Stack>
-                                        </Stack>
-                                    )}
-
-                                    <input
-                                        id="pdf-input"
-                                        type="file"
-                                        accept="application/pdf"
-                                        onChange={handlePdfChange}
-                                        style={{ display: "none" }}
-                                    />
-                                </Card>
-                            </Grid>
-
-                            {/* DIPLOMA */}
-                            <Grid item xs={12} md={6}>
-                                <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 0.5 }}>
-                                    Diploma en PDF
-                                </Typography>
-
-                                <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 2 }}>
-                                    Opcional — tamaño carta vertical (8.5 × 11 in)
-                                </Typography>
-
-                                <Card sx={{ p: 3, backgroundColor: "#f8f9fa" }}>
-                                    {!diplomaPreview ? (
-                                        <Box
-                                            sx={{
-                                                border: "2px dashed rgba(25, 118, 210, 0.3)",
-                                                borderRadius: 2,
-                                                p: 4,
-                                                textAlign: "center",
-                                                cursor: "pointer",
-                                                transition: "all 0.3s ease",
-                                                "&:hover": {
-                                                    borderColor: "primary.main",
-                                                    backgroundColor: "rgba(25, 118, 210, 0.04)",
-                                                },
-                                            }}
-                                            onClick={() => document.getElementById("diploma-input").click()}
-                                        >
-                                            <PdfIcon sx={{ fontSize: 60, mb: 2, color: "primary.light" }} />
-                                            <Typography fontWeight={600}>
-                                                Haz clic para subir el diploma en PDF
-                                            </Typography>
-                                            <Typography variant="caption" color="text.secondary" display="block">
-                                                Solo archivos PDF (máx. 10MB)
+                                                Si está activa, los usuarios podrán ver y obtener esta certificación
                                             </Typography>
                                         </Box>
-                                    ) : (
-                                        <Stack spacing={2} alignItems="center">
-                                            <PdfPreview url={diplomaPreview} title="Vista previa del diploma" />
+                                    }
+                                />
+                            </Paper>
 
-                                            <Typography variant="caption">
-                                                {diplomaName}
-                                            </Typography>
+                            {/* Imagen */}
+                            <Section icon={<ImageOutlined fontSize="small" />}
+                                title="Imagen de la certificación"
+                                subtitle={`PNG, JPG o JPEG · Máx. ${IMG_MAX_MB} MB`}>
+                                <UploadField
+                                    label="Imagen" helper={`PNG, JPG o JPEG (máx. ${IMG_MAX_MB} MB)`}
+                                    accept="image/png, image/jpeg, image/jpg"
+                                    preview={files.image.preview} fileName={files.image.name}
+                                    isImage icon={<CloudUploadIcon />} required={!isEdit}
+                                    onPick={onFileChange("image", validateImage)}
+                                    onRemove={onRemoveFile("image")}
+                                />
+                            </Section>
 
-                                            <Stack direction="row" spacing={2}>
-                                                <Button variant="outlined" color="error" onClick={handleRemoveDiploma}>
-                                                    Eliminar
-                                                </Button>
-                                                <Button variant="outlined" onClick={() => document.getElementById("diploma-input").click()}>
-                                                    Cambiar
-                                                </Button>
-                                            </Stack>
-                                        </Stack>
-                                    )}
+                            {/* PDFs */}
+                            <Section icon={<PdfIcon fontSize="small" />} title="Documentos PDF"
+                                subtitle={`Tamaño carta vertical (8.5 × 11 in) · Máx. ${PDF_MAX_MB} MB cada uno`}>
+                                <Grid container spacing={3}>
+                                    <Grid item xs={12} md={6}>
+                                        <UploadField
+                                            label="Certificado en PDF" helper="Opcional"
+                                            accept="application/pdf"
+                                            preview={files.certificate.preview}
+                                            fileName={files.certificate.name} icon={<PdfIcon />}
+                                            onPick={onFileChange("certificate", (f) => validatePdf(f, "certificado"))}
+                                            onRemove={onRemoveFile("certificate")}
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} md={6}>
+                                        <UploadField
+                                            label="Diploma en PDF" helper="Opcional"
+                                            accept="application/pdf"
+                                            preview={files.diploma.preview}
+                                            fileName={files.diploma.name} icon={<PdfIcon />}
+                                            onPick={onFileChange("diploma", (f) => validatePdf(f, "diploma"))}
+                                            onRemove={onRemoveFile("diploma")}
+                                        />
+                                    </Grid>
+                                </Grid>
+                            </Section>
 
-                                    <input
-                                        id="diploma-input"
-                                        type="file"
-                                        accept="application/pdf"
-                                        onChange={handleDiplomaChange}
-                                        style={{ display: "none" }}
-                                    />
-                                </Card>
-                            </Grid>
+                            <Divider sx={{ borderColor: PINK_SOFT }} />
 
+                            {/* Botones */}
+                            <Stack direction={{ xs: "column-reverse", sm: "row" }}
+                                spacing={2} justifyContent="flex-end">
+                                <Button variant="outlined" size="large" onClick={goBack}
+                                    disabled={submitting} sx={sx.outline}>
+                                    Cancelar
+                                </Button>
+                                <Button type="submit" variant="contained" size="large" disabled={submitting}
+                                    startIcon={submitting
+                                        ? <CircularProgress size={18} sx={{ color: "#fff" }} />
+                                        : <SaveIcon />}
+                                    sx={{ ...sx.primary, minWidth: 220 }}>
+                                    {submitting ? texts.loading : texts.submit}
+                                </Button>
+                            </Stack>
 
-                            {/* BOTONES */}
-                            <Grid item xs={12}>
-                                <Box display="flex" justifyContent="flex-end" gap={2} sx={{ mt: 2 }}>
-                                    <Button
-                                        variant="outlined"
-                                        size="large"
-                                        onClick={() => (onCancel ? onCancel() : history.push("/certifications/list"))}
-                                        disabled={submitting}
-                                    >
-                                        Cancelar
-                                    </Button>
-
-                                    <Button
-                                        type="submit"
-                                        variant="contained"
-                                        size="large"
-                                        startIcon={<SaveIcon />}
-                                        disabled={submitting}
-                                        sx={{ minWidth: 200 }}
-                                    >
-                                        {submitting
-                                            ? (isEditMode ? "Actualizando..." : "Guardando...")
-                                            : (isEditMode ? "Actualizar Certificación" : "Crear Certificación")}
-                                    </Button>
-                                </Box>
-                            </Grid>
-
-                        </Grid>
-                    </form>
-                </Paper>
-            </Grid>
-        </Grid>
+                        </Stack>
+                    </Box>
+                </Box>
+            </Paper>
+        </Box>
     );
 };
 

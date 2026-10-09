@@ -1,84 +1,108 @@
 import React, { useEffect, useState, useMemo, useCallback, useRef, memo } from 'react';
-import { makeStyles } from '@mui/styles';
 import {
-    Box, Button, Card, CardMedia, Chip, Dialog, FormControl,
-    Grid, IconButton, InputLabel, MenuItem, Paper, Select, Stack,
-    TextField, Tooltip, Typography, Avatar, Skeleton, CardActions,
-    Fade, useTheme, useMediaQuery, FormHelperText, CircularProgress,
-    Pagination, Divider, DialogTitle, DialogContent, DialogActions,
+    Alert, Avatar, Box, Button, Card, CardMedia, Chip, Dialog, DialogActions, DialogContent, DialogContentText,
+    DialogTitle, Divider, Fade, FormControl, FormHelperText, Grid, IconButton, InputAdornment, InputLabel,
+    MenuItem, Pagination, Paper, Select, Skeleton, Snackbar, Stack, TextField, Tooltip, Typography,
+    useMediaQuery, useTheme,
 } from '@mui/material';
-import SearchIcon from '@mui/icons-material/Search';
-import CloseIcon from '@mui/icons-material/Close';
-import PendingActionsIcon from '@mui/icons-material/PendingActions';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import ImageIcon from '@mui/icons-material/Image';
-import BookIcon from '@mui/icons-material/Book';
-import SchoolIcon from '@mui/icons-material/School';
-import PersonIcon from '@mui/icons-material/Person';
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
-import ClearAllIcon from '@mui/icons-material/ClearAll';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import EmailIcon from '@mui/icons-material/Email';
-import BadgeIcon from '@mui/icons-material/Badge';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import UpdateIcon from '@mui/icons-material/Update';
+import {
+    Search as SearchIcon, SearchOff as SearchOffIcon, Close as CloseIcon, PendingActions as PendingActionsIcon,
+    DeleteOutline as DeleteOutlineIcon, Image as ImageIcon, Book as BookIcon, School as SchoolIcon,
+    Person as PersonIcon, CalendarToday as CalendarTodayIcon, ClearAll as ClearAllIcon,
+    Visibility as VisibilityIcon, Email as EmailIcon, Badge as BadgeIcon, AccessTime as AccessTimeIcon,
+} from '@mui/icons-material';
 import clienteAxios from '../../config/Axios';
-import Swal from 'sweetalert2';
 
-const useStyles = makeStyles(() => ({
-    '@global': { '.swal2-container': { zIndex: '99999 !important' } },
-}));
-
+// ─── Constantes y helpers ────────────────────────────────────────────────────
+const CDN = 'https://cdn.floreciendojuntas.com';
+const PINK = '#FF5C93';
+const GRADIENT = 'linear-gradient(135deg, #FF5C93 0%, #FF69B4 100%)';
 const CERT_COLORS = ['#FF6B9D', '#4CAF50', '#2196F3', '#FF9800', '#9C27B0', '#E91E63', '#00BCD4', '#795548'];
-const getCertColor = (i) => CERT_COLORS[i % CERT_COLORS.length];
 
-const fmtDate = (d) =>
+const absFill = { position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' };
+const flexRow = { display: 'flex', alignItems: 'center', gap: 1 };
+const iconSx = { color: '#757575', mr: 1, fontSize: 20 };
+const smallIcon = { fontSize: 14, color: '#757575' };
+
+const fieldSx = (border = '#FFD6EA') => ({
+    bgcolor: '#fff',
+    borderRadius: 2,
+    '& .MuiOutlinedInput-root': {
+        borderRadius: 2,
+        '& fieldset': { borderColor: border },
+        '&:hover fieldset, &.Mui-focused fieldset': { borderColor: PINK },
+    },
+    '& .MuiInputLabel-root, & .MuiInputLabel-root.Mui-focused, & .MuiSelect-icon': { color: PINK },
+});
+
+const fmtDate = (d, long = false) =>
     new Date(d).toLocaleDateString('es-MX', {
-        year: 'numeric', month: 'short', day: 'numeric',
-        hour: '2-digit', minute: '2-digit',
+        year: 'numeric', month: long ? 'long' : 'short', day: 'numeric',
+        hour: '2-digit', minute: '2-digit', ...(long && { second: '2-digit' }),
     });
 
-const fmtDateLong = (d) =>
-    new Date(d).toLocaleDateString('es-MX', {
-        year: 'numeric', month: 'long', day: 'numeric',
-        hour: '2-digit', minute: '2-digit', second: '2-digit',
-    });
+const chipSx = (bgcolor, color, extra = {}) => ({
+    bgcolor, color, fontWeight: 600, fontSize: '0.72rem', height: 'auto',
+    '& .MuiChip-label': { whiteSpace: 'normal', py: 0.5 }, '& .MuiChip-icon': { color }, ...extra,
+});
 
-const parseResponse = (res) =>
-    Array.isArray(res.data)
-        ? { rawList: res.data, page: 1, totalPages: 1, total: res.data.length }
-        : { rawList: res.data.data, page: res.data.page, totalPages: res.data.totalPages, total: res.data.total };
+const transformTask = (task, certifications) => {
+    const moduleId = task.moduleId ?? task.module?.id;
+    const certId = task.module?.certificationId || 1;
+    const cert = certifications.find(c => c.originalId === certId);
+    const name = task.user?.name;
+    return {
+        id: task.id,
+        user: {
+            name: name || 'Usuario',
+            email: task.user?.email || '',
+            id: task.userId ?? task.user?.id,
+            avatar: name ? name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'U',
+        },
+        certificationId: cert?.id ?? `cert_${certId}`,
+        certificationName: cert?.name ?? task.module?.certification_name ?? `Certificación ${certId}`,
+        certColor: cert?.color || '#757575',
+        moduleId: moduleId?.toString() ?? '',
+        moduleName: task.module?.title || `Módulo ${moduleId}`,
+        submittedAt: task.createdAt,
+        images: [task.photo_1, task.photo_2, task.photo_3].filter(Boolean).map(p => ({ url: `${CDN}${p}` })),
+    };
+};
 
-const getTotal = (res) =>
-    Array.isArray(res.data) ? res.data.length : (res.data.total ?? 0);
+const PageHeader = ({ icon, title, subtitle, children }) => (
+    <Box sx={{ background: GRADIENT, color: '#fff', p: { xs: 2.5, sm: 3 }, gap: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Stack direction="row" alignItems="center" spacing={2}>
+            <Avatar sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: '#fff', width: 48, height: 48 }}>{icon}</Avatar>
+            <Box>
+                <Typography variant="h6" fontWeight={700}>{title}</Typography>
+                {subtitle && <Typography variant="body2" sx={{ opacity: 0.9 }}>{subtitle}</Typography>}
+            </Box>
+        </Stack>
+        {children}
+    </Box>
+);
 
-// ─── ImageGrid ──────────────────────────────────────────────────────────────
+const IconText = ({ icon, children, variant = 'caption', ...rest }) => (
+    <Box sx={flexRow}>{icon}<Typography variant={variant} color="text.secondary" {...rest}>{children}</Typography></Box>
+);
+
+// ─── ImageGrid ───────────────────────────────────────────────────────────────
 const ImageGrid = memo(({ taskId, images, onOpen }) => {
     const [errors, setErrors] = useState({});
     return (
         <Grid container spacing={{ xs: 1, sm: 2 }}>
             {images.map((img, idx) => (
                 <Grid item xs={4} key={`${taskId}-img-${idx}`}>
-                    <Paper
-                        sx={{
-                            cursor: 'pointer', borderRadius: 2, overflow: 'hidden',
-                            position: 'relative', paddingTop: '100%',
-                            '&:hover': { opacity: 0.8 },
-                        }}
-                        onClick={() => onOpen(img.url)}
-                    >
-                        {!errors[idx] ? (
-                            <CardMedia
-                                component="img"
-                                image={img.url}
-                                alt={`Img ${idx + 1}`}
-                                onError={() => setErrors(p => ({ ...p, [idx]: true }))}
-                                sx={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }}
-                            />
-                        ) : (
-                            <Box sx={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: '#f5f5f5' }}>
+                    <Paper onClick={() => onOpen(img.url)}
+                        sx={{ cursor: 'pointer', borderRadius: 2, overflow: 'hidden', position: 'relative', pt: '100%', '&:hover': { opacity: 0.8 } }}>
+                        {errors[idx] ? (
+                            <Box sx={{ ...absFill, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: '#f5f5f5' }}>
                                 <ImageIcon sx={{ color: '#bdbdbd' }} />
                             </Box>
+                        ) : (
+                            <CardMedia component="img" image={img.url} alt={`Img ${idx + 1}`}
+                                onError={() => setErrors(p => ({ ...p, [idx]: true }))}
+                                sx={{ ...absFill, objectFit: 'cover' }} />
                         )}
                     </Paper>
                 </Grid>
@@ -88,306 +112,229 @@ const ImageGrid = memo(({ taskId, images, onOpen }) => {
 });
 
 // ─── PendingTaskCard ─────────────────────────────────────────────────────────
-const PendingTaskCard = memo(({ task, certColor, onDelete, onViewDetail, isMobile }) => (
+const PendingTaskCard = memo(({ task, onDelete, onViewDetail }) => (
     <Card sx={{
-        height: '100%', display: 'flex', flexDirection: 'column',
-        borderRadius: { xs: 2, sm: 3 }, boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-        transition: 'all 0.3s', border: '1px solid #e0e0e0', overflow: 'visible', position: 'relative',
-        '&:hover': {
-            transform: { xs: 'none', sm: 'translateY(-6px)' },
-            boxShadow: { xs: '0 8px 24px rgba(0,0,0,0.12)', sm: '0 16px 32px rgba(255,152,0,0.18)' },
-        },
+        height: '100%', display: 'flex', flexDirection: 'column', borderRadius: 3, border: '1px solid #FFE6F0',
+        boxShadow: '0 4px 16px rgba(255,92,147,0.08)', transition: 'all 0.25s',
+        '&:hover': { transform: { sm: 'translateY(-4px)' }, boxShadow: '0 12px 28px rgba(255,92,147,0.18)' },
     }}>
-        {/* Badge pendiente */}
-        <Box sx={{
-            position: 'absolute', top: -18, right: -6, zIndex: 1,
-            width: { xs: 38, sm: 45 }, height: { xs: 38, sm: 45 }, borderRadius: '50%',
-            bgcolor: '#ff9800', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 4px 10px rgba(0,0,0,0.25)',
-        }}>
-            <Tooltip title="Tarea pendiente">
-                <PendingActionsIcon sx={{ color: '#fff', fontSize: { xs: 18, sm: 22 } }} />
-            </Tooltip>
-        </Box>
-
-        {/* Header */}
-        <Box sx={{
-            p: { xs: 2, sm: 2.5 },
-            background: 'linear-gradient(135deg, #FE6F9F 0%, #FE6F9FCC 100%)',
-            borderTopLeftRadius: { xs: 8, sm: 12 },
-            borderTopRightRadius: { xs: 8, sm: 12 },
-        }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1.5, sm: 2 } }}>
-                <Avatar sx={{
-                    bgcolor: '#FF91B5', color: '#fff',
-                    width: { xs: 40, sm: 48 }, height: { xs: 40, sm: 48 },
-                    fontSize: { xs: '0.9rem', sm: '1rem' }, flexShrink: 0,
-                }}>
-                    {task.user.avatar || <PersonIcon />}
-                </Avatar>
-                <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Typography variant="subtitle1" fontWeight="700" sx={{
-                        color: '#fff', fontSize: { xs: '0.85rem', sm: '1rem' },
-                        display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 2, overflow: 'hidden',
-                    }}>
-                        {task.user.name}
-                    </Typography>
-                    <Typography variant="caption" sx={{
-                        color: '#fff', opacity: 0.9, fontSize: { xs: '0.7rem', sm: '0.75rem' },
-                        display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                    }}>
-                        {task.user.email}
-                    </Typography>
-                </Box>
+        <Stack direction="row" alignItems="center" spacing={1.5} sx={{ p: 2, background: GRADIENT }}>
+            <Avatar sx={{ bgcolor: 'rgba(255,255,255,0.25)', color: '#fff', width: 44, height: 44, fontSize: '0.95rem', fontWeight: 700 }}>
+                {task.user.avatar || <PersonIcon />}
+            </Avatar>
+            <Box sx={{ minWidth: 0 }}>
+                <Typography fontWeight={700} noWrap sx={{ color: '#fff', fontSize: '0.95rem' }}>{task.user.name}</Typography>
+                <Typography variant="caption" noWrap sx={{ color: '#fff', opacity: 0.9, display: 'block' }}>{task.user.email}</Typography>
             </Box>
-        </Box>
+        </Stack>
 
-        {/* Body */}
-        <Box sx={{ p: { xs: 2, sm: 2.5 }, flex: 1 }}>
-            <Stack direction="row" sx={{ mb: 2, flexWrap: 'wrap', gap: 1 }}>
-                <Chip
-                    icon={<BookIcon sx={{ fontSize: { xs: 13, sm: 16 } }} />}
-                    label={task.moduleName}
-                    size="small"
-                    sx={{
-                        bgcolor: '#f5f5f5', color: certColor, fontWeight: 600,
-                        border: `1px solid ${certColor}`, fontSize: { xs: '0.65rem', sm: '0.75rem' },
-                        height: 'auto', '& .MuiChip-label': { whiteSpace: 'normal', py: 0.5 },
-                    }}
-                />
-                <Chip
-                    icon={<SchoolIcon sx={{ fontSize: { xs: 13, sm: 16 } }} />}
-                    label={task.certificationName}
-                    size="small"
-                    sx={{
-                        bgcolor: '#e3f2fd', color: '#1976d2', fontWeight: 600,
-                        fontSize: { xs: '0.65rem', sm: '0.75rem' },
-                        height: 'auto', '& .MuiChip-label': { whiteSpace: 'normal', py: 0.5 },
-                    }}
-                />
+        <Stack spacing={1.5} sx={{ p: 2, flex: 1 }}>
+            <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1 }}>
+                <Chip size="small" icon={<BookIcon />} label={task.moduleName}
+                    sx={chipSx('#fff', task.certColor, { border: `1px solid ${task.certColor}` })} />
+                <Chip size="small" icon={<SchoolIcon />} label={task.certificationName} sx={chipSx('#e3f2fd', '#1976d2')} />
             </Stack>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <CalendarTodayIcon sx={{ fontSize: { xs: 13, sm: 16 }, color: '#757575', flexShrink: 0 }} />
-                <Typography variant="caption" sx={{ color: '#757575', fontSize: { xs: '0.68rem', sm: '0.75rem' } }}>
-                    {fmtDate(task.submittedAt)}
-                </Typography>
-            </Box>
-        </Box>
+            <IconText icon={<CalendarTodayIcon sx={{ ...smallIcon, fontSize: 15 }} />}>{fmtDate(task.submittedAt)}</IconText>
+        </Stack>
 
-        {/* Actions */}
-        <CardActions sx={{ p: { xs: 2, sm: 2.5 }, pt: 0, gap: 1, flexDirection: { xs: 'column', sm: 'row' } }}>
-            <Button
-                variant="outlined"
-                fullWidth
-                startIcon={<VisibilityIcon sx={{ fontSize: { xs: 16, sm: 20 } }} />}
-                onClick={() => onViewDetail(task)}
-                sx={{
-                    borderColor: '#1976d2', color: '#1976d2', fontWeight: 600,
-                    py: { xs: 1, sm: 1.2 }, fontSize: { xs: '0.78rem', sm: '0.875rem' },
-                    '&:hover': { borderColor: '#1565c0', bgcolor: 'rgba(25,118,210,0.06)', color: '#1565c0' },
-                }}
-            >
-                Ver Detalle
+        <Stack direction="row" spacing={1} sx={{ p: 2, pt: 0 }}>
+            <Button fullWidth variant="contained" startIcon={<VisibilityIcon />} onClick={() => onViewDetail(task)}
+                sx={{ bgcolor: PINK, color: '#fff', fontWeight: 600, boxShadow: 'none', '&:hover': { bgcolor: '#E94E88', boxShadow: 'none' } }}>
+                Ver detalle
             </Button>
-            <Button
-                variant="outlined"
-                fullWidth
-                startIcon={<DeleteOutlineIcon sx={{ fontSize: { xs: 16, sm: 20 } }} />}
-                onClick={() => onDelete(task)}
-                sx={{
-                    borderColor: '#f44336', color: '#f44336', fontWeight: 600,
-                    py: { xs: 1, sm: 1.2 }, fontSize: { xs: '0.78rem', sm: '0.875rem' },
-                    '&:hover': { borderColor: '#d32f2f', bgcolor: 'rgba(244,67,54,0.06)', color: '#d32f2f' },
-                }}
-            >
-                Eliminar Tarea
-            </Button>
-        </CardActions>
+            <Tooltip title="Eliminar tarea">
+                <IconButton onClick={() => onDelete(task)}
+                    sx={{ color: '#f44336', border: '1px solid #f44336', borderRadius: 1, '&:hover': { bgcolor: '#FEF4F6' } }}>
+                    <DeleteOutlineIcon />
+                </IconButton>
+            </Tooltip>
+        </Stack>
     </Card>
 ));
 
-// ─── TaskDetailDialog ───────────────────────────────────────────────────────
-const TaskDetailDialog = ({ open, task, onClose, onOpenImage }) => {
-    if (!task) return null;
+// ─── TaskDetailDialog ────────────────────────────────────────────────────────
+const Section = ({ icon, title, color = 'text.primary', sm, children }) => (
+    <Grid item xs={12} sm={sm}>
+        <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, height: '100%' }}>
+            <Typography variant="subtitle1" fontWeight={700} sx={{ ...flexRow, mb: 2, color }}>{icon} {title}</Typography>
+            {children}
+        </Paper>
+    </Grid>
+);
 
+const TaskDetailDialog = ({ task, onClose, onOpenImage }) => {
+    if (!task) return null;
+    const n = task.images.length;
     return (
-        <Dialog
-            open={open}
-            onClose={onClose}
-            maxWidth="md"
-            fullWidth
-            PaperProps={{
-                sx: {
-                    borderRadius: { xs: 0, sm: 3 },
-                    m: { xs: 0, sm: 2 },
-                    maxHeight: '90vh',
-                }
-            }}
-        >
-            <DialogTitle sx={{
-                background: 'linear-gradient(135deg, #FE6F9F 0%, #FE6F9FCC 100%)',
-                color: '#fff',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                p: 2,
-            }}>
-                <Typography variant="h6" component="div" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <PendingActionsIcon /> Detalle de Tarea
-                </Typography>
-                <IconButton onClick={onClose} sx={{ color: '#fff' }}>
-                    <CloseIcon />
-                </IconButton>
+        <Dialog open onClose={onClose} maxWidth="md" fullWidth
+            PaperProps={{ sx: { borderRadius: { xs: 0, sm: 3 }, m: { xs: 0, sm: 2 }, maxHeight: '90vh' } }}>
+            <DialogTitle sx={{ p: 0 }}>
+                <PageHeader icon={<PendingActionsIcon />} title="Detalle de tarea" subtitle={`Enviada el ${fmtDate(task.submittedAt)}`}>
+                    <IconButton onClick={onClose} sx={{ color: '#fff' }}><CloseIcon /></IconButton>
+                </PageHeader>
             </DialogTitle>
 
-            <DialogContent dividers sx={{ p: { xs: 2, sm: 3 } }}>
+            <DialogContent dividers sx={{ p: { xs: 2, sm: 3 }, bgcolor: '#FFFAFC' }}>
                 <Grid container spacing={3}>
-                    {/* Información del Usuario */}
-                    <Grid item xs={12}>
-                        <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, bgcolor: '#fafafa' }}>
-                            <Typography variant="subtitle1" fontWeight="700" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2, color: '#FE6F9F' }}>
-                                <PersonIcon /> Información del Usuario
-                            </Typography>
-                            <Stack spacing={1.5}>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-                                    <Avatar sx={{ bgcolor: '#FE6F9F', width: 56, height: 56 }}>
-                                        {task.user.avatar || <PersonIcon />}
-                                    </Avatar>
-                                    <Box>
-                                        <Typography variant="body1" fontWeight="600">{task.user.name}</Typography>
-                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-                                            <EmailIcon sx={{ fontSize: 14, color: '#757575' }} />
-                                            <Typography variant="body2" color="text.secondary">{task.user.email}</Typography>
-                                        </Box>
-                                        {task.user.id && (
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-                                                <BadgeIcon sx={{ fontSize: 14, color: '#757575' }} />
-                                                <Typography variant="caption" color="text.secondary">ID Usuario: {task.user.id}</Typography>
-                                            </Box>
-                                        )}
-                                    </Box>
-                                </Box>
-                            </Stack>
-                        </Paper>
-                    </Grid>
+                    <Section icon={<PersonIcon />} title="Información del usuario" color={PINK}>
+                        <Box sx={{ ...flexRow, gap: 2, flexWrap: 'wrap' }}>
+                            <Avatar sx={{ background: GRADIENT, width: 56, height: 56, fontWeight: 700 }}>{task.user.avatar || <PersonIcon />}</Avatar>
+                            <Box>
+                                <Typography fontWeight={600}>{task.user.name}</Typography>
+                                <IconText variant="body2" icon={<EmailIcon sx={smallIcon} />}>{task.user.email}</IconText>
+                                {task.user.id && <IconText icon={<BadgeIcon sx={smallIcon} />}>ID usuario: {task.user.id}</IconText>}
+                            </Box>
+                        </Box>
+                    </Section>
 
-                    {/* Información de Módulo y Certificación */}
-                    <Grid item xs={12} sm={6}>
-                        <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, height: '100%' }}>
-                            <Typography variant="subtitle1" fontWeight="700" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2, color: '#4caf50' }}>
-                                <BookIcon /> Módulo
-                            </Typography>
-                            <Typography variant="body1" fontWeight="500">{task.moduleName}</Typography>
-                            <Typography variant="caption" color="text.secondary">ID Módulo: {task.moduleId}</Typography>
-                        </Paper>
-                    </Grid>
+                    <Section sm={6} icon={<BookIcon />} title="Módulo" color="#4caf50">
+                        <Typography fontWeight={500}>{task.moduleName}</Typography>
+                        <Typography variant="caption" color="text.secondary">ID módulo: {task.moduleId}</Typography>
+                    </Section>
 
-                    <Grid item xs={12} sm={6}>
-                        <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, height: '100%' }}>
-                            <Typography variant="subtitle1" fontWeight="700" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2, color: '#1976d2' }}>
-                                <SchoolIcon /> Certificación
-                            </Typography>
-                            <Typography variant="body1" fontWeight="500">{task.certificationName}</Typography>
-                            <Typography variant="caption" color="text.secondary">ID Certificación: {task.certificationId?.replace('cert_', '')}</Typography>
-                        </Paper>
-                    </Grid>
+                    <Section sm={6} icon={<SchoolIcon />} title="Certificación" color="#1976d2">
+                        <Typography fontWeight={500}>{task.certificationName}</Typography>
+                        <Typography variant="caption" color="text.secondary">
+                            ID certificación: {task.certificationId?.replace('cert_', '')}
+                        </Typography>
+                    </Section>
 
-                    {/* Metadatos de la tarea */}
-                    <Grid item xs={12}>
-                        <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
-                            <Typography variant="subtitle1" fontWeight="700" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2, color: '#ff9800' }}>
-                                <PendingActionsIcon /> Información de la Tarea
-                            </Typography>
-                            <Grid container spacing={2}>
-                                <Grid item xs={12} sm={6}>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                        <AccessTimeIcon sx={{ fontSize: 16, color: '#757575' }} />
-                                        <Typography variant="body2">
-                                            <strong>Fecha de envío:</strong> {fmtDateLong(task.submittedAt)}
-                                        </Typography>
-                                    </Box>
-                                </Grid>
-                                {/* <Grid item xs={12} sm={6}>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                        <UpdateIcon sx={{ fontSize: 16, color: '#757575' }} />
-                                        <Typography variant="body2">
-                                            <strong>ID Tarea:</strong> {task.id}
-                                        </Typography>
-                                    </Box>
-                                </Grid> */}
-                                <Grid item xs={12}>
-                                    <Chip
-                                        label="Estado: Pendiente de revisión"
-                                        icon={<PendingActionsIcon />}
-                                        sx={{ bgcolor: '#fff3e0', color: '#ff9800', fontWeight: 600 }}
-                                    />
-                                </Grid>
-                            </Grid>
-                        </Paper>
-                    </Grid>
+                    <Section icon={<PendingActionsIcon />} title="Información de la tarea" color="#ff9800">
+                        <Box sx={{ ...flexRow, mb: 2 }}>
+                            <AccessTimeIcon sx={{ fontSize: 16, color: '#757575' }} />
+                            <Typography variant="body2"><strong>Fecha de envío:</strong> {fmtDate(task.submittedAt, true)}</Typography>
+                        </Box>
+                        <Chip icon={<PendingActionsIcon />} label="Pendiente de revisión" sx={chipSx('#fff3e0', '#ff9800', { height: 32 })} />
+                    </Section>
 
-                    {/* Imágenes subidas */}
-                    <Grid item xs={12}>
-                        <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
-                            <Typography variant="subtitle1" fontWeight="700" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                                <ImageIcon /> Evidencias ({task.images.length} imagen{task.images.length !== 1 ? 'es' : ''})
+                    <Section icon={<ImageIcon />} title={`Evidencias (${n} imagen${n !== 1 ? 'es' : ''})`}>
+                        {n > 0 ? (
+                            <ImageGrid taskId={task.id} images={task.images} onOpen={onOpenImage} />
+                        ) : (
+                            <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
+                                No hay imágenes subidas para esta tarea.
                             </Typography>
-                            {task.images.length > 0 ? (
-                                <ImageGrid
-                                    taskId={task.id}
-                                    images={task.images}
-                                    onOpen={onOpenImage}
-                                />
-                            ) : (
-                                <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
-                                    No hay imágenes subidas para esta tarea.
-                                </Typography>
-                            )}
-                        </Paper>
-                    </Grid>
+                        )}
+                    </Section>
                 </Grid>
             </DialogContent>
-
-            <DialogActions sx={{ p: 2, justifyContent: 'space-between', flexWrap: 'wrap', gap: 1 }}>
-                {/* <Button
-                    variant="outlined"
-                    onClick={onClose}
-                    startIcon={<CloseIcon />}
-                >
-                    Cerrar
-                </Button>
-                <Button
-                    variant="contained"
-                    color="error"
-                    onClick={() => {
-                        onClose();
-                        // Podrías pasar una función para eliminar desde aquí también
-                    }}
-                    startIcon={<DeleteOutlineIcon />}
-                >
-                    Eliminar Tarea
-                </Button> */}
-            </DialogActions>
         </Dialog>
     );
 };
 
-// ─── Main Component ───────────────────────────────────────────────────────────
-const PendingTask = () => {
-    const theme = useTheme();
-    useStyles();
-    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+// ─── ConfirmDeleteDialog ─────────────────────────────────────────────────────
+const ConfirmDeleteDialog = ({ task, onCancel, onConfirm }) => (
+    <Dialog open={!!task} onClose={onCancel} PaperProps={{ sx: { borderRadius: 3 } }}>
+        <DialogTitle fontWeight={700}>¿Eliminar tarea?</DialogTitle>
+        <DialogContent>
+            <DialogContentText>
+                Se eliminará la tarea de <strong>{task?.user.name}</strong>. Esta acción no se puede deshacer.
+            </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+            <Button color="inherit" onClick={onCancel}>Cancelar</Button>
+            <Button color="error" variant="contained" onClick={onConfirm}>Sí, eliminar</Button>
+        </DialogActions>
+    </Dialog>
+);
 
-    // ─── State ────────────────────────────────────────────────────────────────
+// ─── ImageViewer (zoom + arrastre) ───────────────────────────────────────────
+const ImageViewer = ({ url, onClose, isMobile }) => {
+    const [zoom, setZoom] = useState(1);
+    const [pos, setPos] = useState({ x: 0, y: 0 });
+    const [dragging, setDragging] = useState(false);
+    const dragStart = useRef({ x: 0, y: 0 });
+
+    const changeZoom = (delta) => setZoom(z => Math.min(Math.max(z + delta, 0.5), 4));
+    const reset = () => { setZoom(1); setPos({ x: 0, y: 0 }); };
+    const stop = (e) => e.stopPropagation();
+    const endDrag = () => setDragging(false);
+
+    useEffect(reset, [url]);
+
+    const zoomBtn = (label, onClick, size = 22) => (
+        <IconButton size="small" onClick={onClick} sx={{ color: '#fff' }}>
+            <Typography sx={{ fontSize: size, lineHeight: 1 }}>{label}</Typography>
+        </IconButton>
+    );
+
+    return (
+        <Dialog open={!!url} onClose={onClose} maxWidth="lg" fullWidth fullScreen={isMobile}
+            PaperProps={{ sx: { bgcolor: 'transparent', boxShadow: 'none', overflow: 'hidden', m: isMobile ? 0 : 2 } }}
+            BackdropProps={{ sx: { bgcolor: 'rgba(0,0,0,0.85)' } }}>
+            <Box
+                onWheel={(e) => changeZoom(e.deltaY > 0 ? -0.15 : 0.15)}
+                onPointerDown={(e) => {
+                    e.currentTarget.setPointerCapture(e.pointerId);
+                    dragStart.current = { x: e.clientX - pos.x, y: e.clientY - pos.y };
+                    setDragging(true);
+                }}
+                onPointerMove={(e) => dragging && setPos({ x: e.clientX - dragStart.current.x, y: e.clientY - dragStart.current.y })}
+                onPointerUp={endDrag}
+                onPointerCancel={endDrag}
+                sx={{
+                    position: 'relative', minHeight: isMobile ? '100vh' : 400, overflow: 'hidden', userSelect: 'none',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    touchAction: 'none', cursor: dragging ? 'grabbing' : zoom > 1 ? 'grab' : 'default',
+                }}>
+                <IconButton onClick={onClose} onPointerDown={stop}
+                    sx={{ position: 'absolute', top: 8, right: 8, zIndex: 10, bgcolor: 'rgba(0,0,0,0.5)', color: '#fff', '&:hover': { bgcolor: 'rgba(0,0,0,0.8)' } }}>
+                    <CloseIcon />
+                </IconButton>
+
+                <Box onPointerDown={stop}
+                    sx={{ ...flexRow, position: 'absolute', bottom: { xs: 24, sm: 16 }, left: '50%', transform: 'translateX(-50%)', zIndex: 10, bgcolor: 'rgba(0,0,0,0.55)', borderRadius: 4, px: 2, py: 0.5 }}>
+                    {zoomBtn('−', () => changeZoom(-0.25))}
+                    <Typography sx={{ color: '#fff', minWidth: 50, textAlign: 'center', fontSize: 14 }}>{Math.round(zoom * 100)}%</Typography>
+                    {zoomBtn('+', () => changeZoom(0.25))}
+                    <Divider orientation="vertical" flexItem sx={{ bgcolor: 'rgba(255,255,255,0.3)', mx: 0.5 }} />
+                    {zoomBtn('Reset', reset, 12)}
+                </Box>
+
+                {url && (
+                    <Box component="img" src={url} alt="Vista ampliada" draggable={false}
+                        sx={{
+                            maxWidth: '100%', maxHeight: isMobile ? '80vh' : '85vh', objectFit: 'contain', borderRadius: 1,
+                            transform: `translate(${pos.x}px, ${pos.y}px) scale(${zoom})`, transformOrigin: 'center center',
+                            willChange: 'transform', transition: dragging ? 'none' : 'transform 0.2s ease', pointerEvents: 'none',
+                        }} />
+                )}
+            </Box>
+        </Dialog>
+    );
+};
+
+// ─── FilterSelect ────────────────────────────────────────────────────────────
+const FilterSelect = ({ label, icon, value, onChange, options, allLabel, disabled, helper }) => (
+    <FormControl fullWidth size="small" disabled={disabled} sx={fieldSx(PINK)}>
+        <InputLabel>{label}</InputLabel>
+        <Select value={value} label={label} onChange={onChange} startAdornment={icon}>
+            <MenuItem value="all">{allLabel}</MenuItem>
+            {options.map(o => (
+                <MenuItem key={o.id} value={o.id}>
+                    <Box sx={flexRow}>
+                        {o.color && <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: o.color, flexShrink: 0 }} />}
+                        <Typography component="span" noWrap>{o.name}</Typography>
+                    </Box>
+                </MenuItem>
+            ))}
+        </Select>
+        {helper && <FormHelperText>{helper}</FormHelperText>}
+    </FormControl>
+);
+
+// ─── Main Component ──────────────────────────────────────────────────────────
+const PendingTask = () => {
+    const isMobile = useMediaQuery(useTheme().breakpoints.down('sm'));
+    const itemsPerPage = isMobile ? 6 : 12;
+
     const [loading, setLoading] = useState(false);
     const [loadingCerts, setLoadingCerts] = useState(false);
     const [loadingModules, setLoadingModules] = useState(false);
-    const [deleting, setDeleting] = useState(false);
 
     const [searchTerm, setSearchTerm] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
     const searchTimerRef = useRef(null);
-    const searchMounted = useRef(false);
 
     const [selectedCert, setSelectedCert] = useState('all');
     const [selectedModule, setSelectedModule] = useState('all');
@@ -398,359 +345,157 @@ const PendingTask = () => {
     const [pageInfo, setPageInfo] = useState({ page: 1, totalPages: 1, total: 0 });
 
     const [selectedImage, setSelectedImage] = useState(null);
-    const [imageViewerOpen, setImageViewerOpen] = useState(false);
-    const [zoomLevel, setZoomLevel] = useState(1);
-    const [isDragging, setIsDragging] = useState(false);
-    const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-    const [imagePos, setImagePos] = useState({ x: 0, y: 0 });
-
-    // Estados para el detalle de la tarea
-    const [detailDialogOpen, setDetailDialogOpen] = useState(false);
     const [selectedTask, setSelectedTask] = useState(null);
+    const [toDelete, setToDelete] = useState(null);
+    const [snack, setSnack] = useState(null); // { severity, msg }
 
-    const itemsPerPage = isMobile ? 6 : 12;
+    const hasActiveFilters = searchTerm || selectedCert !== 'all' || selectedModule !== 'all';
+    const search = debouncedSearch.trim();
 
-    // ─── transformTask ────────────────────────────────────────────────────────
-    const transformTask = useCallback((task) => {
-        const moduleId = task.moduleId ?? task.module?.id;
-        const certId = task.module?.certificationId || 1;
-        const cert = certifications.find(c => c.originalId === certId);
-        return {
-            id: task.id,
-            user: {
-                name: task.user?.name || 'Usuario',
-                email: task.user?.email || '',
-                id: task.userId ?? task.user?.id,
-                avatar: task.user?.name
-                    ? task.user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
-                    : 'U',
-            },
-            certificationId: cert ? cert.id : `cert_${certId}`,
-            certificationName: cert?.name ?? task.module?.certification_name ?? `Certificación ${certId}`,
-            moduleId: moduleId?.toString() ?? '',
-            moduleName: task.module?.title || `Módulo ${moduleId}`,
-            submittedAt: task.createdAt,
-            images: [task.photo_1, task.photo_2, task.photo_3]
-                .filter(Boolean)
-                .map(p => ({ url: `https://cdn.floreciendojuntas.com${p}` })),
+    // ─── Data ────────────────────────────────────────────────────────────────
+    // Lee los filtros del estado: cambia cuando cambia cualquiera y el efecto de abajo recarga.
+    const fetchTasks = useCallback(async (page = 1) => {
+        const params = {
+            page: search ? 1 : page,
+            limit: search ? 9999 : itemsPerPage,
+            ...(selectedCert !== 'all' && { certificationId: selectedCert.replace('cert_', '') }),
+            ...(selectedModule !== 'all' && { moduleId: selectedModule }),
         };
-    }, [certifications]);
-
-    // ─── buildParams ──────────────────────────────────────────────────────────
-    const buildParams = useCallback((pageNum, search, certId, modId) => ({
-        ...(search?.trim() ? { page: 1, limit: 9999 } : { page: pageNum, limit: itemsPerPage }),
-        ...(certId && certId !== 'all' && { certificationId: certId.replace('cert_', '') }),
-        ...(modId && modId !== 'all' && { moduleId: modId }),
-    }), [itemsPerPage]);
-
-    // ─── fetchTasks ───────────────────────────────────────────────────────────
-    const fetchTasks = useCallback(async (pageNum = 1, search = '', certId = 'all', modId = 'all') => {
         try {
             setLoading(true);
-            const res = await clienteAxios.get('/module-submission/submitted', {
-                params: buildParams(pageNum, search, certId, modId),
-            });
-            const { rawList, page, totalPages, total } = parseResponse(res);
-            setTasks(rawList.map(t => transformTask(t)));
-            setPageInfo({ page, totalPages, total });
+            const { data } = await clienteAxios.get('/module-submission/submitted', { params });
+            const list = Array.isArray(data) ? data : data.data;
+            setTasks(list.map(t => transformTask(t, certifications)));
+            setPageInfo(Array.isArray(data)
+                ? { page: 1, totalPages: 1, total: data.length }
+                : { page: data.page, totalPages: data.totalPages, total: data.total });
         } catch (e) {
             console.error(e);
         } finally {
             setLoading(false);
         }
-    }, [buildParams, transformTask]);
+    }, [search, selectedCert, selectedModule, itemsPerPage, certifications]);
 
-    // ─── fetchCertifications ──────────────────────────────────────────────────
-    const fetchCertifications = async () => {
-        try {
-            setLoadingCerts(true);
-            const res = await clienteAxios.get('/certifications/active');
-            setCertifications(res.data.map((c, i) => ({
-                id: `cert_${c.id}`,
-                originalId: c.id,
-                name: c.name,
-                color: getCertColor(i),
-            })));
-        } catch (e) {
-            console.error(e);
-        } finally {
-            setLoadingCerts(false);
-        }
-    };
-
-    // ─── fetchModulesByCert ───────────────────────────────────────────────────
-    const fetchModulesByCert = useCallback(async (certId) => {
-        if (!certId || certId === 'all') { setFilteredModules([]); return; }
-        try {
-            setLoadingModules(true);
-            const res = await clienteAxios.get(`/module-certifications/${certId.replace('cert_', '')}`);
-            setFilteredModules(res.data.map(m => ({ id: m.id.toString(), name: m.title || m.name })));
-        } catch (e) {
-            console.error(e);
-            setFilteredModules([]);
-        } finally {
-            setLoadingModules(false);
-        }
+    // ─── Effects ─────────────────────────────────────────────────────────────
+    useEffect(() => {
+        (async () => {
+            try {
+                setLoadingCerts(true);
+                const { data } = await clienteAxios.get('/certifications/active');
+                setCertifications(data.map((c, i) => ({ id: `cert_${c.id}`, originalId: c.id, name: c.name, color: CERT_COLORS[i % CERT_COLORS.length] })));
+            } catch (e) {
+                console.error(e);
+            } finally {
+                setLoadingCerts(false);
+            }
+        })();
+        return () => clearTimeout(searchTimerRef.current);
     }, []);
 
-    // ─── Effects ──────────────────────────────────────────────────────────────
-    useEffect(() => { fetchCertifications(); }, []);
+    useEffect(() => {
+        if (certifications.length) fetchTasks(1);
+    }, [fetchTasks, certifications.length]);
 
     useEffect(() => {
-        if (certifications.length === 0) return;
-        fetchTasks(1, '', 'all', 'all');
-    }, [certifications]); // eslint-disable-line react-hooks/exhaustive-deps
+        if (selectedCert === 'all') { setFilteredModules([]); return; }
+        (async () => {
+            try {
+                setLoadingModules(true);
+                const { data } = await clienteAxios.get(`/module-certifications/${selectedCert.replace('cert_', '')}`);
+                setFilteredModules(data.map(m => ({ id: m.id.toString(), name: m.title || m.name })));
+            } catch (e) {
+                console.error(e);
+                setFilteredModules([]);
+            } finally {
+                setLoadingModules(false);
+            }
+        })();
+    }, [selectedCert]);
 
-    useEffect(() => {
-        if (!searchMounted.current) { searchMounted.current = true; return; }
-        if (certifications.length === 0) return;
-        fetchTasks(1, debouncedSearch, selectedCert, selectedModule);
-    }, [debouncedSearch]); // eslint-disable-line react-hooks/exhaustive-deps
-
-    useEffect(() => {
-        fetchModulesByCert(selectedCert !== 'all' ? selectedCert : null);
-    }, [selectedCert, fetchModulesByCert]);
-
-    useEffect(() => () => {
-        if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
-    }, []);
-
-    // ─── Handlers ─────────────────────────────────────────────────────────────
+    // ─── Handlers ────────────────────────────────────────────────────────────
     const handleSearchChange = (e) => {
-        setSearchTerm(e.target.value);
-        if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
-        searchTimerRef.current = setTimeout(() => setDebouncedSearch(e.target.value), 600);
+        const { value } = e.target;
+        setSearchTerm(value);
+        clearTimeout(searchTimerRef.current);
+        searchTimerRef.current = setTimeout(() => setDebouncedSearch(value), 600);
     };
 
     const clearSearch = () => {
-        if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+        clearTimeout(searchTimerRef.current);
         setSearchTerm('');
         setDebouncedSearch('');
     };
 
-    const handleCertChange = (e) => {
-        const newCert = e.target.value;
-        setSelectedCert(newCert);
-        setSelectedModule('all');
-        fetchTasks(1, debouncedSearch, newCert, 'all');
-    };
+    const handleCertChange = (e) => { setSelectedCert(e.target.value); setSelectedModule('all'); };
 
-    const handleModuleChange = (e) => {
-        const newMod = e.target.value;
-        setSelectedModule(newMod);
-        fetchTasks(1, debouncedSearch, selectedCert, newMod);
-    };
-
-    const clearFilters = () => {
-        setSelectedModule('all');
-        setSelectedCert('all');
-        setFilteredModules([]);
-        clearSearch();
-        fetchTasks(1, '', 'all', 'all');
-    };
+    const clearFilters = () => { setSelectedCert('all'); setSelectedModule('all'); clearSearch(); };
 
     const handlePageChange = (_, value) => {
-        fetchTasks(value, debouncedSearch, selectedCert, selectedModule);
+        fetchTasks(value);
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    // ─── View Detail Handler ─────────────────────────────────────────────────
-    const handleViewDetail = (task) => {
-        setSelectedTask(task);
-        setDetailDialogOpen(true);
-    };
-
-    const handleCloseDetail = () => {
-        setDetailDialogOpen(false);
-        setSelectedTask(null);
-    };
-
-    // ─── Delete ───────────────────────────────────────────────────────────────
-    const handleDelete = async (task) => {
-        const result = await Swal.fire({
-            icon: 'warning',
-            title: '¿Eliminar tarea?',
-            html: `Se eliminará la tarea de <strong>${task.user.name}</strong>.<br/>Esta acción no se puede deshacer.`,
-            showCancelButton: true,
-            confirmButtonText: 'Sí, eliminar',
-            cancelButtonText: 'Cancelar',
-            confirmButtonColor: '#f44336',
-            cancelButtonColor: '#9e9e9e',
-        });
-
-        if (!result.isConfirmed) return;
-
+    const confirmDelete = async () => {
+        const task = toDelete;
+        setToDelete(null);
         try {
-            setDeleting(true);
-            // Endpoint correcto para eliminar
-            await clienteAxios.delete('/module-submission/delete', {
-                data: { submissionId: task.id }
-            });
-
-            // Actualizar lista localmente
+            await clienteAxios.delete('/module-submission/delete', { data: { submissionId: task.id } });
             setTasks(prev => prev.filter(t => t.id !== task.id));
             setPageInfo(prev => ({ ...prev, total: prev.total - 1 }));
-
-            // Si el detalle estaba abierto, cerrarlo
-            if (detailDialogOpen && selectedTask?.id === task.id) {
-                handleCloseDetail();
-            }
-
-            Swal.fire({
-                icon: 'success',
-                title: '¡Tarea eliminada!',
-                text: 'La tarea ha sido eliminada correctamente.',
-                confirmButtonColor: '#4caf50',
-                timer: 2500,
-                timerProgressBar: true,
-            });
+            if (selectedTask?.id === task.id) setSelectedTask(null);
+            setSnack({ severity: 'success', msg: 'Tarea eliminada correctamente.' });
         } catch (error) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: error.response?.data?.message || 'No se pudo eliminar la tarea.',
-                confirmButtonColor: '#f44336',
-            });
-        } finally {
-            setDeleting(false);
+            setSnack({ severity: 'error', msg: error.response?.data?.message || 'No se pudo eliminar la tarea.' });
         }
     };
 
-    // ─── Image viewer ─────────────────────────────────────────────────────────
-    const openImageViewer = (url) => {
-        setSelectedImage(url);
-        setImageViewerOpen(true);
-        setZoomLevel(1);
-        setImagePos({ x: 0, y: 0 });
-    };
-    const closeImageViewer = () => {
-        setImageViewerOpen(false);
-        setSelectedImage(null);
-        setZoomLevel(1);
-        setImagePos({ x: 0, y: 0 });
-    };
-
-    // ─── Derived ──────────────────────────────────────────────────────────────
-    const hasActiveFilters = searchTerm || selectedCert !== 'all' || selectedModule !== 'all';
-
+    // ─── Derived ─────────────────────────────────────────────────────────────
     const displayRows = useMemo(() => {
-        if (!debouncedSearch.trim()) return tasks;
-        const q = debouncedSearch.trim().toLowerCase();
+        const q = search.toLowerCase();
+        if (!q) return tasks;
         return tasks.filter(t =>
-            t.user.name.toLowerCase().includes(q) ||
-            t.user.email.toLowerCase().includes(q) ||
-            String(t.id).includes(q) ||
-            t.moduleName.toLowerCase().includes(q) ||
-            t.certificationName.toLowerCase().includes(q)
-        );
-    }, [tasks, debouncedSearch]);
+            [t.user.name, t.user.email, String(t.id), t.moduleName, t.certificationName].some(v => v.toLowerCase().includes(q)));
+    }, [tasks, search]);
 
-    const modalPaper = { sx: { borderRadius: isMobile ? 0 : 3, m: isMobile ? 0 : 2 } };
-
-    // ─── Render ───────────────────────────────────────────────────────────────
+    // ─── Render ──────────────────────────────────────────────────────────────
     return (
         <Box sx={{ maxWidth: 1400, mx: 'auto', p: { xs: 1.5, sm: 2, md: 3 } }}>
+            <Paper elevation={0} sx={{ borderRadius: 4, mb: 3, overflow: 'hidden', border: '1px solid #FFE6F0', boxShadow: '0 8px 24px rgba(255,92,147,0.08)' }}>
+                <PageHeader icon={<PendingActionsIcon />} title="Tareas pendientes" subtitle="Gestiona las tareas enviadas aún sin calificar">
+                    <Chip label={`${pageInfo.total} pendiente${pageInfo.total !== 1 ? 's' : ''}`}
+                        sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: '#fff', fontWeight: 700 }} />
+                </PageHeader>
 
-            {/* ── Header ── */}
-            <Paper sx={{ borderRadius: { xs: 2, sm: 3, md: 4 }, mb: { xs: 2, sm: 3, md: 4 }, overflow: 'hidden' }}>
-
-                {/* Banner */}
-                <Box sx={{ background: 'linear-gradient(135deg, #FF5C93 0%, #f73b7a 100%)', p: { xs: 2.5, sm: 3, md: 4 }, color: '#fff' }}>
-                    <Box sx={{ display: 'flex', alignItems: { xs: 'flex-start', md: 'center' }, justifyContent: 'space-between', flexDirection: { xs: 'column', md: 'row' }, gap: { xs: 2, md: 3 } }}>
-                        <Box>
-                            <Typography variant="h4" fontWeight="700" sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 2 }, color: '#fff', fontSize: { xs: '1.4rem', sm: '1.75rem', md: '2.125rem' } }}>
-                                <PendingActionsIcon sx={{ fontSize: { xs: '1.5rem', sm: '2rem' } }} /> Tareas Pendientes
-                            </Typography>
-                            <Typography variant="body1" sx={{ color: '#fff', opacity: 0.9, mt: 0.5, fontSize: { xs: '0.85rem', sm: '1rem' } }}>
-                                Gestiona las tareas enviadas aún sin calificar
-                            </Typography>
-                        </Box>
-                        <Paper sx={{ p: { xs: 1.5, sm: 2 }, bgcolor: 'rgba(255,255,255,0.15)', borderRadius: 2, minWidth: { xs: 0, md: 120 }, textAlign: 'center' }}>
-                            <Typography variant="h4" fontWeight="700" sx={{ color: '#ffb74d', fontSize: { xs: '1.6rem', sm: '2.125rem' }, lineHeight: 1.1 }}>
-                                {pageInfo.total}
-                            </Typography>
-                            <Typography variant="caption" sx={{ color: '#fff', fontSize: { xs: '0.62rem', sm: '0.75rem' }, display: 'block', mt: 0.3 }}>
-                                Pendientes
-                            </Typography>
-                        </Paper>
-                    </Box>
-                </Box>
-
-                {/* Filtros */}
-                <Box sx={{ p: { xs: 2, sm: 2.5, md: 3 }, bgcolor: '#fff' }}>
+                <Box sx={{ p: { xs: 2, sm: 2.5 }, bgcolor: '#FFF5FA', borderTop: '1px solid #FFE6F0' }}>
                     <Grid container spacing={{ xs: 1.5, sm: 2 }} alignItems="flex-start">
                         <Grid item xs={12} sm={6} md={3}>
-                            <FormControl fullWidth size="small" disabled={loadingCerts}>
-                                <InputLabel>Certificación</InputLabel>
-                                <Select
-                                    value={selectedCert}
-                                    label="Certificación"
-                                    onChange={handleCertChange}
-                                    startAdornment={<SchoolIcon sx={{ color: '#757575', mr: 1, fontSize: 20 }} />}
-                                >
-                                    <MenuItem value="all">Todas las Certificaciones</MenuItem>
-                                    {certifications.map(c => (
-                                        <MenuItem key={c.id} value={c.id}>
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: c.color, flexShrink: 0 }} />
-                                                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</span>
-                                            </Box>
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                                {loadingCerts && <FormHelperText>Cargando certificaciones...</FormHelperText>}
-                            </FormControl>
+                            <FilterSelect label="Certificación" icon={<SchoolIcon sx={iconSx} />} value={selectedCert}
+                                onChange={handleCertChange} options={certifications} allLabel="Todas las certificaciones"
+                                disabled={loadingCerts} helper={loadingCerts && 'Cargando certificaciones...'} />
                         </Grid>
-
                         <Grid item xs={12} sm={6} md={3}>
-                            <FormControl fullWidth size="small">
-                                <InputLabel>Módulo</InputLabel>
-                                <Select
-                                    value={selectedModule}
-                                    label="Módulo"
-                                    onChange={handleModuleChange}
-                                    disabled={filteredModules.length === 0 || loadingModules}
-                                    startAdornment={<BookIcon sx={{ color: '#757575', mr: 1, fontSize: 20 }} />}
-                                >
-                                    <MenuItem value="all">
-                                        {loadingModules ? 'Cargando módulos...' : 'Todos los Módulos'}
-                                    </MenuItem>
-                                    {filteredModules.map(m => ( 
-                                        <MenuItem key={m.id} value={m.id}>{m.name}</MenuItem>
-                                    ))}
-                                </Select>
-                                {loadingModules && <FormHelperText>Cargando módulos...</FormHelperText>}
-                            </FormControl>
+                            <FilterSelect label="Módulo" icon={<BookIcon sx={iconSx} />} value={selectedModule}
+                                onChange={(e) => setSelectedModule(e.target.value)} options={filteredModules}
+                                allLabel={loadingModules ? 'Cargando módulos...' : 'Todos los módulos'}
+                                disabled={filteredModules.length === 0 || loadingModules}
+                                helper={loadingModules && 'Cargando módulos...'} />
                         </Grid>
-
-                        <Grid item xs={12} sm={12} md={hasActiveFilters ? 5 : 6}>
-                            <TextField
-                                fullWidth
-                                size="small"
-                                placeholder="Buscar por usuario, email, módulo o ID..."
-                                value={searchTerm}
-                                onChange={handleSearchChange}
+                        <Grid item xs={12} md={hasActiveFilters ? 5 : 6}>
+                            <TextField fullWidth size="small" placeholder="Buscar por usuario, email, módulo o ID..."
+                                value={searchTerm} onChange={handleSearchChange} sx={fieldSx()}
                                 InputProps={{
-                                    startAdornment: <SearchIcon sx={{ color: '#757575', mr: 1, fontSize: 20 }} />,
+                                    startAdornment: <InputAdornment position="start"><SearchIcon sx={{ color: PINK }} /></InputAdornment>,
                                     endAdornment: searchTerm && (
-                                        <IconButton size="small" onClick={clearSearch}>
-                                            <CloseIcon fontSize="small" sx={{ color: '#757575' }} />
-                                        </IconButton>
+                                        <InputAdornment position="end">
+                                            <IconButton size="small" onClick={clearSearch} sx={{ color: PINK }}><CloseIcon fontSize="small" /></IconButton>
+                                        </InputAdornment>
                                     ),
-                                }}
-                            />
+                                }} />
                         </Grid>
-
                         {hasActiveFilters && (
-                            <Grid item xs={12} sm={12} md={1} sx={{ display: 'flex', alignItems: 'flex-start' }}>
-                                <Button
-                                    variant="text"
-                                    size="small"
-                                    onClick={clearFilters}
-                                    startIcon={<ClearAllIcon />}
-                                    fullWidth
-                                    sx={{ color: '#FF5C93', whiteSpace: 'nowrap', height: 40 }}
-                                >
+                            <Grid item xs={12} md={1}>
+                                <Button fullWidth size="small" onClick={clearFilters} startIcon={<ClearAllIcon />}
+                                    sx={{ color: PINK, whiteSpace: 'nowrap', height: 40 }}>
                                     {!isMobile && 'Limpiar'}
                                 </Button>
                             </Grid>
@@ -759,28 +504,28 @@ const PendingTask = () => {
                 </Box>
             </Paper>
 
-            {/* ── Cards ── */}
             {loading ? (
-                <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }}>
+                <Grid container spacing={{ xs: 2, md: 3 }}>
                     {Array.from({ length: 6 }, (_, i) => (
                         <Grid item xs={12} sm={6} md={4} lg={3} key={i}>
-                            <Skeleton variant="rectangular" height={isMobile ? 240 : 290} sx={{ borderRadius: 3 }} />
+                            <Skeleton variant="rounded" height={isMobile ? 220 : 250} sx={{ borderRadius: 3 }} />
                         </Grid>
                     ))}
                 </Grid>
             ) : displayRows.length === 0 ? (
                 <Fade in>
-                    <Paper sx={{ p: { xs: 5, sm: 8 }, textAlign: 'center', borderRadius: { xs: 2, sm: 4 } }}>
-                        <PendingActionsIcon sx={{ fontSize: { xs: 60, sm: 80 }, color: '#e0e0e0', mb: 2 }} />
-                        <Typography variant="h5" sx={{ color: '#757575', fontSize: { xs: '1.1rem', sm: '1.5rem' } }} gutterBottom>
-                            No hay tareas pendientes
-                        </Typography>
-                        <Typography variant="body2" sx={{ color: '#757575', mb: 3 }}>
+                    <Paper elevation={0} sx={{ p: { xs: 5, sm: 8 }, textAlign: 'center', borderRadius: 4, border: '1px solid #FFE6F0' }}>
+                        <Avatar sx={{ bgcolor: '#FFF0F7', width: 72, height: 72, mx: 'auto', mb: 2 }}>
+                            <SearchOffIcon sx={{ fontSize: 38, color: '#FFB3DC' }} />
+                        </Avatar>
+                        <Typography variant="h6" color="text.secondary" gutterBottom>No hay tareas pendientes</Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: hasActiveFilters ? 3 : 0 }}>
                             {hasActiveFilters ? 'Intenta con otros filtros' : 'No hay tareas pendientes disponibles'}
                         </Typography>
                         {hasActiveFilters && (
-                            <Button variant="contained" onClick={clearFilters} startIcon={<ClearAllIcon />} sx={{ bgcolor: '#FE5A91' }}>
-                                Limpiar Filtros
+                            <Button variant="outlined" onClick={clearFilters} startIcon={<ClearAllIcon />}
+                                sx={{ borderColor: PINK, color: PINK, borderRadius: 2, '&:hover': { borderColor: '#E94E88', bgcolor: '#FFF5FA' } }}>
+                                Limpiar filtros
                             </Button>
                         )}
                     </Paper>
@@ -788,122 +533,42 @@ const PendingTask = () => {
             ) : (
                 <>
                     <Fade in>
-                        <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }}>
-                            {displayRows.map(task => {
-                                const certColor = certifications.find(c => c.id === task.certificationId)?.color || '#757575';
-                                return (
-                                    <Grid item xs={12} sm={6} md={4} lg={3} key={task.id}>
-                                        <PendingTaskCard
-                                            task={task}
-                                            certColor={certColor}
-                                            isMobile={isMobile}
-                                            onDelete={handleDelete}
-                                            onViewDetail={handleViewDetail}
-                                        />
-                                    </Grid>
-                                );
-                            })}
+                        <Grid container spacing={{ xs: 2, md: 3 }}>
+                            {displayRows.map(task => (
+                                <Grid item xs={12} sm={6} md={4} lg={3} key={task.id}>
+                                    <PendingTaskCard task={task} onDelete={setToDelete} onViewDetail={setSelectedTask} />
+                                </Grid>
+                            ))}
                         </Grid>
                     </Fade>
 
-                    {pageInfo.totalPages > 1 && !debouncedSearch && (
-                        <Box display="flex" flexDirection="column" alignItems="center" sx={{ mt: { xs: 3, sm: 4 }, gap: 1 }}>
-                            <Pagination
-                                count={pageInfo.totalPages}
-                                page={pageInfo.page}
-                                onChange={handlePageChange}
-                                color="primary"
-                                shape="rounded"
-                                size={isMobile ? 'small' : 'medium'}
-                            />
-                            <Typography variant="caption" sx={{ color: '#9e9e9e' }}>
-                                Página {pageInfo.page} de {pageInfo.totalPages} · {pageInfo.total} pendientes en total
+                    {pageInfo.totalPages > 1 && !search && (
+                        <Stack alignItems="center" spacing={1} sx={{ mt: { xs: 3, sm: 4 } }}>
+                            <Pagination count={pageInfo.totalPages} page={pageInfo.page} onChange={handlePageChange}
+                                shape="rounded" size={isMobile ? 'small' : 'medium'}
+                                sx={{ '& .Mui-selected': { bgcolor: `${PINK} !important`, color: '#fff' } }} />
+                            <Typography variant="caption" color="text.secondary">
+                                {pageInfo.page} de {pageInfo.totalPages} páginas · {pageInfo.total} pendientes en total
                             </Typography>
-                        </Box>
+                        </Stack>
                     )}
 
-                    {debouncedSearch && (
-                        <Box display="flex" justifyContent="center" sx={{ mt: { xs: 2, sm: 3 } }}>
-                            <Typography variant="caption" sx={{ color: '#9e9e9e' }}>
-                                {displayRows.length} resultado{displayRows.length !== 1 ? 's' : ''} para «{debouncedSearch}»
-                            </Typography>
-                        </Box>
+                    {search && (
+                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center', mt: 3 }}>
+                            {displayRows.length} resultado{displayRows.length !== 1 ? 's' : ''} para «{debouncedSearch}»
+                        </Typography>
                     )}
                 </>
             )}
 
-            {/* ── TASK DETAIL DIALOG ── */}
-            <TaskDetailDialog
-                open={detailDialogOpen}
-                task={selectedTask}
-                onClose={handleCloseDetail}
-                onOpenImage={openImageViewer}
-            />
+            <TaskDetailDialog task={selectedTask} onClose={() => setSelectedTask(null)} onOpenImage={setSelectedImage} />
+            <ImageViewer url={selectedImage} onClose={() => setSelectedImage(null)} isMobile={isMobile} />
+            <ConfirmDeleteDialog task={toDelete} onCancel={() => setToDelete(null)} onConfirm={confirmDelete} />
 
-            {/* ── IMAGE VIEWER ── */}
-            <Dialog
-                open={imageViewerOpen}
-                onClose={closeImageViewer}
-                maxWidth="lg"
-                fullWidth
-                fullScreen={isMobile}
-                PaperProps={{ sx: { bgcolor: 'transparent', boxShadow: 'none', overflow: 'hidden', m: isMobile ? 0 : 2 } }}
-                BackdropProps={{ sx: { bgcolor: 'rgba(0,0,0,0.85)' } }}
-            >
-                <Box
-                    sx={{ position: 'relative', minHeight: isMobile ? '100vh' : 400, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', userSelect: 'none' }}
-                    onWheel={e => { e.preventDefault(); setZoomLevel(p => Math.min(Math.max(p + (e.deltaY > 0 ? -0.15 : 0.15), 0.5), 4)); }}
-                    onMouseDown={e => { setIsDragging(true); setDragStart({ x: e.clientX - imagePos.x, y: e.clientY - imagePos.y }); }}
-                    onMouseMove={e => { if (isDragging) setImagePos({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y }); }}
-                    onMouseUp={() => setIsDragging(false)}
-                    onMouseLeave={() => setIsDragging(false)}
-                    onTouchStart={e => { if (e.touches.length === 1) { setIsDragging(true); setDragStart({ x: e.touches[0].clientX - imagePos.x, y: e.touches[0].clientY - imagePos.y }); } }}
-                    onTouchMove={e => { if (isDragging && e.touches.length === 1) setImagePos({ x: e.touches[0].clientX - dragStart.x, y: e.touches[0].clientY - dragStart.y }); }}
-                    onTouchEnd={() => setIsDragging(false)}
-                >
-                    <IconButton
-                        onClick={closeImageViewer}
-                        sx={{ position: 'absolute', top: 8, right: 8, zIndex: 10, bgcolor: 'rgba(0,0,0,0.5)', color: '#fff', '&:hover': { bgcolor: 'rgba(0,0,0,0.8)' } }}
-                    >
-                        <CloseIcon />
-                    </IconButton>
-
-                    <Box sx={{ position: 'absolute', bottom: { xs: 24, sm: 16 }, left: '50%', transform: 'translateX(-50%)', zIndex: 10, display: 'flex', alignItems: 'center', gap: 1, bgcolor: 'rgba(0,0,0,0.55)', borderRadius: 4, px: 2, py: 0.5 }}>
-                        <IconButton size="small" onClick={() => setZoomLevel(p => Math.max(p - 0.25, 0.5))} sx={{ color: '#fff' }}>
-                            <Typography sx={{ fontSize: 22, lineHeight: 1 }}>−</Typography>
-                        </IconButton>
-                        <Typography sx={{ color: '#fff', minWidth: 50, textAlign: 'center', fontSize: 14 }}>
-                            {Math.round(zoomLevel * 100)}%
-                        </Typography>
-                        <IconButton size="small" onClick={() => setZoomLevel(p => Math.min(p + 0.25, 4))} sx={{ color: '#fff' }}>
-                            <Typography sx={{ fontSize: 22, lineHeight: 1 }}>+</Typography>
-                        </IconButton>
-                        <Divider orientation="vertical" flexItem sx={{ bgcolor: 'rgba(255,255,255,0.3)', mx: 0.5 }} />
-                        <IconButton size="small" onClick={() => { setZoomLevel(1); setImagePos({ x: 0, y: 0 }); }} sx={{ color: '#fff' }}>
-                            <Typography sx={{ fontSize: 12 }}>Reset</Typography>
-                        </IconButton>
-                    </Box>
-
-                    {selectedImage && (
-                        <img
-                            src={selectedImage}
-                            alt="Vista ampliada"
-                            draggable={false}
-                            style={{
-                                maxWidth: '100%',
-                                maxHeight: isMobile ? '80vh' : '85vh',
-                                objectFit: 'contain',
-                                borderRadius: 8,
-                                transform: `translate(${imagePos.x}px,${imagePos.y}px) scale(${zoomLevel})`,
-                                transition: isDragging ? 'transform 0.05s linear' : 'transform 0.2s ease',
-                                cursor: isDragging ? 'grabbing' : zoomLevel > 1 ? 'grab' : 'default',
-                                willChange: 'transform',
-                                transformOrigin: 'center center',
-                            }}
-                        />
-                    )}
-                </Box>
-            </Dialog>
+            <Snackbar open={!!snack} autoHideDuration={2500} onClose={() => setSnack(null)}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+                <Alert severity={snack?.severity} variant="filled" onClose={() => setSnack(null)}>{snack?.msg}</Alert>
+            </Snackbar>
         </Box>
     );
 };

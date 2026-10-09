@@ -239,10 +239,10 @@ const LiveAdminModal = ({
                                         playsInline
                                         disablePictureInPicture
                                         controls={false}
-                                        style={{
-                                            width: '100%',
-                                            height: '100%',
-                                            objectFit: 'contain',
+                                        sx={{
+                                            width: "100%",
+                                            height: "100%",
+                                            objectFit: "contain",
                                         }}
                                         src={selectedLive.aws_playback_url}
                                     />
@@ -382,7 +382,7 @@ const LiveAdminModal = ({
                                             in={true}
                                             key={comment.id}
                                             timeout={400}
-                                            style={{ transitionDelay: `${index * 50}ms` }}
+                                            sx={{ transitionDelay: `${index * 50}ms` }}
                                         >
                                             <Paper
                                                 elevation={0}

@@ -9,11 +9,11 @@ import {
     Fade,
     IconButton,
     useMediaQuery,
-    useTheme
+    useTheme,
+    Typography,
 } from "@mui/material";
 import { useHistory } from "react-router-dom";
 import { Search as SearchIcon, Edit as EditIcon, Delete as DeleteIcon } from "@mui/icons-material";
-import { Typography } from "../../components/Wrappers";
 import EventContext from "../../context/EventContext/EventContext";
 import Swal from "sweetalert2";
 import { getImageUrl } from "../../utils/image"; // Reutilizamos la función de Product

@@ -1,595 +1,305 @@
-import React, { useContext, useEffect, useState, useMemo } from 'react';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router';
-import { uniqueId } from 'lodash';
-import { makeStyles } from '@mui/styles';
 import {
+  Avatar,
   Box,
   Button,
-  FormControl,
-  Grid,
-  InputLabel,
-  LinearProgress,
-  MenuItem,
-  Paper,
-  Select,
-  Stack,
-  TextField,
-  Typography,
   Chip,
   IconButton,
-  Fade,
+  InputAdornment,
+  Paper,
+  Skeleton,
+  Stack,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
+  TablePagination,
   TableRow,
+  TextField,
   Tooltip,
+  Typography,
 } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
-import ClearAllIcon from '@mui/icons-material/ClearAll';
-import FilterAltIcon from '@mui/icons-material/FilterAlt';
+import GroupIcon from '@mui/icons-material/Group';
 import SearchIcon from '@mui/icons-material/Search';
-import Widget from '../../../../components/Widget/Widget';
-import Actions from '../../../../components/Table/Actions';
-import Dialog from '../../../../components/Dialog';
-import UserContext from '../../../../context/UserContext/UserContext';
-import { VerifiedIcon } from 'lucide-react';
+import SearchOffIcon from '@mui/icons-material/SearchOff';
+import VerifiedIcon from '@mui/icons-material/Verified';
 
-const useStyles = makeStyles(() => ({
-  actions: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-    gap: 10,
-    '& a': {
-      textDecoration: 'none',
-      color: '#fff',
-    },
-  },
-  filterContainer: {
-    padding: 24,
-    marginBottom: 24,
-    borderRadius: 16,
-    background: 'linear-gradient(135deg, #FFEEF8 0%, #FFE0F0 100%)',
-    border: '1px solid #FFD6EA',
-    boxShadow: '0 4px 20px rgba(255, 105, 180, 0.12)',
-  },
-  filterHeader: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 16,
-  },
-}));
+import UserContext from '../../../../context/UserContext/UserContext';
+
+const ROWS_PER_PAGE = 7;
+const PINK = '#FF5C93';
+
+const COLUMNS = [
+  { label: 'Usuario' },
+  { label: 'Teléfono', hideOnXs: true },
+  { label: 'E-Mail', hideOnXs: true },
+  { label: 'Suscripción', align: 'center' },
+];
+
+const headCellSx = {
+  bgcolor: '#FFF5FA',
+  color: '#757575',
+  fontWeight: 700,
+  fontSize: '0.8rem',
+  borderBottom: '1px solid #FFE6F0',
+};
+
+const hideOnXs = { display: { xs: 'none', sm: 'table-cell' } };
+
+// Administradores (1) y rol 5 no tienen suscripción
+const getSubscription = (user) => {
+  if (user.roleId === 1 || user.roleId === 5) {
+    return { label: 'No aplica', color: '#666', bg: '#F5F5F5', border: '#E0E0E0' };
+  }
+  return user?.Subscriptions?.[0]?.status === 'active'
+    ? { label: 'Activa', color: '#28a745', bg: '#EAFCDD', border: '#28a745' }
+    : { label: 'Inactiva', color: '#dc3545', bg: '#FEF4F6', border: '#dc3545' };
+};
 
 const UsersTable = () => {
   const history = useHistory();
-  const classes = useStyles();
+  const { users = [], loading, getUsers } = useContext(UserContext);
 
-  const { users, loading, getUsers, deleteUser } = useContext(UserContext);
-
-  const [filterItems, setFilterItems] = useState([]);
-  const [sortModel, setSortModel] = useState([]);
-  const [selectionModel, setSelectionModel] = useState([]);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [idToDelete, setIdToDelete] = useState(null);
-  const [showFilters, setShowFilters] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-
-  const [rowsState, setRowsState] = useState({
-    page: 0,
-    pageSize: 7,
-  });
-
-  const filters = [
-    { label: 'Nombre', title: 'name' },
-    { label: 'Teléfono', title: 'phone' },
-    { label: 'E-Mail', title: 'email' },
-  ];
+  const [page, setPage] = useState(0);
 
   useEffect(() => {
     getUsers();
   }, []);
 
-  // ARREGLADO: Ahora primero filtra por búsqueda, luego por filtros avanzados
   const displayRows = useMemo(() => {
-    let filtered = users;
-
-    // Filtro de búsqueda global
-    if (searchTerm) {
-      const search = searchTerm.toLowerCase();
-      filtered = filtered.filter((row) => {
-        const email = row.email?.toLowerCase() || '';
-        const phone = row.phone?.toLowerCase() || '';
-        const name = row.name?.toLowerCase() || '';
-        return email.includes(search) || phone.includes(search) || name.includes(search);
-      });
-    }
-
-    // Filtros avanzados (si existen)
-    if (filterItems.length > 0) {
-      filtered = filtered.filter((row) =>
-        filterItems.every((filter) => {
-          const field = filter.fields.selectedField;
-          const value = filter.fields.filterValue.toLowerCase();
-          return row[field]?.toLowerCase().includes(value);
-        })
-      );
-    }
-
-    return filtered;
-  }, [filterItems, users, searchTerm]);
-
-  const handleChange = (id) => (e) => {
-    const { name, value } = e.target;
-    setFilterItems((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, fields: { ...item.fields, [name]: value } } : item
-      )
+    const list = Array.isArray(users) ? users : [];
+    const q = searchTerm.trim().toLowerCase();
+    if (!q) return list;
+    return list.filter((u) =>
+      [u.name, u.email, u.phone].some((v) => v?.toLowerCase().includes(q))
     );
-  };
+  }, [users, searchTerm]);
 
-  const handleReset = () => {
-    setFilterItems([]);
-    setShowFilters(false);
-  };
-
-  const addFilter = () => {
-    const newItem = {
-      id: uniqueId(),
-      fields: {
-        selectedField: filters[0].title,
-        filterValue: '',
-      },
-    };
-    setFilterItems([...filterItems, newItem]);
-    setShowFilters(true);
-  };
-
-  const deleteFilter = (id) => setFilterItems(filterItems.filter((item) => item.id !== id));
-
-  const openModal = (event, id) => {
-    event.stopPropagation();
-    setIdToDelete(id);
-    setModalOpen(true);
-  };
-
-  const closeModal = () => setModalOpen(false);
-
-  const handleDelete = async () => {
-    await deleteUser(idToDelete);
-    setModalOpen(false);
-  };
-
-  const NoRowsOverlay = () => (
-    <Box
-      display="flex"
-      flexDirection="column"
-      alignItems="center"
-      justifyContent="center"
-      minHeight="200px"
-      gap={2}
-    >
-      <SearchIcon sx={{ fontSize: 48, color: '#FFB3DC' }} />
-      <Typography variant="body1" color="text.secondary">
-        No se encontraron resultados
-      </Typography>
-    </Box>
+  const currentRows = useMemo(
+    () => displayRows.slice(page * ROWS_PER_PAGE, (page + 1) * ROWS_PER_PAGE),
+    [displayRows, page]
   );
 
+  const handleSearch = (value) => {
+    setSearchTerm(value);
+    setPage(0);
+  };
+
   return (
-    <Box>
-      {/* <Widget disableWidgetMenu> */}
-        {/* FILTROS */}
-        {filterItems.length > 0 && (
-          <Fade in={showFilters || filterItems.length > 0}>
-            <Paper className={classes.filterContainer}>
-              <Box className={classes.filterHeader}>
-                <FilterAltIcon sx={{ color: '#FF69B4', fontSize: 24 }} />
-                <Typography variant="h6" fontWeight="700" sx={{ color: '#FF69B4' }}>
-                  Filtros Activos
-                </Typography>
-              </Box>
+    <Paper
+      elevation={0}
+      sx={{ borderRadius: 4, overflow: 'hidden', border: '1px solid #FFE6F0', boxShadow: '0 8px 24px rgba(255,92,147,0.08)' }}
+    >
+      {/* Header */}
+      <Box
+        sx={{
+          background: 'linear-gradient(135deg, #FF5C93 0%, #E94E88 100%)',
+          p: { xs: 2.5, sm: 3 },
+          color: '#fff',
+          display: 'flex',
+          alignItems: { xs: 'stretch', md: 'center' },
+          justifyContent: 'space-between',
+          flexDirection: { xs: 'column', md: 'row' },
+          gap: 2,
+        }}
+      >
+        <Stack direction="row" alignItems="center" spacing={2}>
+          <Avatar sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: '#fff', width: 48, height: 48 }}>
+            <GroupIcon />
+          </Avatar>
+          <Box>
+            <Typography variant="h6" fontWeight={700}>Lista de Usuarios</Typography>
+            <Typography variant="body2" sx={{ opacity: 0.9 }}>
+              {loading ? 'Cargando usuarios...' : `${displayRows.length} usuario${displayRows.length !== 1 ? 's' : ''} registrado${displayRows.length !== 1 ? 's' : ''}`}
+            </Typography>
+          </Box>
+        </Stack>
 
-              {filterItems.map((item) => (
-                <Box
-                  key={item.id}
-                  sx={{
-                    backgroundColor: '#fff',
-                    borderRadius: 3,
-                    p: 2,
-                    mb: 2,
-                    boxShadow: '0 2px 8px rgba(255, 182, 217, 0.15)',
-                  }}
-                >
-                  <Grid container alignItems="center" spacing={2}>
-                    <Grid item xs={12} sm={6} md={4}>
-                      <FormControl size="small" fullWidth>
-                        <InputLabel>Campo</InputLabel>
-                        <Select
-                          label="Campo"
-                          name="selectedField"
-                          value={item.fields.selectedField}
-                          onChange={handleChange(item.id)}
-                          sx={{
-                            borderRadius: 2,
-                            '& .MuiOutlinedInput-notchedOutline': {
-                              borderColor: '#FFD6EA',
-                            },
-                          }}
-                        >
-                          {filters.map((f) => (
-                            <MenuItem key={f.title} value={f.title}>
-                              {f.label}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    </Grid>
-
-                    <Grid item xs={12} sm={6} md={6}>
-                      <TextField
-                        label="Contiene"
-                        name="filterValue"
-                        size="small"
-                        fullWidth
-                        value={item.fields.filterValue}
-                        onChange={handleChange(item.id)}
-                        sx={{
-                          '& .MuiOutlinedInput-root': {
-                            borderRadius: 2,
-                            '& fieldset': {
-                              borderColor: '#FFD6EA',
-                            },
-                          },
-                        }}
-                      />
-                    </Grid>
-
-                    <Grid item xs={12} sm={12} md={2}>
-                      <IconButton
-                        onClick={() => deleteFilter(item.id)}
-                        sx={{
-                          color: '#FF6B9D',
-                          backgroundColor: '#FFF0F5',
-                          '&:hover': {
-                            backgroundColor: '#FFE1EE',
-                          },
-                        }}
-                      >
-                        <CloseIcon />
-                      </IconButton>
-                    </Grid>
-                  </Grid>
-                </Box>
-              ))}
-
-              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mt: 2 }}>
-                <Button
-                  variant="contained"
-                  sx={{
-                    background: 'linear-gradient(135deg, #FF6B9D 0%, #C969E0 100%)',
-                    color: '#fff',
-                    fontWeight: '600',
-                    borderRadius: 2,
-                    boxShadow: '0 4px 12px rgba(255, 107, 157, 0.3)',
-                  }}
-                >
-                  Aplicar
-                </Button>
-                <Button
-                  variant="outlined"
-                  startIcon={<ClearAllIcon />}
-                  onClick={handleReset}
-                  sx={{
-                    borderColor: '#FF6B9D',
-                    color: '#FF6B9D',
-                    fontWeight: '600',
-                    borderRadius: 2,
-                    '&:hover': {
-                      borderColor: '#FF5A8C',
-                      backgroundColor: '#FFF5FA',
-                    },
-                  }}
-                >
-                  Limpiar Todo
-                </Button>
-              </Stack>
-            </Paper>
-          </Fade>
-        )}
-
-        {/* TABLA CON ESTILO DASHBOARD */}
-        <Paper
-          elevation={0}
-          sx={{
-            borderRadius: 4,
-            overflow: 'hidden',
-            border: '1px solid #FFE6F0',
-          }}
-        >
-          <Box
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ sm: 'center' }}>
+          <TextField
+            size="small"
+            placeholder="Buscar por nombre, email o teléfono..."
+            value={searchTerm}
+            onChange={(e) => handleSearch(e.target.value)}
             sx={{
-              background: 'linear-gradient(135deg, #FF5C93)',
-              p: 3,
-              color: '#fff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 3,
-              flexWrap: 'wrap',
-            }}
-          >
-            {/* TÍTULO */}
-            <Box>
-              <Typography variant="h6" fontWeight="700">
-                Lista de Usuarios
-              </Typography>
-              <Typography variant="body2" sx={{ opacity: 0.9, mt: 0.5 }}>
-                Gestión completa de usuarios registrados
-              </Typography>
-            </Box>
-
-            {/* BUSCADOR */}
-            <TextField
-              placeholder="Buscar por nombre, email o teléfono..."
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setRowsState((prev) => ({ ...prev, page: 0 }));
-              }}
-              variant="outlined"
-              size="small"
-              sx={{
-                minWidth: 300,
-                maxWidth: 400,
-                backgroundColor: '#fff',
+              minWidth: { sm: 320 },
+              bgcolor: '#fff',
+              borderRadius: 2,
+              '& .MuiOutlinedInput-root': {
                 borderRadius: 2,
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 2,
-                  '& fieldset': { borderColor: '#FFD6EA' },
-                  '&:hover fieldset': { borderColor: '#FF69B4' },
-                  '&.Mui-focused fieldset': { borderColor: '#FF69B4' },
-                },
-              }}
-              InputProps={{
-                startAdornment: (
-                  <SearchIcon sx={{ color: '#FF69B4', mr: 1 }} />
-                ),
-                endAdornment: searchTerm && (
-                  <IconButton
-                    size="small"
-                    onClick={() => setSearchTerm('')}
-                    sx={{ color: '#FF6B9D' }}
-                  >
+                '& fieldset': { borderColor: '#FFD6EA' },
+                '&:hover fieldset, &.Mui-focused fieldset': { borderColor: PINK },
+              },
+            }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon sx={{ color: PINK }} />
+                </InputAdornment>
+              ),
+              endAdornment: searchTerm && (
+                <InputAdornment position="end">
+                  <IconButton size="small" onClick={() => handleSearch('')} sx={{ color: PINK }}>
                     <CloseIcon fontSize="small" />
                   </IconButton>
-                ),
-              }}
-            />
-          </Box>
+                </InputAdornment>
+              ),
+            }}
+          />
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => history.push('/users/useradd')}
+            sx={{
+              bgcolor: '#fff', color: PINK, fontWeight: 700, borderRadius: 2, whiteSpace: 'nowrap', boxShadow: 'none',
+              '&:hover': { bgcolor: '#FFF5FA', boxShadow: 'none' },
+            }}
+          >
+            Agregar Usuario
+          </Button>
+        </Stack>
+      </Box>
 
-          {/* CONTADOR DE RESULTADOS */}
-          {searchTerm && (
-            <Box sx={{ px: 3, py: 1.5, bgcolor: '#FFF5FA', borderBottom: '1px solid #FFE6F0' }}>
-              <Typography variant="caption" color="text.secondary">
-                🔍 Mostrando {displayRows.length} resultado{displayRows.length !== 1 ? 's' : ''} para "{searchTerm}"
-              </Typography>
-            </Box>
-          )}
+      {/* Tabla */}
+      <TableContainer>
+        <Table>
+          <TableHead>
+            <TableRow>
+              {COLUMNS.map((col) => (
+                <TableCell key={col.label} align={col.align} sx={{ ...headCellSx, ...(col.hideOnXs && hideOnXs) }}>
+                  {col.label}
+                </TableCell>
+              ))}
+            </TableRow>
+          </TableHead>
 
-          {loading ? (
-            <Box sx={{ p: 4 }}>
-              <LinearProgress sx={{
-                backgroundColor: '#FFE6F0',
-                '& .MuiLinearProgress-bar': {
-                  backgroundColor: '#FF69B4',
-                }
-              }} />
-            </Box>
-          ) : displayRows.length === 0 ? (
-            <NoRowsOverlay />
-          ) : (
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow sx={{ bgcolor: '#FFF5FA' }}>
-                    <TableCell sx={{ fontWeight: '700', color: '#FF69B4' }}>
-                      Avatar
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: '700', color: '#FF69B4' }}>
-                      Nombre
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: '700', color: '#FF69B4' }}>
-                      Teléfono
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: '700', color: '#FF69B4' }}>
-                      E-Mail
-                    </TableCell>
-                    <TableCell
-                      align="center"
-                      sx={{ fontWeight: '700', color: '#FF69B4' }}
-                    >
-                      Suscripción
-                    </TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {displayRows
-                    .slice(
-                      rowsState.page * rowsState.pageSize,
-                      rowsState.page * rowsState.pageSize + rowsState.pageSize
-                    )
-                    .map((user, index) => (
-                      <TableRow
-                        key={user.id}
-                        sx={{
-                          '&:hover': {
-                            bgcolor: '#FFF5FA',
-                            transition: 'all 0.2s',
-                          },
-                        }}
+          <TableBody>
+            {loading ? (
+              Array.from({ length: 5 }, (_, i) => (
+                <TableRow key={i}>
+                  <TableCell>
+                    <Stack direction="row" alignItems="center" spacing={1.5}>
+                      <Skeleton variant="circular" width={44} height={44} />
+                      <Skeleton width={140} />
+                    </Stack>
+                  </TableCell>
+                  <TableCell sx={hideOnXs}><Skeleton width={100} /></TableCell>
+                  <TableCell sx={hideOnXs}><Skeleton width={180} /></TableCell>
+                  <TableCell align="center"><Skeleton width={70} sx={{ mx: 'auto' }} /></TableCell>
+                </TableRow>
+              ))
+            ) : currentRows.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={COLUMNS.length} sx={{ border: 0 }}>
+                  <Stack alignItems="center" spacing={1.5} sx={{ py: 7 }}>
+                    <Avatar sx={{ bgcolor: '#FFF0F7', width: 72, height: 72 }}>
+                      <SearchOffIcon sx={{ fontSize: 38, color: '#FFB3DC' }} />
+                    </Avatar>
+                    <Typography color="text.secondary">No se encontraron resultados</Typography>
+                    {searchTerm && (
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        onClick={() => handleSearch('')}
+                        sx={{ borderColor: PINK, color: PINK, borderRadius: 2, '&:hover': { borderColor: '#FF5A8C', bgcolor: '#FFF5FA' } }}
                       >
-                        <TableCell>
-                          <Box
-                            sx={{
-                              width: 48,
-                              height: 48,
-                              borderRadius: '50%',
-                              overflow: 'hidden',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              background: 'linear-gradient(135deg, #FF5723 0%, #FF8A60 100%)',
-                              color: '#fff',
-                              fontWeight: 'bold',
-                              fontSize: 18,
-                              boxShadow: '0 4px 12px rgba(255, 87, 35, 0.3)',
-                            }}
-                          >
-                            {user.profileImageUrl ? (
-                              <img
-                                src={user.profileImageUrl}
-                                alt={user.name}
-                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                onError={(e) => {
-                                  e.target.onerror = null;
-                                  e.target.style.display = 'none';
-                                  e.target.parentNode.textContent =
-                                    user.name?.[0]?.toUpperCase() || '?';
-                                }}
-                              />
-                            ) : (
-                              user.name?.[0]?.toUpperCase() || '?'
-                            )}
-                          </Box>
-                        </TableCell>
-                        <TableCell>
-                          <Box display="flex" alignItems="center" gap={1}>
-                            <Typography fontWeight="600" color="text.primary">
-                              {user.name}
-                            </Typography>
+                        Limpiar búsqueda
+                      </Button>
+                    )}
+                  </Stack>
+                </TableCell>
+              </TableRow>
+            ) : (
+              currentRows.map((user) => {
+                const sub = getSubscription(user);
+                return (
+                  <TableRow
+                    key={user.id}
+                    hover
+                    sx={{ '&:hover': { bgcolor: '#FFF9FC !important' }, '&:last-child td': { border: 0 } }}
+                  >
+                    {/* Avatar + nombre (en móvil muestra también el correo) */}
+                    <TableCell>
+                      <Stack direction="row" alignItems="center" spacing={1.5}>
+                        <Avatar
+                          src={user.profileImageUrl || undefined}
+                          alt={user.name || 'Usuario'}
+                          sx={{
+                            width: 44, height: 44, fontWeight: 700, color: '#fff',
+                            background: 'linear-gradient(135deg, #FF5C93 0%, #FF8AB4 100%)',
+                            boxShadow: '0 4px 12px rgba(255,92,147,0.3)',
+                          }}
+                        >
+                          {user.name?.charAt(0)?.toUpperCase() || '?'}
+                        </Avatar>
+
+                        <Box sx={{ minWidth: 0 }}>
+                          <Stack direction="row" alignItems="center" spacing={0.5}>
+                            <Typography fontWeight={600}>{user.name}</Typography>
                             {user.roleId === 1 && (
                               <Tooltip title="Administrador" arrow>
-                                <VerifiedIcon
-                                  style={{ color: '#FF69B4', fontSize: 20 }}
-                                />
-
+                                <VerifiedIcon sx={{ color: PINK, fontSize: 20 }} />
                               </Tooltip>
                             )}
-                          </Box>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2" color="text.secondary">
-                            {user.phone || 'Sin teléfono'}
+                          </Stack>
+                          <Typography variant="caption" color="text.secondary" noWrap sx={{ display: { xs: 'block', sm: 'none' }, maxWidth: 180 }}>
+                            {user.email || 'Sin correo'}
                           </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2" color="text.secondary">
-                            {user.email}
-                          </Typography>
-                        </TableCell>
-                        <TableCell align="center">
-                          {user.roleId === 5 || user.roleId === 1 ? (
-                            <Chip
-                              label="No aplica"
-                              size="small"
-                              sx={{
-                                fontWeight: '600',
-                                color: '#666',
-                                backgroundColor: '#f5f5f5',
-                                border: '1px solid #e0e0e0',
-                              }}
-                            />
-                          ) : (
-                            <Chip
-                              label={user?.Subscriptions?.[0]?.status === 'active' ? 'Activa' : 'Inactiva'}
-                              size="small"
-                              sx={{
-                                fontWeight: '600',
-                                color: '#fff',
-                                background:
-                                  user?.Subscriptions?.[0]?.status === 'active'
-                                    ? 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)'
-                                    : 'linear-gradient(135deg, #FF6B9D 0%, #FF8AB4 100%)',
-                                boxShadow:
-                                  user?.Subscriptions?.[0]?.status === 'active'
-                                    ? '0 2px 8px rgba(76, 175, 80, 0.3)'
-                                    : '0 2px 8px rgba(255, 107, 157, 0.3)',
-                              }}
-                            />
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
+                        </Box>
+                      </Stack>
+                    </TableCell>
 
-          {/* PAGINACIÓN MANUAL */}
-          {!loading && displayRows.length > 0 && (
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                p: 2,
-                bgcolor: '#FFF5FA',
-                borderTop: '1px solid #FFE6F0',
-              }}
-            >
-              <Typography variant="body2" color="text.secondary">
-                Mostrando {rowsState.page * rowsState.pageSize + 1} -{' '}
-                {Math.min(
-                  (rowsState.page + 1) * rowsState.pageSize,
-                  displayRows.length
-                )}{' '}
-                de {displayRows.length}
-              </Typography>
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                <Button
-                  size="small"
-                  disabled={rowsState.page === 0}
-                  onClick={() => setRowsState((prev) => ({ ...prev, page: prev.page - 1 }))}
-                  sx={{
-                    color: '#FF69B4',
-                    '&:disabled': { color: '#ccc' },
-                  }}
-                >
-                  Anterior
-                </Button>
-                <Button
-                  size="small"
-                  disabled={
-                    (rowsState.page + 1) * rowsState.pageSize >= displayRows.length
-                  }
-                  onClick={() => setRowsState((prev) => ({ ...prev, page: prev.page + 1 }))}
-                  sx={{
-                    color: '#FF69B4',
-                    '&:disabled': { color: '#ccc' },
-                  }}
-                >
-                  Siguiente
-                </Button>
-              </Box>
-            </Box>
-          )}
-        </Paper>
-      {/* </Widget> */}
+                    <TableCell sx={{ ...hideOnXs, color: 'text.secondary' }}>{user.phone || 'Sin teléfono'}</TableCell>
+                    <TableCell sx={{ ...hideOnXs, color: 'text.secondary' }}>{user.email || 'Sin correo'}</TableCell>
 
-      {/* MODAL */}
-      <Dialog
-        open={modalOpen}
-        title="Confirmar eliminación"
-        contentText="¿Estás seguro de eliminar este usuario?"
-        onClose={closeModal}
-        onSubmit={handleDelete}
-      />
-    </Box>
+                    <TableCell align="center">
+                      <Chip
+                        size="small"
+                        label={sub.label}
+                        sx={{ fontWeight: 700, color: sub.color, bgcolor: sub.bg, border: `1px solid ${sub.border}` }}
+                      />
+                    </TableCell>
+                  </TableRow>
+                );
+              })
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
+
+      {/* Paginación */}
+      {!loading && displayRows.length > 0 && (
+        <TablePagination
+          component="div"
+          count={displayRows.length}
+          page={page}
+          rowsPerPage={ROWS_PER_PAGE}
+          rowsPerPageOptions={[]}
+          onPageChange={(_, newPage) => setPage(newPage)}
+          labelDisplayedRows={({ from, to, count }) =>
+            `${from}–${to} de ${count}`
+          }
+          sx={{
+            borderTop: "1px solid #FFE6F0",
+            bgcolor: "#FFFAFC",
+
+            "& .MuiTablePagination-toolbar": {
+              justifyContent: "center",
+            },
+
+            "& .MuiTablePagination-spacer": {
+              display: "none",
+            },
+          }}
+        />
+
+      )}
+    </Paper>
   );
 };
 

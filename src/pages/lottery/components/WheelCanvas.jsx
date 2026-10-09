@@ -1,70 +1,73 @@
 import React, { useEffect, useRef } from 'react';
+import Box from '@mui/material/Box';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
+import OpenInFullRounded from '@mui/icons-material/OpenInFullRounded';
+import { keyframes } from '@mui/system';
+
+const glow = keyframes`
+    from { filter: drop-shadow(0 10px 25px rgba(0, 0, 0, 0.2)); }
+    to   { filter: drop-shadow(0 10px 30px rgba(255, 20, 147, 0.4)); }
+`;
+
+const MIN_PETALS = 5;
+
+const pinkColors = [
+    '#FF1493', '#FFB6C1', '#C71585', '#FFC0CB',
+    '#FF69B4', '#DB7093', '#FF80AB', '#FFB8D1',
+    '#FF4081', '#FFA0C8', '#E8569A', '#FF82AB',
+    '#D63384'
+];
+
+const emptyPetalColors = [
+    '#FFCFE6', '#FFD9EE', '#FFCFE6', '#FFD9EE', '#FFD2E8'
+];
+
+// Dibuja un pétalo de flor (versión redondeada, sin punta afilada)
+const drawFlowerPetal = (ctx, petalLength, pHalfWidth, baseR) => {
+    ctx.beginPath();
+    ctx.moveTo(baseR * 0.4, -baseR * 0.9);
+
+    ctx.bezierCurveTo(
+        petalLength * 0.22, -pHalfWidth * 1.0,
+        petalLength * 0.55, -pHalfWidth * 1.05,
+        petalLength * 0.82, -pHalfWidth * 0.55
+    );
+
+    ctx.bezierCurveTo(
+        petalLength * 0.98, -pHalfWidth * 0.28,
+        petalLength * 0.98, pHalfWidth * 0.28,
+        petalLength * 0.82, pHalfWidth * 0.55
+    );
+
+    ctx.bezierCurveTo(
+        petalLength * 0.55, pHalfWidth * 1.05,
+        petalLength * 0.22, pHalfWidth * 1.0,
+        baseR * 0.4, baseR * 0.9
+    );
+
+    ctx.quadraticCurveTo(-baseR * 0.35, 0, baseR * 0.4, -baseR * 0.9);
+    ctx.closePath();
+};
 
 const WheelCanvas = ({
     prizes,
     rotation,
     winningIndex,
     selectedPrize,
-    isFullscreen = false
+    isFullscreen = false,
+    onFullscreen
 }) => {
     const canvasRef = useRef(null);
 
-    const MIN_PETALS = 5;
-    const pinkColors = [
-        '#FF1493', '#FFB6C1', '#C71585', '#FFC0CB',
-        '#FF69B4', '#DB7093', '#FF80AB', '#FFB8D1',
-        '#FF4081', '#FFA0C8', '#E8569A', '#FF82AB',
-        '#D63384'
-    ];
-
-    const emptyPetalColors = [
-        '#FFCFE6', '#FFD9EE', '#FFCFE6', '#FFD9EE', '#FFD2E8'
-    ];
-
     useEffect(() => {
-        drawWheel();
-    }, [prizes, rotation, winningIndex, selectedPrize, isFullscreen]);
-
-    // Dibuja un pétalo de flor (versión redondeada, sin punta afilada)
-    const drawFlowerPetal = (ctx, petalLength, pHalfWidth, baseR) => {
-        ctx.beginPath();
-
-        // Arranca en el borde superior de la base (redondeada, sin V)
-        ctx.moveTo(baseR * 0.4, -baseR * 0.9);
-
-        // Lado superior: se ensancha rápido y se curva suavemente hacia la punta
-        ctx.bezierCurveTo(
-            petalLength * 0.22, -pHalfWidth * 1.0,
-            petalLength * 0.55, -pHalfWidth * 1.05,
-            petalLength * 0.82, -pHalfWidth * 0.55
-        );
-
-        // Punta redonda y ancha (antes convergía casi a un punto)
-        ctx.bezierCurveTo(
-            petalLength * 0.98, -pHalfWidth * 0.28,
-            petalLength * 0.98, pHalfWidth * 0.28,
-            petalLength * 0.82, pHalfWidth * 0.55
-        );
-
-        // Lado inferior, simétrico, de vuelta a la base
-        ctx.bezierCurveTo(
-            petalLength * 0.55, pHalfWidth * 1.05,
-            petalLength * 0.22, pHalfWidth * 1.0,
-            baseR * 0.4, baseR * 0.9
-        );
-
-        // Cierra la base con un arco suave (sin punta dura en el centro)
-        ctx.quadraticCurveTo(-baseR * 0.35, 0, baseR * 0.4, -baseR * 0.9);
-
-        ctx.closePath();
-    };
-
-    const drawWheel = () => {
         const canvas = canvasRef.current;
         if (!canvas) return;
 
         const ctx = canvas.getContext('2d');
-        const SIZE = isFullscreen ? Math.floor(Math.min(window.innerWidth, window.innerHeight) * 0.80) : 680;
+        const SIZE = isFullscreen
+            ? Math.floor(Math.min(window.innerWidth, window.innerHeight) * 0.80)
+            : 680;
         canvas.width = SIZE;
         canvas.height = SIZE;
 
@@ -74,14 +77,14 @@ const WheelCanvas = ({
         const totalPetals = Math.max(MIN_PETALS, prizes.length);
         const sliceAngle = (2 * Math.PI) / totalPetals;
 
-        // Ancho de pétalo
-        const gap = 0.86; // <1 deja un pequeño espacio entre pétalos
+        const gap = 0.86;
         const maxHalfWidthByAngle = Math.tan((sliceAngle * gap) / 2) * petalLength;
         const pHalfWidth = Math.min(maxHalfWidthByAngle, petalLength * 0.34);
         const baseR = Math.max(12, petalLength * 0.05);
 
         ctx.clearRect(0, 0, SIZE, SIZE);
 
+        /* ------------------------------ Pétalos ------------------------------ */
         for (let index = 0; index < totalPetals; index++) {
             const hasPrize = index < prizes.length;
             const prize = hasPrize ? prizes[index] : null;
@@ -91,11 +94,11 @@ const WheelCanvas = ({
             ctx.translate(centerX, centerY);
             ctx.rotate(petalAngle);
 
-            const isWinning = hasPrize && winningIndex === index && selectedPrize?.id === prize.id;
+            const isWinning =
+                hasPrize && winningIndex === index && selectedPrize?.id === prize.id;
 
             drawFlowerPetal(ctx, petalLength, pHalfWidth, baseR);
 
-            // Gradiente
             const gradient = ctx.createLinearGradient(0, -pHalfWidth, petalLength, pHalfWidth);
 
             if (isWinning) {
@@ -125,7 +128,7 @@ const WheelCanvas = ({
             ctx.stroke();
             ctx.shadowBlur = 0;
 
-            // Nervadura central sutil (como una vena de pétalo real)
+            // Nervadura central
             ctx.beginPath();
             ctx.moveTo(baseR * 0.6, 0);
             ctx.lineTo(petalLength * 0.82, 0);
@@ -151,13 +154,13 @@ const WheelCanvas = ({
                 ctx.fill();
             }
 
+            // Adorno en pétalos vacíos
             if (!hasPrize) {
                 ctx.save();
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillStyle = 'rgba(255,100,170,0.35)';
-                const decorFontSize = isFullscreen ? 18 : 14;
-                ctx.font = `${decorFontSize}px Arial`;
+                ctx.font = `${isFullscreen ? 18 : 14}px Arial`;
                 ctx.fillText('✦', petalLength * 0.58, 0);
                 ctx.restore();
             }
@@ -165,6 +168,7 @@ const WheelCanvas = ({
             ctx.restore();
         }
 
+        /* ------------------------------ Textos ------------------------------- */
         for (let index = 0; index < prizes.length; index++) {
             const prize = prizes[index];
             const petalAngle = index * sliceAngle + sliceAngle / 2 + rotation;
@@ -175,6 +179,7 @@ const WheelCanvas = ({
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillStyle = '#FFFFFF';
+
             const fontSize = isFullscreen
                 ? Math.max(13, Math.min(20, pHalfWidth * 0.85))
                 : Math.max(11, Math.min(16, pHalfWidth * 0.8));
@@ -199,7 +204,7 @@ const WheelCanvas = ({
             ctx.restore();
         }
 
-        // Centro dorado (corazón de la flor)
+        /* ---------------------------- Centro dorado -------------------------- */
         const centerRadius = isFullscreen ? 42 : 34;
         const centerGrad = ctx.createRadialGradient(
             centerX - 7, centerY - 7, 3,
@@ -220,7 +225,6 @@ const WheelCanvas = ({
         ctx.stroke();
         ctx.shadowBlur = 0;
 
-        // Pequeños puntos de polen alrededor del centro para reforzar el look floral
         const pollenCount = 8;
         for (let p = 0; p < pollenCount; p++) {
             const a = (p / pollenCount) * Math.PI * 2;
@@ -232,13 +236,12 @@ const WheelCanvas = ({
             ctx.fill();
         }
 
-        // Brillo central
         ctx.beginPath();
         ctx.arc(centerX - 10, centerY - 10, 10, 0, 2 * Math.PI);
         ctx.fillStyle = 'rgba(255,255,255,0.32)';
         ctx.fill();
 
-        // Puntero
+        /* ------------------------------- Puntero ----------------------------- */
         const pointerAngle = -Math.PI / 2;
         const pointerX = centerX + Math.cos(pointerAngle) * (petalLength + 16);
         const pointerY = centerY + Math.sin(pointerAngle) * (petalLength + 16);
@@ -263,9 +266,65 @@ const WheelCanvas = ({
         ctx.lineWidth = 2;
         ctx.stroke();
         ctx.restore();
-    };
+    }, [prizes, rotation, winningIndex, selectedPrize, isFullscreen]);
 
-    return <canvas ref={canvasRef} className="wheel-canvas" />;
+    const canvas = (
+        <Box
+            component="canvas"
+            ref={canvasRef}
+            sx={{
+                display: 'block',
+                width: '100%',
+                height: '100%',
+                filter: 'drop-shadow(0 10px 25px rgba(0, 0, 0, 0.2))',
+                animation: `${glow} 2s ease-in-out infinite alternate`
+            }}
+        />
+    );
+
+    // En pantalla completa, FullscreenWheel ya aporta el contenedor
+    if (isFullscreen) return canvas;
+
+    return (
+        <Box
+            sx={{
+                position: 'relative',
+                width: '100%',
+                maxWidth: { xs: 310, sm: 390, md: 450, lg: 500 },
+                aspectRatio: '1 / 1'
+            }}
+        >
+            {canvas}
+
+            {onFullscreen && (
+                <Tooltip title="Pantalla completa">
+                    <IconButton
+                        onClick={onFullscreen}
+                        aria-label="Ver la rueda en pantalla completa"
+                        sx={{
+                            position: 'absolute',
+                            top: 10,
+                            right: 10,
+                            zIndex: 10,
+                            width: 42,
+                            height: 42,
+                            color: 'primary.main',
+                            bgcolor: 'rgba(255,255,255,0.9)',
+                            border: '1px solid rgba(255,105,180,0.3)',
+                            boxShadow: '0 4px 15px rgba(255,105,180,0.18)',
+                            '&:hover': {
+                                bgcolor: '#fff',
+                                transform: 'scale(1.08)',
+                                boxShadow: '0 7px 20px rgba(255,105,180,0.28)'
+                            }
+                        }}
+                    >
+                        <OpenInFullRounded />
+                    </IconButton>
+                </Tooltip>
+            )}
+        </Box>
+    );
 };
 
 export default WheelCanvas;

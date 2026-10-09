@@ -5,6 +5,7 @@ import * as ExcelJS from 'exceljs';
 export const useExcelExport = () => {
     const [exportingExcel, setExportingExcel] = useState(false);
 
+    // Genera y descarga el archivo .xlsx
     const exportToExcel = useCallback(async ({ data, title, fileName }) => {
         if (!data || data.length === 0) {
             Swal.fire({
@@ -38,7 +39,7 @@ export const useExcelExport = () => {
 
             // Encabezados
             const headerRow = worksheet.addRow(['Nombre', 'Email', 'Teléfono', 'Premio']);
-            headerRow.eachCell(cell => {
+            headerRow.eachCell((cell) => {
                 cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFF69B4' } };
                 cell.font = { name: 'Arial', bold: true, color: { argb: 'FFFFFFFF' }, size: 12 };
                 cell.alignment = { horizontal: 'center', vertical: 'middle' };
@@ -53,7 +54,7 @@ export const useExcelExport = () => {
             // Datos
             data.forEach((item, idx) => {
                 const row = worksheet.addRow([item.name, item.email, item.phone, item.prize_name]);
-                row.eachCell(cell => {
+                row.eachCell((cell) => {
                     cell.fill = {
                         type: 'pattern',
                         pattern: 'solid',
@@ -70,9 +71,9 @@ export const useExcelExport = () => {
             });
 
             // Ajustar columnas
-            worksheet.columns.forEach(col => {
+            worksheet.columns.forEach((col) => {
                 let mx = 0;
-                col.eachCell({ includeEmpty: true }, c => {
+                col.eachCell({ includeEmpty: true }, (c) => {
                     const l = c.value ? c.value.toString().length : 10;
                     if (l > mx) mx = l;
                 });
@@ -81,7 +82,9 @@ export const useExcelExport = () => {
 
             // Descargar
             const buffer = await workbook.xlsx.writeBuffer();
-            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const blob = new Blob([buffer], {
+                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
             link.download = fileName;
@@ -112,5 +115,28 @@ export const useExcelExport = () => {
         }
     }, []);
 
-    return { exportingExcel, exportToExcel };
+    // Arma datos, título y nombre de archivo según la pestaña activa y exporta
+    const exportWinners = useCallback(
+        ({ isCurrent, currentWinners, historicalWinners, month }) => {
+            const source = isCurrent ? currentWinners : historicalWinners;
+
+            const data = source.map((w) => ({
+                name: w.name,
+                email: w.email,
+                phone: w.phone,
+                prize_name: isCurrent ? w.prize : w.prize_name
+            }));
+
+            const date = new Date().toISOString().split('T')[0];
+
+            return exportToExcel({
+                data,
+                title: isCurrent ? 'Ganadores Actuales' : `Ganadores - ${month}`,
+                fileName: `ganadores_${isCurrent ? 'actuales' : month}_${date}.xlsx`
+            });
+        },
+        [exportToExcel]
+    );
+
+    return { exportingExcel, exportToExcel, exportWinners };
 };

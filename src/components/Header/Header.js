@@ -1,246 +1,335 @@
-import React, { useState, useEffect, useContext, useCallback } from 'react';
-import { Link } from 'react-router-dom';
-import { AppBar, Toolbar, IconButton, Menu, MenuItem, Divider, Box } from '@mui/material';
-import { useTheme, alpha } from '@mui/material';
+import React, {
+  useState,
+  useEffect,
+  useContext,
+  useCallback,
+} from "react";
+import { Link } from "react-router-dom";
+import {
+  AppBar,
+  Toolbar,
+  IconButton,
+  Menu,
+  MenuItem,
+  Divider,
+  Box,
+  Typography,
+  Avatar,
+  useTheme,
+  alpha,
+} from "@mui/material";
 import {
   Menu as MenuIcon,
   Person as AccountIcon,
   ArrowBack as ArrowBackIcon,
   Logout as LogoutIcon,
   KeyboardArrowDown as ChevronIcon,
-} from '@mui/icons-material';
-import classNames from 'classnames';
-import { deepOrange } from '@mui/material/colors';
-
-// styles
-import useStyles from './styles';
-
-// components
-import { Typography, Avatar } from '../Wrappers/Wrappers';
+} from "@mui/icons-material";
+import { deepOrange } from "@mui/material/colors";
 
 // context
 import {
   useLayoutState,
   useLayoutDispatch,
   toggleSidebar,
-} from '../../context/LayoutContext';
-import AuthContext from '../../context/AuthContext/AuthContext';
+} from "../../context/LayoutContext";
+import AuthContext from "../../context/AuthContext/AuthContext";
 
 export default function Header(props) {
-  const classes = useStyles();
   const theme = useTheme();
 
-  // global
+  // Global
   const layoutState = useLayoutState();
   const layoutDispatch = useLayoutDispatch();
 
-  // local
+  // Local
   const [profileMenu, setProfileMenu] = useState(null);
   const [isSmall, setSmall] = useState(false);
 
-  // usuario autenticado
+  // Usuario autenticado
   const { usuario, cerrarSesion } = useContext(AuthContext);
-  const userName = usuario?.user?.name || 'Usuario';
+
+  const userName = usuario?.user?.name || "Usuario";
   const userInitial = userName?.[0]?.toUpperCase();
   const hasAvatarImage = Boolean(usuario?.user?.profileImage);
 
   const handleLogout = () => {
     setProfileMenu(null);
     cerrarSesion();
-    localStorage.removeItem('token');
-    props.history.push('/login');
+    localStorage.removeItem("token");
+    props.history.push("/login");
   };
 
   const handleWindowWidthChange = useCallback(() => {
     const breakpointWidth = theme.breakpoints.values.md;
+
     setSmall(window.innerWidth < breakpointWidth);
   }, [theme.breakpoints.values.md]);
 
-  // Solo se registra/limpia una vez, no en cada render
   useEffect(() => {
     handleWindowWidthChange();
-    window.addEventListener('resize', handleWindowWidthChange);
-    return () => window.removeEventListener('resize', handleWindowWidthChange);
+
+    window.addEventListener("resize", handleWindowWidthChange);
+
+    return () => {
+      window.removeEventListener("resize", handleWindowWidthChange);
+    };
   }, [handleWindowWidthChange]);
 
   const isMenuOpen = Boolean(profileMenu);
-  const closeMenu = () => setProfileMenu(null);
+
+  const closeMenu = () => {
+    setProfileMenu(null);
+  };
 
   return (
-    <AppBar position="fixed" className={classes.appBar}>
-      <Toolbar className={classes.toolbar}>
-        {/* Botón de menú: ahora es un botón cuadrado con esquinas suaves, no un icono suelto */}
+    <AppBar
+      position="fixed"
+      sx={{
+        zIndex: theme.zIndex.drawer + 1,
+        backgroundColor: "#FF5C95",
+      }}
+    >
+      <Toolbar
+        sx={{
+          minHeight: {
+            xs: 56,
+            sm: 64,
+          },
+          px: {
+            xs: 1.5,
+            sm: 2,
+          },
+        }}
+      >
+        {/* Botón del menú */}
         <IconButton
           color="inherit"
-          aria-label={layoutState.isSidebarOpened ? 'Contraer menú' : 'Abrir menú'}
+          aria-label={
+            layoutState.isSidebarOpened
+              ? "Contraer menú"
+              : "Abrir menú"
+          }
           onClick={() => toggleSidebar(layoutDispatch)}
           sx={{
             borderRadius: 1.5,
             mr: 1,
-            '&:hover': { backgroundColor: alpha('#fff', 0.12) },
+
+            "&:hover": {
+              backgroundColor: alpha("#fff", 0.12),
+            },
           }}
         >
           {(!layoutState.isSidebarOpened && isSmall) ||
-          (layoutState.isSidebarOpened && !isSmall) ? (
+            (layoutState.isSidebarOpened && !isSmall) ? (
             <ArrowBackIcon
-              classes={{
-                root: classNames(classes.headerIcon, classes.headerIconCollapse),
+              sx={{
+                fontSize: 24,
+                color: "#fff",
               }}
-              sx={{ fontSize: 24 }}
             />
           ) : (
             <MenuIcon
-              classes={{
-                root: classNames(classes.headerIcon, classes.headerIconCollapse),
+              sx={{
+                fontSize: 24,
+                color: "#fff",
               }}
-              sx={{ fontSize: 24 }}
             />
           )}
         </IconButton>
 
-        {/* Logo con acento: punto + tipografía espaciada en vez de texto plano */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Box
-            // sx={{
-            //   width: 8,
-            //   height: 8,
-            //   borderRadius: '50%',
-            //   backgroundColor: '#fff',
-            //   flexShrink: 0,
-            // }}
-          />
+        {/* Logo / Nombre */}
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            minWidth: 0,
+          }}
+        >
           <Typography
             variant="h6"
-            weight="medium"
-            className={classes.logotype}
-            sx={{ margin: '0 !important', letterSpacing: 0.4 }}
+            sx={{
+              m: 0,
+              color: "#fff",
+              fontWeight: 500,
+              letterSpacing: 0.4,
+              whiteSpace: "nowrap",
+            }}
           >
             Floreciendo Juntas
           </Typography>
         </Box>
 
-        <div className={classes.grow} />
+        {/* Espaciador */}
+        <Box sx={{ flexGrow: 1 }} />
 
-        {/* Chip de usuario: avatar + nombre + chevron, todo en un solo control */}
+        {/* Botón de usuario */}
         <Box
           component="button"
           onClick={(e) => setProfileMenu(e.currentTarget)}
           aria-label="Abrir menú de perfil"
-          aria-controls={isMenuOpen ? 'profile-menu' : undefined}
+          aria-controls={isMenuOpen ? "profile-menu" : undefined}
           aria-haspopup="true"
-          aria-expanded={isMenuOpen ? 'true' : undefined}
+          aria-expanded={isMenuOpen ? "true" : undefined}
           sx={{
-            display: 'flex',
-            alignItems: 'center',
+            display: "flex",
+            alignItems: "center",
             gap: 1,
-            border: '1px solid',
-            borderColor: alpha('#fff', 0.3),
-            backgroundColor: isMenuOpen ? alpha('#fff', 0.14) : 'transparent',
+
+            border: "1px solid",
+            borderColor: alpha("#fff", 0.3),
+
+            backgroundColor: isMenuOpen
+              ? alpha("#fff", 0.14)
+              : "transparent",
+
             borderRadius: 999,
+
             pl: 0.5,
             pr: isSmall ? 0.5 : 1.5,
             py: 0.5,
-            cursor: 'pointer',
-            transition: '0.2s',
-            '&:hover': {
-              backgroundColor: alpha('#fff', 0.14),
-              borderColor: alpha('#fff', 0.5),
+
+            cursor: "pointer",
+            transition: "0.2s",
+
+            "&:hover": {
+              backgroundColor: alpha("#fff", 0.14),
+              borderColor: alpha("#fff", 0.5),
             },
           }}
         >
+          {/* Avatar */}
           <Avatar
             alt={userName}
-            src={usuario?.user?.profileImage || ''}
+            src={usuario?.user?.profileImage || ""}
             sx={{
               width: 30,
               height: 30,
-              bgcolor: hasAvatarImage ? 'transparent' : deepOrange[500],
-              color: '#fff',
+              bgcolor: hasAvatarImage
+                ? "transparent"
+                : deepOrange[500],
+              color: "#fff",
               fontSize: 14,
+              fontWeight: 600,
             }}
           >
             {!hasAvatarImage && userInitial}
           </Avatar>
 
-          {/* Nombre visible solo en pantallas medianas o mayores */}
+          {/* Nombre */}
           {!isSmall && (
-            <Typography weight="medium" sx={{ color: '#fff', fontSize: 14, lineHeight: 1 }}>
+            <Typography
+              sx={{
+                color: "#fff",
+                fontSize: 14,
+                lineHeight: 1,
+                fontWeight: 500,
+                maxWidth: 180,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
               {userName}
             </Typography>
           )}
 
+          {/* Flecha */}
           <ChevronIcon
             sx={{
-              color: alpha('#fff', 0.8),
+              color: alpha("#fff", 0.8),
               fontSize: 20,
-              transition: 'transform 0.2s',
-              transform: isMenuOpen ? 'rotate(180deg)' : 'none',
+              transition: "transform 0.2s",
+              transform: isMenuOpen
+                ? "rotate(180deg)"
+                : "none",
             }}
           />
         </Box>
 
+        {/* Menú de perfil */}
         <Menu
           id="profile-menu"
           open={isMenuOpen}
           anchorEl={profileMenu}
           onClose={closeMenu}
-          MenuListProps={{ 'aria-label': 'Menú de perfil', sx: { p: 1 } }}
+          MenuListProps={{
+            "aria-label": "Menú de perfil",
+            sx: {
+              p: 1,
+            },
+          }}
           PaperProps={{
             elevation: 6,
             sx: {
               mt: 1.5,
               borderRadius: 3,
               minWidth: 250,
-              overflow: 'hidden',
-              backgroundColor: theme.palette.background.paper,
+              maxWidth: 320,
+              overflow: "hidden",
+              backgroundColor:
+                theme.palette.background.paper,
             },
           }}
         >
-          {/* Header tipo "tarjeta de identidad" */}
+          {/* Información del usuario */}
           <Box
             sx={{
-              display: 'flex',
-              alignItems: 'center',
+              display: "flex",
+              alignItems: "center",
               gap: 1.5,
               px: 2,
               py: 2,
-              backgroundColor: alpha(theme.palette.primary.main, 0.06),
+              backgroundColor: alpha(
+                "#FF5C95",
+                0.06
+              ),
             }}
           >
             <Avatar
               alt={userName}
-              src={usuario?.user?.profileImage || ''}
+              src={usuario?.user?.profileImage || ""}
               sx={{
                 width: 44,
                 height: 44,
-                bgcolor: hasAvatarImage ? 'transparent' : deepOrange[500],
-                color: '#fff',
+                bgcolor: hasAvatarImage
+                  ? "transparent"
+                  : deepOrange[500],
+                color: "#fff",
+                fontWeight: 600,
               }}
             >
               {!hasAvatarImage && userInitial}
             </Avatar>
-            <Box sx={{ minWidth: 0 }}>
+
+            <Box
+              sx={{
+                minWidth: 0,
+                flex: 1,
+              }}
+            >
               <Typography
-                weight="bold"
                 sx={{
                   fontSize: 15,
+                  fontWeight: 700,
                   color: theme.palette.text.primary,
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
                 }}
               >
                 {userName}
               </Typography>
+
               {usuario?.user?.email && (
                 <Typography
                   sx={{
+                    mt: 0.25,
                     fontSize: 13,
-                    color: theme.palette.text.hint,
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    color: "#545353"
+                    color: "#545353",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
                   }}
                 >
                   {usuario.user.email}
@@ -251,7 +340,7 @@ export default function Header(props) {
 
           <Divider />
 
-          {/* Acciones como "hover chips" redondeados en vez de filas cuadradas */}
+          {/* Acciones */}
           <Box sx={{ p: 1 }}>
             <MenuItem
               component={Link}
@@ -261,11 +350,30 @@ export default function Header(props) {
                 borderRadius: 2,
                 py: 1,
                 color: theme.palette.text.primary,
-                '&:hover': { backgroundColor: alpha(theme.palette.primary.main, 0.08) },
+
+                "&:hover": {
+                  backgroundColor: alpha(
+                    theme.palette.primary.main,
+                    0.08
+                  ),
+                },
               }}
             >
-              <AccountIcon sx={{ fontSize: 20, mr: 1.5, color: 'primary.main' }} />
-              Perfil
+              <AccountIcon
+                sx={{
+                  fontSize: 20,
+                  mr: 1.5,
+                  color: "#ff64a8",
+                }}
+              />
+
+              <Typography
+                sx={{
+                  fontWeight: 500,
+                }}
+              >
+                Perfil
+              </Typography>
             </MenuItem>
 
             <MenuItem
@@ -274,11 +382,31 @@ export default function Header(props) {
                 borderRadius: 2,
                 py: 1,
                 mt: 0.5,
-                '&:hover': { backgroundColor: alpha(theme.palette.error.main, 0.08) },
+
+                "&:hover": {
+                  backgroundColor: alpha(
+                    theme.palette.error.main,
+                    0.08
+                  ),
+                },
               }}
             >
-              <LogoutIcon sx={{ fontSize: 20, mr: 1.5, color: 'error.main' }} />
-              <Typography color="error.main">Cerrar sesión</Typography>
+              <LogoutIcon
+                sx={{
+                  fontSize: 20,
+                  mr: 1.5,
+                  color: "error.main",
+                }}
+              />
+
+              <Typography
+                sx={{
+                  color: "error.main",
+                  fontWeight: 500,
+                }}
+              >
+                Cerrar sesión
+              </Typography>
             </MenuItem>
           </Box>
         </Menu>

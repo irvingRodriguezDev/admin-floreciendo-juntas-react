@@ -1,7 +1,7 @@
 import React, { useContext, useEffect } from "react";
 // REMOVER BrowserRouter de aquí - ya existe en App.js
 import { Switch, Route } from "react-router-dom";
-import { Grid, Box, CircularProgress } from "@mui/material";
+import { Grid, Box, CircularProgress, Typography } from "@mui/material";
 
 // Context
 import AuthContext from "../context/AuthContext/AuthContext";
@@ -12,7 +12,7 @@ import { PublicRouter } from "./PublicRoute";
 
 // Páginas
 import Login from "../pages/login/Login";
-import Error from "../pages/error/Error";
+// import Error from "../pages/error/Error";
 import Layout from "../components/Layout/Layout";
 
 export default function AppRouter() {
@@ -38,7 +38,9 @@ export default function AppRouter() {
 					}}
 				>
 					<CircularProgress size={60} thickness={5} color="primary" />
-					<p style={{ marginTop: 20, fontSize: 18, color: "#555" }}>Cargando...</p>
+					<Typography sx={{ mt: 2.5, fontSize: 18, color: "#555" }}>
+						Cargando...
+					</Typography>
 				</Box>
 			</Grid>
 		);
@@ -63,10 +65,10 @@ export default function AppRouter() {
 			/>
 
 			{/* 3. Fallback: error 404 */}
-			<Route
+			{/* <Route
 				path="*"
 				component={Error}
-			/>
+			/> */}
 		</Switch>
 	);
 }

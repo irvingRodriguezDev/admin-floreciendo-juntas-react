@@ -1,4 +1,17 @@
 import React, { useState } from 'react';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import CircularProgress from '@mui/material/CircularProgress';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
+import IconButton from '@mui/material/IconButton';
+import Paper from '@mui/material/Paper';
+import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
+import Checkbox from '@mui/material/Checkbox';
+import { gradients } from '../Theme';
 
 const PrizeModal = ({ onClose, onCreate }) => {
     const [newPrizeName, setNewPrizeName] = useState('');
@@ -13,241 +26,199 @@ const PrizeModal = ({ onClose, onCreate }) => {
         if (success) onClose();
     };
 
-    return (
-        <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.75)',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 9999,
-            animation: 'fadeIn 0.3s ease'
-        }}>
-            <div style={{
-                width: '90%',
-                maxWidth: '500px',
-                animation: 'modalSlideIn 0.4s ease-out'
-            }}>
-                <div style={{
-                    background: 'linear-gradient(145deg, #ffffff 0%, #fff5f9 100%)',
-                    borderRadius: '20px',
-                    boxShadow: '0 25px 50px rgba(255,20,147,0.25)',
-                    overflow: 'hidden',
-                    border: '2px solid #ff69b4'
-                }}>
-                    <div style={{
-                        background: 'linear-gradient(135deg, #ff69b4 0%, #ff1493 100%)',
-                        padding: '25px 30px',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center'
-                    }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                            <span style={{
-                                fontSize: '2rem',
-                                background: 'rgba(255,255,255,0.2)',
-                                width: '50px',
-                                height: '50px',
-                                borderRadius: '50%',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center'
-                            }}>🌸</span>
-                            <h2 style={{ color: 'white', margin: 0, fontSize: '1.8rem', fontWeight: 700 }}>
-                                Crear Nuevo Premio
-                            </h2>
-                        </div>
-                        <button
-                            onClick={onClose}
-                            disabled={creating}
-                            style={{
-                                background: 'rgba(255,255,255,0.2)',
-                                border: 'none',
-                                width: '40px',
-                                height: '40px',
-                                borderRadius: '50%',
-                                cursor: creating ? 'not-allowed' : 'pointer',
-                                color: 'white',
-                                fontSize: '1.2rem'
-                            }}
-                        >
-                            ✕
-                        </button>
-                    </div>
+    const canCreate = newPrizeName.trim() && !creating;
 
-                    <div style={{ padding: '30px' }}>
-                        <label style={{
+    return (
+        <Dialog
+            open
+            onClose={creating ? undefined : onClose}
+            fullWidth
+            maxWidth="sm"
+            PaperProps={{
+                sx: {
+                    borderRadius: 5,
+                    border: '2px solid #ff69b4',
+                    background: 'linear-gradient(145deg, #ffffff 0%, #fff5f9 100%)',
+                    boxShadow: '0 25px 50px rgba(255,20,147,0.25)',
+                    overflow: 'hidden'
+                }
+            }}
+            slotProps={{ backdrop: { sx: { bgcolor: 'rgba(0,0,0,0.75)' } } }}
+        >
+            <DialogTitle
+                component="div"
+                sx={{
+                    background: gradients.pink,
+                    color: '#fff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    px: 4,
+                    py: 3
+                }}
+            >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Box
+                        sx={{
+                            width: 50,
+                            height: 50,
+                            borderRadius: '50%',
+                            bgcolor: 'rgba(255,255,255,0.2)',
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '10px',
-                            fontSize: '1.1rem',
-                            fontWeight: 600,
-                            color: '#333',
-                            marginBottom: '10px'
-                        }}>
-                            <span style={{ fontSize: '1.3rem' }}>🏷️</span>
-                            Nombre del Premio
-                        </label>
-                        <input
-                            type="text"
-                            value={newPrizeName}
-                            onChange={e => setNewPrizeName(e.target.value)}
-                            placeholder="Kit profesional de uñas, Salón de tus sueños..."
-                            disabled={creating}
-                            onKeyPress={e => e.key === 'Enter' && !creating && handleCreate()}
-                            autoFocus
-                            style={{
-                                width: '100%',
-                                padding: '16px 20px',
-                                border: '2px solid #ffb6c1',
-                                borderRadius: '12px',
-                                fontSize: '1rem',
-                                background: 'white',
-                                boxSizing: 'border-box'
-                            }}
-                            onFocus={e => {
-                                e.target.style.borderColor = '#ff69b4';
-                                e.target.style.boxShadow = '0 0 0 3px rgba(255,105,180,0.2)';
-                                e.target.style.outline = 'none';
-                            }}
-                            onBlur={e => {
-                                e.target.style.borderColor = '#ffb6c1';
-                                e.target.style.boxShadow = 'none';
-                            }}
-                        />
-                        <div style={{
-                            display: 'flex',
-                            alignItems: 'flex-start',
-                            gap: '10px',
-                            marginTop: '10px',
-                            color: '#666',
-                            fontSize: '0.9rem',
-                            background: '#fff0f6',
-                            padding: '12px 15px',
-                            borderRadius: '10px',
-                            borderLeft: '4px solid #ff69b4',
-                            lineHeight: 1.4
-                        }}>
-                            <span>💡</span>
-                            Este nombre aparecerá en un pétalo de la flor y será visible para todos los participantes
-                        </div>
+                            justifyContent: 'center',
+                            fontSize: '2rem'
+                        }}
+                    >
+                        🌸
+                    </Box>
+                    <Typography variant="h5" component="h2" sx={{ fontWeight: 700, fontSize: { xs: '1.3rem', sm: '1.8rem' } }}>
+                        Crear Nuevo Premio
+                    </Typography>
+                </Box>
+                <IconButton
+                    onClick={onClose}
+                    disabled={creating}
+                    sx={{ color: '#fff', bgcolor: 'rgba(255,255,255,0.2)', '&:hover': { bgcolor: 'rgba(255,255,255,0.35)' } }}
+                    aria-label="Cerrar"
+                >
+                    ✕
+                </IconButton>
+            </DialogTitle>
 
-                        <div
-                            onClick={() => !creating && setIsPremium(prev => !prev)}
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '12px',
-                                marginTop: '16px',
-                                padding: '14px 18px',
-                                border: `2px solid ${isPremium ? '#ff1493' : '#ffb6c1'}`,
-                                borderRadius: '12px',
-                                cursor: creating ? 'not-allowed' : 'pointer',
-                                background: isPremium ? 'linear-gradient(135deg, #fff0f8, #ffe0f2)' : '#fff',
-                                transition: 'all 0.2s ease',
-                                userSelect: 'none'
-                            }}
-                        >
-                            <div style={{
-                                width: '22px',
-                                height: '22px',
-                                borderRadius: '6px',
-                                flexShrink: 0,
-                                border: `2px solid ${isPremium ? '#ff1493' : '#ccc'}`,
-                                background: isPremium ? 'linear-gradient(135deg, #ff69b4, #ff1493)' : 'white',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                transition: 'all 0.2s ease'
-                            }}>
-                                {isPremium && <span style={{ color: 'white', fontSize: '13px', fontWeight: 'bold' }}>✓</span>}
-                            </div>
-                            <div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                    <span style={{ fontSize: '1.1rem' }}>⭐</span>
-                                    <span style={{ fontWeight: 700, fontSize: '1rem', color: isPremium ? '#ff1493' : '#333' }}>
-                                        Premio Premium
-                                    </span>
-                                </div>
-                                <span style={{ fontSize: '0.82rem', color: '#888' }}>
-                                    Marca si este premio es de categoría premium
-                                </span>
-                            </div>
-                        </div>
-                    </div>
+            <DialogContent sx={{ p: 4, pt: '30px !important' }}>
+                <Typography sx={{ display: 'flex', alignItems: 'center', gap: 1.25, fontSize: '1.1rem', fontWeight: 600, mb: 1.25 }}>
+                    <span>🏷️</span> Nombre del Premio
+                </Typography>
+                <TextField
+                    fullWidth
+                    autoFocus
+                    value={newPrizeName}
+                    onChange={(e) => setNewPrizeName(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && !creating && handleCreate()}
+                    placeholder="Kit profesional de uñas, Salón de tus sueños..."
+                    disabled={creating}
+                    sx={{
+                        '& .MuiOutlinedInput-root': {
+                            bgcolor: '#fff',
+                            borderRadius: 3,
+                            '& fieldset': { borderWidth: 2, borderColor: 'primary.light' },
+                            '&:hover fieldset': { borderColor: 'primary.light' },
+                            '&.Mui-focused fieldset': { borderColor: 'primary.main' },
+                            '&.Mui-focused': { boxShadow: '0 0 0 3px rgba(255,105,180,0.2)' }
+                        }
+                    }}
+                />
 
-                    <div style={{
-                        padding: '20px 30px',
-                        background: 'linear-gradient(135deg, #fff8fb 0%, #fff0f6 100%)',
-                        borderTop: '1px solid #ffd1dc',
+                <Box
+                    sx={{
                         display: 'flex',
-                        justifyContent: 'flex-end',
-                        gap: '15px'
-                    }}>
-                        <button
-                            onClick={onClose}
-                            disabled={creating}
-                            style={{
-                                padding: '14px 28px',
-                                border: '1px solid #ddd',
-                                borderRadius: '12px',
-                                fontSize: '1rem',
-                                fontWeight: 600,
-                                cursor: creating ? 'not-allowed' : 'pointer',
-                                background: 'linear-gradient(135deg, #f0f0f0 0%, #e0e0e0 100%)',
-                                color: '#666'
-                            }}
-                        >
-                            ↩️ Cancelar
-                        </button>
-                        <button
-                            onClick={handleCreate}
-                            disabled={!newPrizeName.trim() || creating}
-                            style={{
-                                padding: '14px 28px',
-                                border: '1px solid #ff1493',
-                                borderRadius: '12px',
-                                fontSize: '1rem',
-                                fontWeight: 600,
-                                cursor: (!newPrizeName.trim() || creating) ? 'not-allowed' : 'pointer',
-                                background: 'linear-gradient(135deg, #ff69b4 0%, #ff1493 100%)',
-                                color: 'white',
-                                minWidth: '150px',
-                                opacity: (!newPrizeName.trim() || creating) ? 0.5 : 1
-                            }}
-                        >
-                            {creating ? (
-                                <>
-                                    <div style={{
-                                        width: '18px',
-                                        height: '18px',
-                                        border: '2px solid rgba(255,255,255,0.3)',
-                                        borderRadius: '50%',
-                                        borderTopColor: 'white',
-                                        animation: 'spin 1s linear infinite',
-                                        display: 'inline-block',
-                                        marginRight: '8px',
-                                        verticalAlign: 'middle'
-                                    }}></div>
-                                    Creando...
-                                </>
-                            ) : (
-                                <>✅ Crear Premio</>
-                            )}
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <style>{`
-                @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
-                @keyframes modalSlideIn { from { opacity:0; transform:translateY(-30px) scale(0.95); } to { opacity:1; transform:translateY(0) scale(1); } }
-                @keyframes spin { to { transform:rotate(360deg); } }
-            `}</style>
-        </div>
+                        alignItems: 'flex-start',
+                        gap: 1.25,
+                        mt: 1.25,
+                        px: 2,
+                        py: 1.5,
+                        bgcolor: '#fff0f6',
+                        borderRadius: 2.5,
+                        borderLeft: '4px solid #ff69b4',
+                        color: 'text.secondary',
+                        fontSize: '0.9rem',
+                        lineHeight: 1.4
+                    }}
+                >
+                    <span>💡</span>
+                    Este nombre aparecerá en un pétalo de la flor y será visible para todos los participantes
+                </Box>
+
+                <Paper
+                    variant="outlined"
+                    onClick={() => !creating && setIsPremium((prev) => !prev)}
+                    sx={{
+                        mt: 2,
+                        px: 2,
+                        py: 1.25,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                        borderWidth: 2,
+                        borderRadius: 3,
+                        borderColor: isPremium ? 'secondary.main' : 'primary.light',
+                        background: isPremium ? 'linear-gradient(135deg, #fff0f8, #ffe0f2)' : '#fff',
+                        cursor: creating ? 'not-allowed' : 'pointer',
+                        userSelect: 'none',
+                        transition: 'all 0.2s ease'
+                    }}
+                >
+                    <Checkbox
+                        checked={isPremium}
+                        disabled={creating}
+                        tabIndex={-1}
+                        disableRipple
+                        color="secondary"
+                        sx={{ p: 0.5 }}
+                    />
+                    <Box>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                            <span>⭐</span>
+                            <Typography sx={{ fontWeight: 700, color: isPremium ? 'secondary.main' : 'text.primary' }}>
+                                Premio Premium
+                            </Typography>
+                        </Box>
+                        <Typography sx={{ fontSize: '0.82rem', color: '#888' }}>
+                            Marca si este premio es de categoría premium
+                        </Typography>
+                    </Box>
+                </Paper>
+            </DialogContent>
+
+            <DialogActions
+                sx={{
+                    px: 4,
+                    py: 2.5,
+                    gap: 1.5,
+                    background: gradients.soft,
+                    borderTop: '1px solid #ffd1dc'
+                }}
+            >
+                <Button
+                    onClick={onClose}
+                    disabled={creating}
+                    sx={{
+                        px: 3.5,
+                        py: 1.5,
+                        borderRadius: 3,
+                        color: 'text.secondary',
+                        border: '1px solid #ddd',
+                        background: 'linear-gradient(135deg, #f0f0f0 0%, #e0e0e0 100%)'
+                    }}
+                >
+                    ↩️ Cancelar
+                </Button>
+                <Button
+                    onClick={handleCreate}
+                    disabled={!canCreate}
+                    variant="contained"
+                    sx={{
+                        px: 3.5,
+                        py: 1.5,
+                        minWidth: 150,
+                        borderRadius: 3,
+                        border: '1px solid #ff1493',
+                        background: gradients.pink,
+                        '&.Mui-disabled': { color: '#fff', opacity: 0.5, background: gradients.pink }
+                    }}
+                >
+                    {creating ? (
+                        <>
+                            <CircularProgress size={18} color="inherit" sx={{ mr: 1 }} />
+                            Creando...
+                        </>
+                    ) : (
+                        <>✅ Crear Premio</>
+                    )}
+                </Button>
+            </DialogActions>
+        </Dialog>
     );
 };
 

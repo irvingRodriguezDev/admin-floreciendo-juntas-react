@@ -10,6 +10,7 @@ import {
     InputAdornment,
     Divider,
     Tooltip,
+    Button,
 } from "@mui/material";
 import { useHistory } from "react-router-dom";
 import {
@@ -77,28 +78,64 @@ const Formation = () => {
                     sx={{
                         p: 3,
                         borderRadius: 4,
-                        background: "linear-gradient(135deg, rgba(240,244,248,0.9), rgba(255,255,255,0.95))",
+                        background:
+                            "linear-gradient(135deg, rgba(240,244,248,0.9), rgba(255,255,255,0.95))",
                         backdropFilter: "blur(6px)",
                         border: "1px solid rgba(200,200,200,0.3)",
                     }}
                 >
-                    <TextField
-                        variant="outlined"
-                        size="small"
-                        placeholder="Buscar formación..."
-                        value={state.searchTerm}
-                        onChange={(e) => dispatch({ searchTerm: e.target.value })}
-                        sx={{ backgroundColor: "white", borderRadius: 2, width: { xs: "100%", sm: 280 } }}
-                        InputProps={{
-                            startAdornment: (
-                                <InputAdornment position="start">
-                                    <SearchIcon color="action" />
-                                </InputAdornment>
-                            ),
+                    <Box
+                        sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            gap: 2,
                         }}
-                    />
+                    >
+                        {/* Buscador */}
+                        <TextField
+                            variant="outlined"
+                            size="small"
+                            placeholder="Buscar formación..."
+                            value={state.searchTerm}
+                            onChange={(e) =>
+                                dispatch({ searchTerm: e.target.value })
+                            }
+                            sx={{
+                                backgroundColor: "white",
+                                borderRadius: 2,
+                                width: { xs: "100%", sm: 280 },
+                            }}
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <SearchIcon color="action" />
+                                    </InputAdornment>
+                                ),
+                            }}
+                        />
+
+                        {/* Botón */}
+                        <Button
+                            variant="contained"
+                            size="medium"
+                            sx={{
+                                fontWeight: 700,
+                                borderRadius: 2,
+                                whiteSpace: "nowrap",
+                                boxShadow: "none",
+                                backgroundColor: "#FF5C93",
+                                color: "#fff",
+                                "&:hover": { backgroundColor: "#e64a7f" },
+                            }}
+                            onClick={() => history.push("/formations/addformation")}
+                        >
+                            Agregar Formación
+                        </Button>
+                    </Box>
                 </Paper>
             </Grid>
+
 
             {/* Lista */}
             <Grid item xs={12}>
@@ -177,17 +214,26 @@ const Formation = () => {
                                             <Tooltip title="Agregar módulos">
                                                 <IconButton
                                                     size="small"
-                                                    color="primary"
-                                                    onClick={() => history.push(`/formations/${formation.id}/modules`)}
+                                                    onClick={() =>
+                                                        history.push(`/formations/${formation.id}/modules`)
+                                                    }
+                                                    sx={{
+                                                        color: "#FF5C95",
+                                                    }}
                                                 >
                                                     <AddOutlined fontSize="small" />
                                                 </IconButton>
                                             </Tooltip>
+
                                             <Tooltip title="Editar">
                                                 <IconButton
                                                     size="small"
-                                                    color="secondary"
-                                                    onClick={() => history.push(`/formations/editformation/${formation.id}`)}
+                                                    onClick={() =>
+                                                        history.push(`/formations/editformation/${formation.id}`)
+                                                    }
+                                                    sx={{
+                                                        color: "#FF5C95",
+                                                    }}
                                                 >
                                                     <EditIcon fontSize="small" />
                                                 </IconButton>

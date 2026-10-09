@@ -8,6 +8,8 @@ import {
   Paper,
   Fade,
   IconButton,
+  Button,
+  Typography as MuiTypography,
 } from "@mui/material";
 import { useHistory } from "react-router-dom";
 import {
@@ -15,18 +17,17 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
 } from "@mui/icons-material";
-import { Typography} from "../../components/Wrappers";
 import SystemContext from "../../context/SystemContext/SystemContext";
 import Swal from "sweetalert2";
 
 const System = () => {
   const history = useHistory();
-  const { systems, getSystems, loading, deleteSystem } = useContext(SystemContext);
+  const { systems, getSystems, loading, deleteSystem } =
+    useContext(SystemContext);
 
-  const [state, dispatch] = useReducer(
-    (s, a) => ({ ...s, ...a }),
-    { searchTerm: "" }
-  );
+  const [state, dispatch] = useReducer((s, a) => ({ ...s, ...a }), {
+    searchTerm: "",
+  });
 
   useEffect(() => {
     getSystems();
@@ -47,15 +48,13 @@ const System = () => {
       confirmButtonText: "Sí, eliminar",
       cancelButtonText: "Cancelar",
     }).then((result) => {
-      if (result.isConfirmed) {
-        deleteSystem(id);
-      }
+      if (result.isConfirmed) deleteSystem(id);
     });
   };
 
   return (
     <Grid container spacing={3}>
-      {/* Filtros */}
+      {/* ============ FILTROS ============ */}
       <Grid item xs={12}>
         <Paper
           elevation={0}
@@ -75,37 +74,64 @@ const System = () => {
             justifyContent="space-between"
             gap={2}
           >
-            <Box display="flex" alignItems="center" gap={1}>
-              <TextField
-                variant="outlined"
-                size="small"
-                placeholder="Buscar secreto..."
-                value={state.searchTerm}
-                onChange={(e) => dispatch({ searchTerm: e.target.value })}
-                sx={{
-                  backgroundColor: "white",
+            <TextField
+              variant="outlined"
+              size="small"
+              placeholder="Buscar secreto..."
+              value={state.searchTerm}
+              onChange={(e) => dispatch({ searchTerm: e.target.value })}
+              sx={{
+                backgroundColor: "white",
+                borderRadius: 2,
+                width: 250,
+
+                "& .MuiOutlinedInput-root": {
                   borderRadius: 2,
-                  width: 250,
-                }}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon color="action" />
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            </Box>
+
+                  "&:hover .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "#FF5C93",
+                  },
+
+                  "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "#FF5C93",
+                  },
+                },
+              }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon sx={{ color: "#FF5C93" }} />
+                  </InputAdornment>
+                ),
+              }}
+            />
+
+            <Button
+              variant="contained"
+              size="medium"
+              sx={{
+                fontWeight: 700,
+                borderRadius: 2,
+                whiteSpace: 'nowrap',
+                boxShadow: 'none',
+                bgcolor: "#FF5C93",
+                color: "#fff",
+                "&:hover": { bgcolor: "#e64a7f" },
+              }}
+              onClick={() => history.push("/system/addsystem")}
+            >
+              Agregar Secreto
+            </Button>
           </Box>
         </Paper>
       </Grid>
 
-      {/* Cards de Sistemas */}
+      {/* ============ CARDS ============ */}
       <Grid item xs={12}>
         {loading ? (
-          <Typography align="center">Cargando academias...</Typography>
+          <MuiTypography align="center">Cargando academias...</MuiTypography>
         ) : filteredSystems.length === 0 ? (
-            <Typography align="center">No hay academias disponibles.</Typography>
+            <MuiTypography align="center">No hay academias disponibles.</MuiTypography>
         ) : (
           <Grid container spacing={3}>
             {filteredSystems.map((system, index) => (
@@ -125,18 +151,27 @@ const System = () => {
                       },
                     }}
                   >
-                    {/* Iconos Editar / Eliminar */}
-                    <Box sx={{ position: "absolute", top: 10, right: 10, zIndex: 2 }}>
+                    {/* Botones editar / eliminar */}
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        top: 10,
+                        right: 10,
+                        zIndex: 2,
+                        display: "flex",
+                        gap: 1,
+                      }}
+                    >
                       <IconButton
                         size="large"
-                        color="primary"
+                        // color="primary"
                         sx={{
-                          backgroundColor: "white",
-                          "&:hover": { backgroundColor: "rgba(0,0,0,0.08)" },
+                          bgcolor: "white",
+                          color: "#FF5C95",
                           borderRadius: "50%",
                           width: 40,
                           height: 40,
-                          mr: 1,
+                          "&:hover": { bgcolor: "rgba(0,0,0,0.08)" },
                         }}
                         onClick={() =>
                           history.push(`/system/editsystem/${system.id}`)
@@ -148,11 +183,11 @@ const System = () => {
                         size="large"
                         color="error"
                         sx={{
-                          backgroundColor: "white",
-                          "&:hover": { backgroundColor: "rgba(0,0,0,0.08)" },
+                          bgcolor: "white",
                           borderRadius: "50%",
                           width: 40,
                           height: 40,
+                          "&:hover": { bgcolor: "rgba(0,0,0,0.08)" },
                         }}
                         onClick={() => handleDelete(system.id)}
                       >
@@ -160,83 +195,56 @@ const System = () => {
                       </IconButton>
                     </Box>
 
-                    <Card
-                      // onClick={() => history.push(`/system/detail/${system.id}`)}
+                    {/* Media */}
+                    <Box
+                      sx={{
+                        position: "relative",
+                        height: 190,
+                        bgcolor: "#f7f7f7",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        borderTopLeftRadius: 4,
+                        borderTopRightRadius: 4,
+                        overflow: "hidden",
+                      }}
                     >
-                      {/* Imagen ajustada */}
                       <Box
+                        component="video"
+                        src={system.icon}
+                        controls
                         sx={{
-                          position: "relative",
-                          height: 190,
-                          backgroundColor: "#f7f7f7",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          borderTopLeftRadius: 4,
-                          borderTopRightRadius: 4,
+                          width: "100%",
+                          height: "125%",
+                          objectFit: "cover",
+                          borderRadius: 2.5,
+                        }}
+                      />
+                    </Box>
+
+                    {/* Contenido */}
+                    <Box sx={{ p: 2 }}>
+                      <MuiTypography
+                        variant="h6"
+                        gutterBottom
+                        sx={{ fontWeight: "bold" }}
+                      >
+                        {system.name}
+                      </MuiTypography>
+                      <MuiTypography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{
+                          mb: 1,
+                          display: "-webkit-box",
                           overflow: "hidden",
+                          WebkitBoxOrient: "vertical",
+                          WebkitLineClamp: 2,
                         }}
                       >
-                        <Box
-                        
-                          sx={{
-                            width: "100%",
-                            height: "100%",
-                            objectFit: "contain",
-                            objectPosition: "center",
-                            borderTopLeftRadius: 4,
-                            borderTopRightRadius: 4,
-                            transition: "transform 0.3s ease",
-                          }}
-                        />
-                        <video
-                          src={system.icon}
-                          controls
-                          style={{
-                            width: '100%',
-                            height: '125%',
-                            objectFit: 'cover',
-                            borderRadius: '10px',
-                          }}
-                          // id={existingVideoUrl && !videoPreview ? 'existing-video' : undefined}
-                        />
-                        {/* <Chip
-                          label="Activo"
-                          color="success"
-                          size="small"
-                          sx={{
-                            position: "absolute",
-                            top: 10,
-                            left: 10,
-                            borderRadius: "8px",
-                            fontWeight: 600,
-                          }}
-                        /> */}
-                      </Box>
-
-                      {/* Contenido */}
-                      <Box sx={{ p: 2 }}>
-                        <Typography variant="h6" fontWeight={600} gutterBottom style={{ fontWeight: 'bold' }}>
-                          {system.name}
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                          sx={{
-                            mb: 1,
-                            display: "-webkit-box",
-                            overflow: "hidden",
-                            WebkitBoxOrient: "vertical",
-                            WebkitLineClamp: 2,
-                          }}
-                        >
-                          {system.description || "Sin descripción"}
-                        </Typography>
-                        {/* <Typography variant="body2" color="text.secondary">
-                          ID: {system.id}
-                        </Typography> */}
-                      </Box>
-                    </Card>
+                        {system.description || "Sin descripción"}
+                      </MuiTypography>
+                    </Box>
                   </Card>
                 </Fade>
               </Grid>

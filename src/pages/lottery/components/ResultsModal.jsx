@@ -1,335 +1,194 @@
 import React, { useEffect } from 'react';
+import Alert from '@mui/material/Alert';
+import Avatar from '@mui/material/Avatar';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Chip from '@mui/material/Chip';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
+import IconButton from '@mui/material/IconButton';
+import Paper from '@mui/material/Paper';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
+import { alpha, keyframes } from '@mui/material/styles';
+import CloseIcon from '@mui/icons-material/Close';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import CardGiftcardIcon from '@mui/icons-material/CardGiftcard';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import TiktokIcon from '../TiktokIcon';
 import { launchSuccessConfetti } from '../launchSuccessConfetti';
-import { launchRoseConfetti } from '../launchsucessText';
 import { launchFireworks } from '../lauchSuccessFireworks';
-import { launchEmojiRain } from '../launchEmojiRain';
+
+const pop = keyframes`
+    from { transform: scale(0); }
+    to   { transform: scale(1); }
+`;
+
+/**
+ * Fila de información: Avatar + etiqueta + valor.
+ * Usa Paper (variant="outlined") y colores del tema en lugar de hex fijos.
+ */
+const InfoRow = ({ avatar, avatarColor = 'primary', label, value, children }) => (
+    <Paper
+        variant="outlined"
+        sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+            p: 2,
+            borderColor: 'transparent',
+            bgcolor: (theme) => alpha(theme.palette[avatarColor].main, 0.08)
+        }}
+    >
+        <Avatar
+            sx={{
+                width: 50,
+                height: 50,
+                fontWeight: 800,
+                bgcolor: `${avatarColor}.main`,
+                color: `${avatarColor}.contrastText`
+            }}
+        >
+            {avatar}
+        </Avatar>
+        <Stack sx={{ minWidth: 0 }} spacing={0.25}>
+            <Typography variant="overline" color={`${avatarColor}.dark`} sx={{ lineHeight: 1.5 }}>
+                {label}
+            </Typography>
+            <Typography variant="h6" component="strong" sx={{ overflowWrap: 'anywhere', lineHeight: 1.3 }}>
+                {value}
+            </Typography>
+            {children}
+        </Stack>
+    </Paper>
+);
 
 const ResultsModal = ({ winner, selectedPrize, raffleResult, onClose }) => {
-
     useEffect(() => {
         launchSuccessConfetti();
-        // launchRoseConfetti();
         launchFireworks();
-        // launchEmojiRain();
     }, []);
 
+    const hasTiktok = winner.tiktokUsername !== null && winner.tiktokUsername !== undefined;
+
     return (
-        <div className="rm-overlay">
-            <div className="results-modal">
-                <button className="rm-close" onClick={onClose} title="Cerrar">✕</button>
+        <Dialog
+            open
+            onClose={onClose}
+            fullWidth
+            maxWidth="xs"
+            slotProps={{
+                backdrop: { sx: { backdropFilter: 'blur(4px)' } },
+                paper: { sx: { borderRadius: 4, overflow: 'hidden' } }
+            }}
+        >
+            {/* Encabezado */}
+            <DialogTitle
+                component="div"
+                sx={{
+                    position: 'relative',
+                    textAlign: 'center',
+                    py: 5,
+                    color: 'primary.contrastText',
+                    background: (theme) =>
+                        `linear-gradient(150deg, ${theme.palette.primary.light}, ${theme.palette.primary.main} 55%, ${theme.palette.primary.dark})`
+                }}
+            >
+                <IconButton
+                    onClick={onClose}
+                    title="Cerrar"
+                    aria-label="Cerrar"
+                    size="small"
+                    sx={{
+                        position: 'absolute',
+                        top: 12,
+                        right: 12,
+                        color: 'inherit',
+                        bgcolor: (theme) => alpha(theme.palette.common.white, 0.25),
+                        '&:hover': { bgcolor: (theme) => alpha(theme.palette.common.white, 0.45) }
+                    }}
+                >
+                    <CloseIcon fontSize="small" />
+                </IconButton>
 
-                <div className="rm-stage">
-                    <div className="rm-glow"></div>
-                    <div className="rm-confetti" aria-hidden="true">
-                        <span></span><span></span><span></span><span></span>
-                        <span></span><span></span><span></span><span></span>
-                    </div>
-                    <div className="rm-trophy">🏆</div>
-                    <h2 className="rm-heading">¡Felicidades!</h2>
-                    {raffleResult?.message && (
-                        <p className="rm-message">{raffleResult.message}</p>
-                    )}
-                </div>
+                <Avatar
+                    sx={{
+                        width: 84,
+                        height: 84,
+                        mx: 'auto',
+                        mb: 2,
+                        bgcolor: (theme) => alpha(theme.palette.common.white, 0.2),
+                        color: 'inherit',
+                        animation: `${pop} 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both`
+                    }}
+                >
+                    <EmojiEventsIcon sx={{ fontSize: 48 }} />
+                </Avatar>
 
-                <div className="rm-content">
-                    <div className="rm-row">
-                        <div className="rm-row-main">
-                            <div className="rm-avatar">{winner.name.charAt(0)}</div>
-                            <div className="rm-row-info">
-                                <span className="rm-row-label">Ganador</span>
-                                <strong className="rm-row-value">{winner.name}</strong>
-                                {winner.tiktokUsername !== null && (
-                                    <span className="rm-tiktok-badge">
-                                        <TiktokIcon width="40" />
-                                        <span className="rm-tiktok-divider"></span>
-                                        @{winner.tiktokUsername}
-                                        {/* <span className="rm-tiktok-sparkle">✨</span> */}
-                                    </span>
-                                )}
-                            </div>
-                        </div>
-                    </div>
+                <Typography variant="h4" component="h2" fontWeight={800} gutterBottom={!!raffleResult?.message}>
+                    ¡Felicidades!
+                </Typography>
+                {raffleResult?.message && (
+                    <Typography variant="body1" sx={{ opacity: 0.92 }}>
+                        {raffleResult.message}
+                    </Typography>
+                )}
+            </DialogTitle>
 
-                    <div className="rm-row">
-                        <div className="rm-row-main">
-                            <div className="rm-avatar rm-avatar-prize">🎁</div>
-                            <div className="rm-row-info">
-                                <span className="rm-row-label">Premio</span>
-                                <strong className="rm-row-value">{selectedPrize.name}</strong>
-                                <span className="rm-row-sub rm-row-warning">
-                                    ⚠️ Ya no está disponible para futuros sorteos
-                                </span>
-                            </div>
-                        </div>
-                    </div>
+            {/* Contenido */}
+            <DialogContent sx={{ pt: '24px !important' }}>
+                <Stack spacing={2}>
+                    <InfoRow avatar={winner.name.charAt(0)} label="Ganador" value={winner.name}>
+                        {hasTiktok && (
+                            <Box sx={{ pt: 0.5 }}>
+                                <Chip
+                                    icon={<TiktokIcon width="20" />}
+                                    label={`@${winner.tiktokUsername}`}
+                                    sx={{
+                                        height: 39,
+                                        pl: 1.5, // 👈 mueve icono + texto hacia la derecha
+                                        fontWeight: 700,
+                                        color: 'common.white',
+                                        bgcolor: 'common.black',
+                                        border: 1.5,
+                                        borderColor: 'primary.light',
+                                        boxShadow: (theme) =>
+                                            `0 0 10px ${alpha(theme.palette.primary.light, 0.55)}`,
+                                        '& .MuiChip-icon': {
+                                            ml: 0,
+                                        },
+                                    }}
+                                />
+                            </Box>
+                        )}
+                    </InfoRow>
 
-                    <button className="rm-cta" onClick={onClose}>
-                        🌸 Realizar nuevo sorteo
-                    </button>
-                </div>
-            </div>
+                    <InfoRow
+                        avatar={<CardGiftcardIcon />}
+                        avatarColor="error"
+                        label="Premio"
+                        value={selectedPrize.name}
+                    >
+                        <Alert
+                            severity="error"
+                            variant="standard"
+                            icon={<WarningAmberIcon fontSize="inherit" />}
+                            sx={{ mt: 0.5, p: 0, bgcolor: 'transparent', '& .MuiAlert-message': { py: 0 } }}
+                        >
+                            Ya no está disponible para futuros sorteos
+                        </Alert>
+                    </InfoRow>
+                </Stack>
+            </DialogContent>
 
-            <style>{`
-                .rm-overlay {
-                    position: fixed;
-                    inset: 0;
-                    z-index: 9999;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    padding: 20px;
-                    box-sizing: border-box;
-                    background: rgba(60, 4, 36, 0.55);
-                    backdrop-filter: blur(4px);
-                    animation: rmFadeIn 0.25s ease;
-                }
-
-                @keyframes rmFadeIn {
-                    from { opacity: 0; }
-                    to { opacity: 1; }
-                }
-
-                .results-modal {
-                    position: relative;
-                    width: 100%;
-                    max-width: 500px;
-                    margin: 0 auto;
-                    background: #fff;
-                    border-radius: 32px;
-                    overflow: hidden;
-                    box-shadow: 0 28px 70px rgba(180, 30, 100, 0.28);
-                    font-family: system-ui, -apple-system, sans-serif;
-                }
-
-                .rm-close {
-                    position: absolute;
-                    top: 16px;
-                    right: 16px;
-                    z-index: 3;
-                    width: 34px;
-                    height: 34px;
-                    border-radius: 50%;
-                    border: none;
-                    background: rgba(255,255,255,0.3);
-                    color: #fff;
-                    font-size: 0.85rem;
-                    cursor: pointer;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    backdrop-filter: blur(4px);
-                    transition: background 0.2s ease, transform 0.2s ease;
-                }
-                .rm-close:hover {
-                    background: rgba(255,255,255,0.5);
-                    transform: rotate(90deg);
-                }
-
-                .rm-stage {
-                    position: relative;
-                    overflow: hidden;
-                    padding: 52px 34px 42px;
-                    text-align: center;
-                    background: linear-gradient(150deg, #ff85b3, #e0468f 55%, #b5306f);
-                }
-
-                .rm-glow {
-                    position: absolute;
-                    top: -40%;
-                    left: 50%;
-                    width: 320px;
-                    height: 320px;
-                    transform: translateX(-50%);
-                    background: radial-gradient(circle, rgba(255,255,255,0.35), transparent 70%);
-                    border-radius: 50%;
-                }
-
-                .rm-confetti {
-                    position: absolute;
-                    inset: 0;
-                    pointer-events: none;
-                }
-                .rm-confetti span {
-                    position: absolute;
-                    width: 7px;
-                    height: 7px;
-                    border-radius: 2px;
-                    background: #fff;
-                    opacity: 0.8;
-                }
-                .rm-confetti span:nth-child(1) { top: 18%; left: 12%; background: #ffe066; transform: rotate(20deg); }
-                .rm-confetti span:nth-child(2) { top: 30%; left: 85%; background: #fff; transform: rotate(-15deg); }
-                .rm-confetti span:nth-child(3) { top: 65%; left: 8%;  background: #fff; border-radius: 50%; }
-                .rm-confetti span:nth-child(4) { top: 75%; left: 90%; background: #ffe066; transform: rotate(45deg); }
-                .rm-confetti span:nth-child(5) { top: 10%; left: 45%; background: #fff; border-radius: 50%; }
-                .rm-confetti span:nth-child(6) { top: 50%; left: 95%; background: #fff; transform: rotate(30deg); }
-                .rm-confetti span:nth-child(7) { top: 85%; left: 45%; background: #ffe066; border-radius: 50%; }
-                .rm-confetti span:nth-child(8) { top: 8%;  left: 75%; background: #fff; transform: rotate(-30deg); }
-
-                .rm-trophy {
-                    position: relative;
-                    z-index: 1;
-                    width: 84px;
-                    height: 84px;
-                    margin: 0 auto 18px;
-                    border-radius: 50%;
-                    background: rgba(255,255,255,0.2);
-                    backdrop-filter: blur(2px);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    font-size: 2.4rem;
-                    animation: rmPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
-                }
-
-                @keyframes rmPop {
-                    from { transform: scale(0); }
-                    to   { transform: scale(1); }
-                }
-
-                .rm-heading {
-                    position: relative;
-                    z-index: 1;
-                    margin: 0 0 8px;
-                    font-size: 2rem;
-                    font-weight: 800;
-                    color: #fff;
-                }
-
-                .rm-message {
-                    position: relative;
-                    z-index: 1;
-                    margin: 0;
-                    font-size: 0.98rem;
-                    color: rgba(255,255,255,0.92);
-                    line-height: 1.45;
-                }
-
-                .rm-content {
-                    padding: 30px 30px 32px;
-                    display: flex;
-                    flex-direction: column;
-                    gap: 16px;
-                }
-
-                .rm-row {
-                    border-radius: 18px;
-                    background: #fff3f8;
-                }
-
-                .rm-row-main {
-                    display: flex;
-                    align-items: center;
-                    gap: 14px;
-                    padding: 15px 17px;
-                }
-
-                .rm-tiktok-badge {
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 7px;
-                    width: fit-content;
-                    margin-top: 7px;
-                    padding: 5px 12px 5px 8px;
-                    border-radius: 999px;
-                    background: #010101;
-                    border: 1.5px solid #ff5fa2;
-                    box-shadow: 0 0 10px rgba(255, 95, 162, 0.55), 0 0 3px rgba(255, 95, 162, 0.7);
-                    color: #fff;
-                    font-size: 1.2rem;
-                    font-weight: 700;
-                    line-height: 1;
-                }
-
-                .rm-tiktok-divider {
-                    width: 1px;
-                    height: 14px;
-                    background: rgba(255, 255, 255, 0.25);
-                }
-
-                .rm-tiktok-sparkle {
-                    font-size: 0.75rem;
-                    margin-left: 1px;
-                }
-
-                .rm-avatar {
-                    width: 50px;
-                    height: 50px;
-                    border-radius: 50%;
-                    flex-shrink: 0;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    font-weight: 800;
-                    font-size: 1.3rem;
-                    color: #fff;
-                    background: linear-gradient(135deg, #e0468f, #b5306f);
-                }
-
-                .rm-avatar-prize {
-                    background: linear-gradient(135deg, #ffb84d, #f5871f);
-                    font-size: 1.4rem;
-                }
-
-                .rm-row-info {
-                    display: flex;
-                    flex-direction: column;
-                    text-align: left;
-                    min-width: 0;
-                }
-
-                .rm-row-label {
-                    font-size: 0.68rem;
-                    font-weight: 700;
-                    letter-spacing: 0.6px;
-                    text-transform: uppercase;
-                    color: #cc6a9c;
-                }
-
-                .rm-row-value {
-                    font-size: 1.2rem;
-                    color: #3f0f2c;
-                    white-space: nowrap;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                }
-
-                .rm-row-sub {
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 4px;
-                    margin-top: 3px;
-                    font-size: 0.8rem;
-                    color: #b5306f;
-                }
-
-                .rm-row-warning {
-                    color: #c47a1f;
-                }
-
-                .rm-cta {
-                    margin-top: 6px;
-                    border: none;
-                    border-radius: 16px;
-                    padding: 17px;
-                    font-size: 1.05rem;
-                    font-weight: 700;
-                    color: #fff;
-                    cursor: pointer;
-                    background: linear-gradient(135deg, #ff6fa5, #d6478f);
-                    box-shadow: 0 10px 24px rgba(214, 71, 143, 0.4);
-                    transition: transform 0.15s ease, box-shadow 0.15s ease;
-                }
-                .rm-cta:hover {
-                    transform: translateY(-2px);
-                    box-shadow: 0 12px 24px rgba(214, 71, 143, 0.5);
-                }
-                .rm-cta:active {
-                    transform: translateY(0);
-                }
-            `}</style>
-        </div>
+            <DialogActions sx={{ px: 3, pb: 3, pt: 0 }}>
+                <Button onClick={onClose} variant="contained" size="large" fullWidth sx={{ py: 1.5, fontWeight: 700 }}>
+                    🌸 Realizar nuevo sorteo
+                </Button>
+            </DialogActions>
+        </Dialog>
     );
 };
 

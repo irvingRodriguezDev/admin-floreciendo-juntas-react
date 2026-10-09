@@ -113,7 +113,7 @@ const ScannerComponent = () => {
                             onDecode={handleScan}
                             onError={handleError}
                             constraints={{ facingMode: "environment" }}
-                            style={{ width: "100%", borderRadius: "8px" }}
+                            sx={{ width: "100%", borderRadius: "8px" }}
                         />
                         <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                             Apunta la cámara al código QR

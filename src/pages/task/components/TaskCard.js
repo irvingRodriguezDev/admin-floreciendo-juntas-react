@@ -1,228 +1,120 @@
 import React, { memo } from 'react';
 import {
-    Avatar, Box, Button, Card, CardActions, Chip, Divider,
-    LinearProgress, Stack, Tooltip, Typography
+    Avatar, Box, Button, Card, Chip, Divider, LinearProgress, Stack, Typography,
 } from '@mui/material';
 import BookIcon from '@mui/icons-material/Book';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import PendingActionsIcon from '@mui/icons-material/PendingActions';
 import PersonIcon from '@mui/icons-material/Person';
 import RateReviewIcon from '@mui/icons-material/RateReview';
 import SchoolIcon from '@mui/icons-material/School';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 
-const fmtDate = (d) => new Date(d).toLocaleDateString('es-MX', { 
-    year: 'numeric', 
-    month: 'short', 
-    day: 'numeric', 
-    hour: '2-digit', 
-    minute: '2-digit' 
+const PINK = '#FF5C93';
+const GRADIENT = 'linear-gradient(135deg, #FF5C93 0%, #FF69B4 100%)';
+
+const STATUS = {
+    pending: { label: 'Pendiente', color: '#ff9800', bg: '#fff3e0', icon: <PendingActionsIcon /> },
+    rated: { label: 'Calificada', color: '#28a745', bg: '#EAFCDD', icon: <CheckCircleOutlineIcon /> },
+};
+
+const fmtDate = (d) =>
+    new Date(d).toLocaleDateString('es-MX', {
+        year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+    });
+
+const chipSx = (bgcolor, color, extra = {}) => ({
+    bgcolor, color, fontWeight: 600, fontSize: '0.72rem',
+    height: 'auto', '& .MuiChip-label': { whiteSpace: 'normal', py: 0.5 },
+    '& .MuiChip-icon': { color }, ...extra,
 });
 
-const TaskCard = memo(({ task, certColor, onRate, onViewDetail, isMobile }) => {
+const TaskCard = memo(({ task, certColor, onRate, onViewDetail }) => {
     const isRated = task.status === 'rated';
+    const status = STATUS[isRated ? 'rated' : 'pending'];
+
+    // Aprobado con el 80% o más del puntaje máximo
     const passedMin = isRated && task.maxScore > 0 && task.totalScore >= Math.ceil(task.maxScore * 0.8);
+    const scoreColor = passedMin ? '#4caf50' : '#ff9800';
+    const percent = task.maxScore > 0 ? (task.totalScore / task.maxScore) * 100 : 0;
 
     return (
         <Card sx={{
-            height: '100%', 
-            display: 'flex', 
-            flexDirection: 'column',
-            borderRadius: { xs: 2, sm: 3 }, 
-            boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-            transition: 'all 0.3s', 
-            border: '1px solid #e0e0e0', 
-            overflow: 'visible', 
-            position: 'relative',
-            '&:hover': { 
-                transform: { xs: 'none', sm: 'translateY(-8px)' }, 
-                boxShadow: { xs: '0 8px 24px rgba(0,0,0,0.12)', sm: '0 16px 32px rgba(234, 14, 14, 0.16)' } 
-            },
+            height: '100%', display: 'flex', flexDirection: 'column', borderRadius: 3, border: '1px solid #FFE6F0',
+            boxShadow: '0 4px 16px rgba(255,92,147,0.08)', transition: 'all 0.25s',
+            '&:hover': { transform: { sm: 'translateY(-4px)' }, boxShadow: '0 12px 28px rgba(255,92,147,0.18)' },
         }}>
-            {/* Status badge */}
-            <Box sx={{ 
-                position: 'absolute', 
-                top: -18, 
-                right: -6, 
-                zIndex: 1, 
-                width: { xs: 38, sm: 45 }, 
-                height: { xs: 38, sm: 45 }, 
-                borderRadius: '50%', 
-                bgcolor: isRated ? '#4caf50' : '#ff9800', 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center', 
-                boxShadow: '0 4px 10px rgba(0,0,0,0.25)' 
-            }}>
-                <Tooltip title={isRated ? 'Tarea calificada' : 'Tarea pendiente'}>
-                    {isRated
-                        ? <CheckCircleIcon sx={{ color: '#fff', fontSize: { xs: 18, sm: 22 } }} />
-                        : <PendingActionsIcon sx={{ color: '#fff', fontSize: { xs: 18, sm: 22 } }} />}
-                </Tooltip>
-            </Box>
-
-            {/* Header */}
-            <Box sx={{
-                p: { xs: 2, sm: 2.5 },
-                background: 'linear-gradient(135deg, #FE6F9F 0%, #FE6F9FCC 100%)',
-                borderTopLeftRadius: { xs: 8, sm: 12 },
-                borderTopRightRadius: { xs: 8, sm: 12 },
-            }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1.5, sm: 2 } }}>
-                    <Avatar sx={{ 
-                        bgcolor: '#FF91B5', 
-                        color: '#fff', 
-                        width: { xs: 40, sm: 48 }, 
-                        height: { xs: 40, sm: 48 }, 
-                        fontSize: { xs: '0.9rem', sm: '1rem' }, 
-                        flexShrink: 0 
-                    }}>
-                        {task.user.avatar || <PersonIcon />}
-                    </Avatar>
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                        <Typography variant="subtitle1" fontWeight="700" sx={{ 
-                            color: '#fff', 
-                            fontSize: { xs: '0.85rem', sm: '1rem' }, 
-                            display: '-webkit-box', 
-                            WebkitBoxOrient: 'vertical', 
-                            WebkitLineClamp: 2, 
-                            overflow: 'hidden' 
-                        }}>
-                            {task.user.name}
-                        </Typography>
-                        <Typography variant="caption" sx={{ 
-                            color: '#fff', 
-                            opacity: 0.9, 
-                            fontSize: { xs: '0.7rem', sm: '0.75rem' }, 
-                            display: 'block', 
-                            overflow: 'hidden', 
-                            textOverflow: 'ellipsis', 
-                            whiteSpace: 'nowrap' 
-                        }}>
-                            {task.user.email}
-                        </Typography>
-                    </Box>
+            {/* Usuario */}
+            <Stack direction="row" alignItems="center" spacing={1.5} sx={{ p: 2, background: GRADIENT }}>
+                <Avatar sx={{ bgcolor: 'rgba(255,255,255,0.25)', color: '#fff', width: 44, height: 44, fontSize: '0.95rem', fontWeight: 700 }}>
+                    {task.user.avatar || <PersonIcon />}
+                </Avatar>
+                <Box sx={{ minWidth: 0 }}>
+                    <Typography fontWeight={700} noWrap sx={{ color: '#fff', fontSize: '0.95rem' }}>{task.user.name}</Typography>
+                    <Typography variant="caption" noWrap sx={{ color: '#fff', opacity: 0.9, display: 'block' }}>{task.user.email}</Typography>
                 </Box>
-            </Box>
+            </Stack>
 
-            {/* Body */}
-            <Box sx={{ p: { xs: 2, sm: 2.5 }, flex: 1 }}>
-                <Stack direction="row" sx={{ mb: 2, flexWrap: 'wrap', gap: 1 }}>
-                    <Chip 
-                        icon={<BookIcon sx={{ fontSize: { xs: 13, sm: 16 } }} />} 
-                        label={task.moduleName} 
-                        size="small"
-                        sx={{ 
-                            bgcolor: '#f5f5f5', 
-                            color: certColor, 
-                            fontWeight: 600, 
-                            border: `1px solid ${certColor}`, 
-                            fontSize: { xs: '0.65rem', sm: '0.75rem' }, 
-                            height: 'auto', 
-                            '& .MuiChip-label': { whiteSpace: 'normal', py: 0.5 } 
-                        }} 
-                    />
-                    <Chip 
-                        icon={<SchoolIcon sx={{ fontSize: { xs: 13, sm: 16 } }} />} 
-                        label={task.certificationName} 
-                        size="small"
-                        sx={{ 
-                            bgcolor: '#e3f2fd', 
-                            color: '#1976d2', 
-                            fontWeight: 600, 
-                            fontSize: { xs: '0.65rem', sm: '0.75rem' }, 
-                            height: 'auto', 
-                            '& .MuiChip-label': { whiteSpace: 'normal', py: 0.5 } 
-                        }} 
-                    />
+            {/* Cuerpo */}
+            <Stack spacing={1.5} sx={{ p: 2, flex: 1 }}>
+                <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1 }}>
+                    <Chip size="small" icon={<BookIcon />} label={task.moduleName}
+                        sx={chipSx('#fff', certColor, { border: `1px solid ${certColor}` })} />
+                    <Chip size="small" icon={<SchoolIcon />} label={task.certificationName}
+                        sx={chipSx('#e3f2fd', '#1976d2')} />
                 </Stack>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                    <CalendarTodayIcon sx={{ fontSize: { xs: 13, sm: 16 }, color: '#757575', flexShrink: 0 }} />
-                    <Typography variant="caption" sx={{ color: '#757575', fontSize: { xs: '0.68rem', sm: '0.75rem' } }}>
-                        {fmtDate(task.submittedAt)}
-                    </Typography>
-                </Box>
+
+                <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                        <CalendarTodayIcon sx={{ fontSize: 15, color: '#757575' }} />
+                        <Typography variant="caption" color="text.secondary">{fmtDate(task.submittedAt)}</Typography>
+                    </Stack>
+                    <Chip size="small" icon={status.icon} label={status.label}
+                        sx={chipSx(status.bg, status.color, { height: 22, border: `1px solid ${status.color}` })} />
+                </Stack>
+
                 {isRated && (
-                    <Box>
-                        <Divider sx={{ my: { xs: 1.5, sm: 2 } }} />
-                        <Box sx={{ mb: { xs: 1.5, sm: 2 } }}>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, alignItems: 'center' }}>
-                                <Typography variant="body2" fontWeight="600" sx={{ color: '#000', fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
-                                    Puntuación Total
-                                </Typography>
-                                <Chip 
-                                    label={`${task.totalScore}/${task.maxScore}`} 
-                                    size="small"
-                                    sx={{ 
-                                        bgcolor: passedMin ? '#4caf50' : '#ff9800', 
-                                        color: '#fff', 
-                                        fontWeight: 700, 
-                                        fontSize: { xs: '0.68rem', sm: '0.75rem' } 
-                                    }} 
-                                />
-                            </Box>
-                            <LinearProgress 
-                                variant="determinate" 
-                                value={task.maxScore > 0 ? (task.totalScore / task.maxScore) * 100 : 0}
-                                sx={{ 
-                                    height: { xs: 6, sm: 8 }, 
-                                    borderRadius: 4, 
-                                    bgcolor: '#e0e0e0', 
-                                    '& .MuiLinearProgress-bar': { bgcolor: passedMin ? '#4caf50' : '#ff9800' } 
-                                }} 
+                    <>
+                        <Divider />
+                        <Box>
+                            <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
+                                <Typography variant="body2" fontWeight={600}>Puntuación total</Typography>
+                                <Chip size="small" label={`${task.totalScore}/${task.maxScore}`}
+                                    sx={{ bgcolor: scoreColor, color: '#fff', fontWeight: 700 }} />
+                            </Stack>
+                            <LinearProgress
+                                variant="determinate"
+                                value={percent}
+                                sx={{ height: 8, borderRadius: 4, bgcolor: '#FFE6F0', '& .MuiLinearProgress-bar': { bgcolor: scoreColor } }}
                             />
                         </Box>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <Typography variant="body2" sx={{ color: '#757575', fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
-                                Promedio
-                            </Typography>
-                            <Typography variant="body2" fontWeight="700" sx={{ color: '#000', fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
-                                {task.averageScore.toFixed(1)}/5.0
-                            </Typography>
-                        </Box>
-                    </Box>
+                        <Stack direction="row" justifyContent="space-between">
+                            <Typography variant="body2" color="text.secondary">Promedio</Typography>
+                            <Typography variant="body2" fontWeight={700}>{task.averageScore.toFixed(1)}/5.0</Typography>
+                        </Stack>
+                    </>
                 )}
-            </Box>
+            </Stack>
 
-            {/* Actions */}
-            <CardActions sx={{ p: { xs: 2, sm: 2.5 }, pt: 0 }}>
-                {!isRated ? (
-                    <Button 
-                        variant="contained" 
-                        fullWidth 
-                        startIcon={<RateReviewIcon sx={{ fontSize: { xs: 16, sm: 20 } }} />} 
-                        onClick={() => onRate(task)}
-                        sx={{ 
-                            background: `linear-gradient(135deg, ${certColor} 0%, ${certColor}CC 100%)`, 
-                            color: '#fff', 
-                            fontWeight: 600, 
-                            py: { xs: 1, sm: 1.2 }, 
-                            fontSize: { xs: '0.78rem', sm: '0.875rem' }, 
-                            '&:hover': { background: `linear-gradient(135deg, ${certColor}CC 0%, ${certColor} 100%)` } 
-                        }}
-                    >
-                        Calificar Tarea
+            {/* Acción */}
+            <Box sx={{ p: 2, pt: 0 }}>
+                {isRated ? (
+                    <Button fullWidth variant="outlined" startIcon={<VisibilityIcon />} onClick={() => onViewDetail(task)}
+                        sx={{ borderColor: PINK, color: PINK, fontWeight: 600, '&:hover': { borderColor: '#E94E88', bgcolor: '#FFF5FA' } }}>
+                        Ver detalle
                     </Button>
                 ) : (
-                    <Button 
-                        variant="outlined" 
-                        fullWidth 
-                        startIcon={<VisibilityIcon sx={{ fontSize: { xs: 16, sm: 20 } }} />} 
-                        onClick={() => onViewDetail(task)}
-                        sx={{ 
-                            borderColor: '#FF5B91', 
-                            color: '#FF5B91', 
-                            fontWeight: 600, 
-                            py: { xs: 1, sm: 1.2 }, 
-                            fontSize: { xs: '0.78rem', sm: '0.875rem' }, 
-                            '&:hover': { borderColor: '#FF5B91', bgcolor: 'rgba(255,91,145,0.04)' } 
-                        }}
-                    >
-                        Ver Detalle
+                    <Button fullWidth variant="contained" startIcon={<RateReviewIcon />} onClick={() => onRate(task)}
+                        sx={{
+                            color: '#fff', fontWeight: 600, boxShadow: 'none',
+                            background: `linear-gradient(135deg, ${certColor} 0%, ${certColor}CC 100%)`,
+                            '&:hover': { background: `linear-gradient(135deg, ${certColor}CC 0%, ${certColor} 100%)`, boxShadow: 'none' },
+                        }}>
+                        Calificar tarea
                     </Button>
                 )}
-            </CardActions>
+            </Box>
         </Card>
     );
 });

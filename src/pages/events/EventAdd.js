@@ -290,7 +290,7 @@ const EventAdd = ({ onCancel }) => {
                                         onChange={handleDescriptionChange}
                                         modules={quillModules}
                                         formats={quillFormats}
-                                        style={{ minHeight: 250 }}
+                                        sx={{ minHeight: 250 }}
                                     />
                                 </Paper>
                             </Grid>
@@ -367,7 +367,7 @@ const EventAdd = ({ onCancel }) => {
                                             width="100%"
                                             height="100%"
                                             frameBorder="0"
-                                            style={{ border: 0 }}
+                                            sx={{ border: 0 }}
                                             src={extractSrcFromEmbed(form.map)}
                                             allowFullScreen
                                             title="Mapa del evento"
@@ -401,7 +401,7 @@ const EventAdd = ({ onCancel }) => {
                                         <img
                                             src={preview}
                                             alt="Vista previa"
-                                            style={{
+                                            sx={{
                                                 width: '100%',
                                                 height: 'auto',
                                                 objectFit: 'contain',

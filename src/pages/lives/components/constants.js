@@ -1,6 +1,6 @@
 // src/components/Live/constants.js
 
-export const VISIBLE_COMMENTS = 6;
+// export const VISIBLE_COMMENTS = 6;
 export const SCROLL_COMMENTS = 15;
 
 export const statusLabels = {

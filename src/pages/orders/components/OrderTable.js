@@ -1,27 +1,42 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
+    Avatar,
     Box,
-    Button,
-    LinearProgress,
+    Skeleton,
+    Stack,
     Table,
     TableBody,
     TableCell,
     TableContainer,
     TableHead,
+    TablePagination,
     TableRow,
     Typography,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
+import SearchOffIcon from '@mui/icons-material/SearchOff';
 import OrderTableRow from './OrderTableRow';
 
-const NoRowsOverlay = ({ isLoading }) => (
-    <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" minHeight="200px" gap={2}>
-        <SearchIcon sx={{ fontSize: 48, color: '#FFB3DC' }} />
-        <Typography variant="body1" color="text.secondary">
-            {isLoading ? 'Cargando órdenes...' : 'No se encontraron órdenes en esta categoría'}
-        </Typography>
-    </Box>
-);
+const headCellSx = {
+    bgcolor: '#FFF5FA',
+    color: '#757575',
+    fontWeight: 700,
+    fontSize: '0.8rem',
+    whiteSpace: 'nowrap',
+    borderBottom: '1px solid #FFE6F0',
+};
+
+const getColumns = (activeTab) => [
+    'Número de Orden',
+    'Cliente',
+    'Fecha',
+    'Dirección',
+    'Total',
+    'Estado',
+    activeTab === 3 ? 'Número de Guía' : 'Envio Pagado',
+    'Costo de Envío',
+    'Acciones',
+];
 
 const OrderTable = ({
     activeTab,
@@ -34,116 +49,109 @@ const OrderTable = ({
     onEditShipping,
     onAddTracking,
 }) => {
+    const columns = useMemo(() => getColumns(activeTab), [activeTab]);
+    const { page, pageSize } = rowsState;
+    const currentRows = displayRows.slice(page * pageSize, (page + 1) * pageSize);
+    const total = displayRows.length;
+
     return (
         <>
             {searchTerm && (
-                <Box sx={{ px: 3, py: 1.5, bgcolor: '#FFF5FA', borderBottom: '1px solid #FFE6F0' }}>
+                <Stack
+                    direction="row"
+                    alignItems="center"
+                    spacing={1}
+                    sx={{ px: 3, py: 1.5, bgcolor: '#FFF5FA', borderBottom: '1px solid #FFE6F0' }}
+                >
+                    <SearchIcon sx={{ fontSize: 16, color: '#FF69B4' }} />
                     <Typography variant="caption" color="text.secondary">
-                        🔍 Mostrando {displayRows.length} resultado{displayRows.length !== 1 ? 's' : ''} para "{searchTerm}"
+                        Mostrando {total} resultado{total !== 1 ? 's' : ''} para "{searchTerm}"
                     </Typography>
-                </Box>
+                </Stack>
             )}
 
-            {isLoading ? (
-                <Box sx={{ p: 4 }}>
-                    <LinearProgress
-                        sx={{
-                            backgroundColor: '#FFE6F0',
-                            '& .MuiLinearProgress-bar': { backgroundColor: '#FF69B4' },
-                        }}
-                    />
-                </Box>
-            ) : displayRows.length === 0 ? (
-                <NoRowsOverlay isLoading={isLoading} />
-            ) : (
-                <TableContainer>
-                    <Table>
-                        <TableHead>
-                            <TableRow sx={{ bgcolor: '#FFF5FA' }}>
-                                <TableCell align="center" sx={{ fontWeight: '700', color: '#FF69B4' }}>
-                                    Número de Orden
+            <TableContainer>
+                <Table>
+                    <TableHead>
+                        <TableRow>
+                            {columns.map((label) => (
+                                <TableCell key={label} align="center" sx={headCellSx}>
+                                    {label}
                                 </TableCell>
-                                <TableCell align="center" sx={{ fontWeight: '700', color: '#FF69B4' }}>
-                                    Cliente
-                                </TableCell>
-                                <TableCell align="center" sx={{ fontWeight: '700', color: '#FF69B4' }}>
-                                    Fecha
-                                </TableCell>
-                                <TableCell align="center" sx={{ fontWeight: '700', color: '#FF69B4' }}>
-                                    Dirección
-                                </TableCell>
-                                <TableCell align="center" sx={{ fontWeight: '700', color: '#FF69B4' }}>
-                                    Total
-                                </TableCell>
-                                <TableCell align="center" sx={{ fontWeight: '700', color: '#FF69B4' }}>
-                                    Estado
-                                </TableCell>
-                                <TableCell align="center" sx={{ fontWeight: '700', color: '#FF69B4' }}>
-                                    {activeTab === 3 ? 'Número de Guía' : 'Envio Pagado'}
-                                </TableCell>
-                                <TableCell align="center" sx={{ fontWeight: '700', color: '#FF69B4' }}>
-                                    Costo de Envío
-                                </TableCell>
-                                <TableCell align="center" sx={{ fontWeight: '700', color: '#FF69B4' }}>
-                                    Acciones
+                            ))}
+                        </TableRow>
+                    </TableHead>
+
+                    <TableBody>
+                        {isLoading ? (
+                            Array.from({ length: 5 }, (_, i) => (
+                                <TableRow key={i}>
+                                    {columns.map((label) => (
+                                        <TableCell key={label} align="center">
+                                            <Skeleton sx={{ mx: 'auto' }} width="70%" />
+                                        </TableCell>
+                                    ))}
+                                </TableRow>
+                            ))
+                        ) : currentRows.length === 0 ? (
+                            <TableRow>
+                                <TableCell colSpan={columns.length} sx={{ border: 0 }}>
+                                    <Stack alignItems="center" spacing={1.5} sx={{ py: 7 }}>
+                                        <Avatar sx={{ bgcolor: '#FFF0F7', width: 72, height: 72 }}>
+                                            <SearchOffIcon sx={{ fontSize: 38, color: '#FFB3DC' }} />
+                                        </Avatar>
+                                        <Typography color="text.secondary">
+                                            No se encontraron órdenes en esta categoría
+                                        </Typography>
+                                    </Stack>
                                 </TableCell>
                             </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {displayRows
-                                .slice(
-                                    rowsState.page * rowsState.pageSize,
-                                    rowsState.page * rowsState.pageSize + rowsState.pageSize
-                                )
-                                .map((order) => (
-                                    <OrderTableRow
-                                        key={order.id}
-                                        order={order}
-                                        activeTab={activeTab}
-                                        onViewDetail={onViewDetail}
-                                        onEditShipping={onEditShipping}
-                                        onAddTracking={onAddTracking}
-                                    />
-                                ))}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
-            )}
+                        ) : (
+                            currentRows.map((order) => (
+                                <OrderTableRow
+                                    key={order.id}
+                                    order={order}
+                                    activeTab={activeTab}
+                                    onViewDetail={onViewDetail}
+                                    onEditShipping={onEditShipping}
+                                    onAddTracking={onAddTracking}
+                                />
+                            ))
+                        )}
+                    </TableBody>
+                </Table>
+            </TableContainer>
 
-            {!isLoading && displayRows.length > 0 && (
-                <Box
+            {!isLoading && total > 0 && (
+                <TablePagination
+                    component="div"
+                    count={total}
+                    page={page}
+                    rowsPerPage={pageSize}
+                    rowsPerPageOptions={[]}
+                    onPageChange={(_, newPage) =>
+                        setRowsState((prev) => ({
+                            ...prev,
+                            page: newPage,
+                        }))
+                    }
+                    labelDisplayedRows={({ from, to, count }) =>
+                        `${from}–${to} de ${count}`
+                    }
                     sx={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        p: 2,
-                        bgcolor: '#FFF5FA',
-                        borderTop: '1px solid #FFE6F0',
+                        borderTop: "1px solid #FFE6F0",
+                        bgcolor: "#FFFAFC",
+
+                        "& .MuiTablePagination-toolbar": {
+                            justifyContent: "center",
+                        },
+
+                        "& .MuiTablePagination-spacer": {
+                            display: "none",
+                        },
                     }}
-                >
-                    <Typography variant="body2" color="text.secondary">
-                        Mostrando {rowsState.page * rowsState.pageSize + 1} -{' '}
-                        {Math.min((rowsState.page + 1) * rowsState.pageSize, displayRows.length)} de {displayRows.length}
-                    </Typography>
-                    <Box sx={{ display: 'flex', gap: 1 }}>
-                        <Button
-                            size="small"
-                            disabled={rowsState.page === 0}
-                            onClick={() => setRowsState((prev) => ({ ...prev, page: prev.page - 1 }))}
-                            sx={{ color: '#FF69B4', '&:disabled': { color: '#ccc' } }}
-                        >
-                            Anterior
-                        </Button>
-                        <Button
-                            size="small"
-                            disabled={(rowsState.page + 1) * rowsState.pageSize >= displayRows.length}
-                            onClick={() => setRowsState((prev) => ({ ...prev, page: prev.page + 1 }))}
-                            sx={{ color: '#FF69B4', '&:disabled': { color: '#ccc' } }}
-                        >
-                            Siguiente
-                        </Button>
-                    </Box>
-                </Box>
+                />
+
             )}
         </>
     );

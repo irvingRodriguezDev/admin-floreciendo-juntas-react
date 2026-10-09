@@ -1,93 +1,238 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
-import { Drawer, IconButton, List } from '@mui/material';
-import { useTheme } from '@mui/material';
-import { withRouter } from 'react-router-dom';
-import classNames from 'classnames';
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+} from "react";
 
-// styles
-import useStyles from './styles';
+import {
+  Drawer,
+  List,
+  Box,
+  useTheme,
+} from "@mui/material";
 
-// components
-import SidebarLink from './components/SidebarLink/SidebarLink';
+import { withRouter } from "react-router-dom";
 
-// context
+// Components
+import SidebarLink from "./components/SidebarLink/SidebarLink";
+
+// Context
 import {
   useLayoutState,
   useLayoutDispatch,
   toggleSidebar,
-} from '../../context/LayoutContext';
+} from "../../context/LayoutContext";
 
 function Sidebar({ location, structure }) {
-  let classes = useStyles();
-  let theme = useTheme();
+  const theme = useTheme();
+
+  // Global
+  const { isSidebarOpened } = useLayoutState();
+  const layoutDispatch = useLayoutDispatch();
+
+  // Local
+  const [isPermanent, setPermanent] = useState(true);
+
+  /*
+   * Determina si el Drawer debe estar abierto.
+   *
+   * En desktop:
+   *   isPermanent === true
+   *   → utiliza directamente isSidebarOpened
+   *
+   * En mobile:
+   *   isPermanent === false
+   *   → invierte el valor porque el Drawer es temporal
+   */
+  const isSidebarOpenedWrapper = useMemo(
+    () =>
+      !isPermanent
+        ? !isSidebarOpened
+        : isSidebarOpened,
+    [isPermanent, isSidebarOpened]
+  );
+
+  const handleWindowWidthChange = () => {
+    const windowWidth = window.innerWidth;
+    const breakpointWidth = theme.breakpoints.values.md;
+
+    const isSmallScreen =
+      windowWidth < breakpointWidth;
+
+    if (isSmallScreen && isPermanent) {
+      setPermanent(false);
+    } else if (!isSmallScreen && !isPermanent) {
+      setPermanent(true);
+    }
+  };
+
+  useEffect(() => {
+    handleWindowWidthChange();
+
+    window.addEventListener(
+      "resize",
+      handleWindowWidthChange
+    );
+
+    return () => {
+      window.removeEventListener(
+        "resize",
+        handleWindowWidthChange
+      );
+    };
+  }, [theme.breakpoints.values.md]);
 
   const toggleDrawer = (value) => (event) => {
     if (
-      event.type === 'keydown' &&
-      (event.key === 'Tab' || event.key === 'Shift')
+      event.type === "keydown" &&
+      (event.key === "Tab" ||
+        event.key === "Shift")
     ) {
       return;
     }
 
-    if (value && !isPermanent) toggleSidebar(layoutDispatch);
+    if (value && !isPermanent) {
+      toggleSidebar(layoutDispatch);
+    }
   };
-
-  // global
-  let { isSidebarOpened } = useLayoutState();
-  let layoutDispatch = useLayoutDispatch();
-
-  // local
-  let [isPermanent, setPermanent] = useState(true);
-
-  const isSidebarOpenedWrapper = useMemo(
-    () => (!isPermanent ? !isSidebarOpened : isSidebarOpened),
-    [isPermanent, isSidebarOpened],
-  );
-
-  useEffect(function () {
-    window.addEventListener('resize', handleWindowWidthChange);
-    handleWindowWidthChange();
-    return function cleanup() {
-      window.removeEventListener('resize', handleWindowWidthChange);
-    };
-  });
 
   return (
     <Drawer
-      variant={isPermanent ? 'permanent' : 'temporary'}
-      className={classNames(classes.drawer, {
-        [classes.drawerOpen]: isSidebarOpenedWrapper,
-        [classes.drawerClose]: !isSidebarOpenedWrapper,
-      })}
-      classes={{
-        paper: classNames({
-          [classes.drawerOpen]: isSidebarOpenedWrapper,
-          [classes.drawerClose]: !isSidebarOpenedWrapper,
-        }),
-      }}
+      variant={
+        isPermanent
+          ? "permanent"
+          : "temporary"
+      }
       open={isSidebarOpenedWrapper}
       onClose={toggleDrawer(true)}
+      sx={{
+        width: {
+          xs: isSidebarOpenedWrapper ? 260 : 0,
+          md: isSidebarOpenedWrapper ? 260 : 72,
+        },
+
+        flexShrink: 0,
+
+        "& .MuiDrawer-paper": {
+          width: isSidebarOpenedWrapper
+            ? 260
+            : 72,
+
+          boxSizing: "border-box",
+
+          overflowX: "hidden",
+
+          transition: theme.transitions.create(
+            "width",
+            {
+              easing:
+                theme.transitions.easing.sharp,
+              duration:
+                theme.transitions.duration.enteringScreen,
+            }
+          ),
+
+          ...(isSidebarOpenedWrapper
+            ? {
+              width: 260,
+            }
+            : {
+              width: 72,
+            }),
+
+          backgroundColor:
+            theme.palette.background.paper,
+
+          borderRight: `1px solid ${theme.palette.divider}`,
+
+          zIndex:
+            theme.zIndex.drawer,
+        },
+
+        ...(isPermanent && {
+          "& .MuiDrawer-paper": {
+            position: "fixed",
+            top: 0,
+            left: 0,
+            height: "100vh",
+            width: isSidebarOpenedWrapper
+              ? 260
+              : 72,
+            boxSizing: "border-box",
+            overflowX: "hidden",
+            transition: theme.transitions.create(
+              "width",
+              {
+                easing:
+                  theme.transitions.easing.sharp,
+                duration:
+                  theme.transitions.duration.enteringScreen,
+              }
+            ),
+            backgroundColor:
+              theme.palette.background.paper,
+            borderRight: `1px solid ${theme.palette.divider}`,
+            zIndex:
+              theme.zIndex.drawer,
+          },
+        }),
+
+        ...(isPermanent &&
+          isSidebarOpenedWrapper && {
+          width: 260,
+
+          "& .MuiDrawer-paper": {
+            width: 260,
+          },
+        }),
+
+        ...(isPermanent &&
+          !isSidebarOpenedWrapper && {
+          width: 72,
+
+          "& .MuiDrawer-paper": {
+            width: 72,
+          },
+        }),
+      }}
     >
-      <div className={classes.toolbar} />
-      <div className={classes.mobileBackButton}>
-        <IconButton onClick={() => toggleSidebar(layoutDispatch)}>
-          <ArrowBackIcon
-            classes={{
-              root: classNames(classes.headerIcon, classes.headerIconCollapse),
-            }}
-          />
-        </IconButton>
-      </div>
+      {/* Espacio para el Header */}
+      <Box
+        sx={{
+          minHeight: {
+            xs: 56,
+            sm: 64,
+          },
+
+          flexShrink: 0,
+        }}
+      />
+
+      {/* Contenedor de navegación */}
       <List
-        className={classes.sidebarList}
-        classes={{ padding: classes.padding }}
+        disablePadding
+        sx={{
+          width: "100%",
+          px: isSidebarOpenedWrapper
+            ? 1
+            : 0.5,
+
+          py: 1,
+
+          overflowX: "hidden",
+
+          transition: "padding 0.2s ease",
+        }}
       >
-        {structure.map(link => (
+        {structure.map((link) => (
           <SidebarLink
             key={link.id}
             location={location}
-            isSidebarOpened={!isPermanent ? !isSidebarOpened : isSidebarOpened}
+            isSidebarOpened={
+              !isPermanent
+                ? !isSidebarOpened
+                : isSidebarOpened
+            }
             {...link}
             toggleDrawer={toggleDrawer(true)}
           />
@@ -95,19 +240,6 @@ function Sidebar({ location, structure }) {
       </List>
     </Drawer>
   );
-
-  // ##################################################################
-  function handleWindowWidthChange() {
-    let windowWidth = window.innerWidth;
-    let breakpointWidth = theme.breakpoints.values.md;
-    let isSmallScreen = windowWidth < breakpointWidth;
-
-    if (isSmallScreen && isPermanent) {
-      setPermanent(false);
-    } else if (!isSmallScreen && !isPermanent) {
-      setPermanent(true);
-    }
-  }
 }
 
 export default withRouter(Sidebar);

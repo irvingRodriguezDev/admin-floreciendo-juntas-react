@@ -86,12 +86,18 @@ const OrderTableRow = ({ order, activeTab, onViewDetail, onEditShipping, onAddTr
             </TableCell>
             <TableCell align="center">
                 {activeTab === 3 ? (
-                    <Typography fontWeight="600" color="primary.main">
-                        {order.trackingNumber || 'Sin guía'}
+                    <Typography
+                        fontWeight="600"
+                        sx={{ color: "#ff5c95" }}
+                    >
+                        {order.trackingNumber || "Sin guía"}
                     </Typography>
                 ) : (
-                    <Typography fontWeight="600" color={order.shippingPaid ? 'success.main' : 'text.secondary'}>
-                        {order.shippingPaid ? 'Sí' : 'No'}
+                    <Typography
+                        fontWeight="600"
+                        color={order.shippingPaid ? "success.main" : "text.secondary"}
+                    >
+                        {order.shippingPaid ? "Sí" : "No"}
                     </Typography>
                 )}
             </TableCell>

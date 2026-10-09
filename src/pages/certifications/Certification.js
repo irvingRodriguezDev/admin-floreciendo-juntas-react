@@ -10,6 +10,7 @@ import {
     IconButton,
     Chip,
     Typography,
+    Button,
 } from "@mui/material";
 import { useHistory } from "react-router-dom";
 import {
@@ -112,6 +113,24 @@ const Certification = () => {
                                 }}
                             />
                         </Box>
+
+                        <Box>
+                            <Button
+                                variant="contained"
+                                color="primary"
+                                size="medium"
+                                sx={{ 
+                                    fontWeight: 700,
+                                    borderRadius: 2,
+                                    whiteSpace: 'nowrap',
+                                    boxShadow: 'none',
+                                    backgroundColor: "#FF5C93", 
+                                    color: "#fff" 
+                                }}
+                                onClick={() => history.push("/certifications/addcertificate")}>
+                                Agregar una Certificación
+                            </Button>
+                        </Box>
                     </Box>
                 </Paper>
             </Grid>
@@ -164,9 +183,9 @@ const Certification = () => {
                                         <Box sx={{ position: "absolute", top: 10, right: 10, zIndex: 2 }}>
                                             <IconButton
                                                 size="large"
-                                                color="primary"
                                                 sx={{
                                                     backgroundColor: "white",
+                                                    color: "#FF5C95",
                                                     "&:hover": { backgroundColor: "rgba(0,0,0,0.08)" },
                                                     borderRadius: "50%",
                                                     width: 40,
@@ -179,9 +198,9 @@ const Certification = () => {
                                             </IconButton>
                                             <IconButton
                                                 size="large"
-                                                color="secondary"
                                                 sx={{
                                                     backgroundColor: "white",
+                                                    color: "#FF5C95",
                                                     "&:hover": { backgroundColor: "rgba(0,0,0,0.08)" },
                                                     borderRadius: "50%",
                                                     width: 40,
@@ -290,13 +309,16 @@ const Certification = () => {
                                                     display: "flex",
                                                     justifyContent: "space-between",
                                                     alignItems: "center",
-                                                    mt: 4,
+                                                    mt: 2,
                                                     pt: 2,
                                                     borderTop: "1px solid rgba(0,0,0,0.08)",
                                                 }}
                                             >
                                                 <Box>
-                                                    <Typography variant="caption" color="secondary">
+                                                    <Typography
+                                                        variant="caption"
+                                                        sx={{ color: "#FF5C95" }}
+                                                    >
                                                         Puntaje mínimo
                                                     </Typography>
                                                     <Typography variant="body2" fontWeight={600}>
@@ -304,7 +326,10 @@ const Certification = () => {
                                                     </Typography>
                                                 </Box>
                                                 <Box textAlign="right">
-                                                    <Typography variant="caption" color="secondary">
+                                                    <Typography
+                                                        variant="caption"
+                                                        sx={{ color: "#FF5C95" }}
+                                                    >
                                                         Puntaje máximo
                                                     </Typography>
                                                     <Typography variant="body2" fontWeight={600}>
