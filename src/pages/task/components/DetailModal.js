@@ -1,7 +1,7 @@
 import React from 'react';
 import {
     Avatar, Box, Button, Chip, Dialog, DialogActions, DialogContent,
-    DialogTitle, Divider, Grid, IconButton, LinearProgress, Paper,
+    DialogTitle, Grid, IconButton, LinearProgress, Paper,
     Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
     Typography
 } from '@mui/material';

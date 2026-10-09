@@ -30,8 +30,6 @@ import CourseVideoAdd from "../../pages/ecommerce/CourseVideoAdd";
 import EventAdd from "../../pages/events/EventAdd";
 import Event from "../../pages/events/Event";
 
-import ScannerComponent from "../../pages/scanner/scanner";
-
 import AddProduct from "../../pages/products/AddProduct";
 import Order from "../../pages/orders/Order";
 import Lottery from "../../pages/lottery/lottery";
@@ -152,14 +150,6 @@ function Layout(props) {
             <Route
               path="/profile"
               component={Profile}
-            />
-
-            {/* Scanner */}
-            <PrivateRouter
-              path="/scanner"
-              component={ScannerComponent}
-              isAuthenticated={autenticado}
-              allowedRoles={["1"]}
             />
 
             {/* Sistema */}

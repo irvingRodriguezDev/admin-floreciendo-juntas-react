@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
     Alert, Avatar, Box, Button, Chip, CircularProgress, Dialog, DialogActions,
-    DialogContent, DialogTitle, Divider, Grid, IconButton, LinearProgress,
-    Paper, Typography, Stack, Tooltip
+    DialogContent, DialogTitle, Grid, IconButton, LinearProgress,
+    Paper, Typography, Stack
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import RateReviewIcon from '@mui/icons-material/RateReview';

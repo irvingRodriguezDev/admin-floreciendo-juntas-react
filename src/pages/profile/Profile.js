@@ -10,7 +10,6 @@ import {
   Stack,
   Divider,
   Button,
-  IconButton,
   Link,
 } from "@mui/material";
 import {
@@ -19,7 +18,6 @@ import {
   LanguageOutlined,
   BadgeOutlined,
   PersonOutlined,
-  LogoutOutlined,
   ShieldOutlined,
   WorkspacePremiumOutlined,
 } from "@mui/icons-material";

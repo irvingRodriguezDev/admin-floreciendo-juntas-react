@@ -1,4 +1,3 @@
-import React from "react";
 import confetti from "canvas-confetti";
 export const launchSuccessConfetti = () => {
   const duration = 7 * 1000;

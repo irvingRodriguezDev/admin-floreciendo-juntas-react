@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 import {
     Avatar,
-    Box,
     Skeleton,
     Stack,
     Table,

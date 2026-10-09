@@ -1,6 +1,6 @@
 import React, { useContext, useEffect } from "react";
 // REMOVER BrowserRouter de aquí - ya existe en App.js
-import { Switch, Route } from "react-router-dom";
+import { Switch} from "react-router-dom";
 import { Grid, Box, CircularProgress, Typography } from "@mui/material";
 
 // Context

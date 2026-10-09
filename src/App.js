@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
+import { BrowserRouter as Router } from "react-router-dom";
 import AuthState from "./context/AuthContext/AuthState";
 import AppRouter from "./Routes/AppRouter";
 import ResetPasswordState from "./context/ResetPasswordContext/ResetPasswordState";

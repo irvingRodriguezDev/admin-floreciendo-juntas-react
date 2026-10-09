@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-    Alert, Avatar, Box, Button, Card, CardActions, CardContent, CardHeader, Chip, CircularProgress, Dialog,
+    Alert, Avatar, Box, Button, Card, CardActions, CardContent, CardHeader, Chip, Dialog,
     DialogActions, DialogContent, DialogTitle, Divider, Grid, IconButton, LinearProgress, List, ListItem,
     ListItemIcon, ListItemText, Paper, Skeleton, Step, StepLabel, Stepper, Stack, Typography,
 } from '@mui/material';
@@ -12,7 +12,6 @@ import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import EventIcon from '@mui/icons-material/Event';
 import PaymentsIcon from '@mui/icons-material/Payments';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
-import PendingIcon from '@mui/icons-material/HourglassTop';
 import PaidIcon from '@mui/icons-material/CheckCircle';
 import TagIcon from '@mui/icons-material/Tag';
 import NotesIcon from '@mui/icons-material/StickyNote2';
@@ -65,18 +64,6 @@ const Row = ({ icon, label, children }) => (
     </ListItem>
 );
 
-const Stat = ({ icon, label, value, color }) => (
-    <Paper variant="outlined" sx={{ p: 2, borderRadius: 3, borderColor: alpha(color, 0.3), bgcolor: alpha(color, 0.05) }}>
-        <Stack direction="row" spacing={1.5} alignItems="center">
-            <IconAvatar color={color}>{icon}</IconAvatar>
-            <Box minWidth={0}>
-                <Typography variant="caption" color="text.secondary">{label}</Typography>
-                <Typography variant="h6" fontWeight={800} sx={{ color }} noWrap>{value}</Typography>
-            </Box>
-        </Stack>
-    </Paper>
-);
-
 const stepperSx = {
     '& .MuiStepIcon-root.Mui-active, & .MuiStepIcon-root.Mui-completed': { color: PINK },
     '& .MuiStepConnector-line': { borderColor: soft(0.4) },
@@ -86,8 +73,6 @@ const stepperSx = {
 // ─── Modal ───────────────────────────────────────────────────────────────────
 const OrderDetailModal = ({ open, onClose, selectedOrder, orderDetail: o, loading }) => {
     const status = o && statusColors[o.status];
-    const total = Number(o?.totalAmount) || 0;
-    const progress = total ? Math.min((Number(o.paidAmount) / total) * 100, 100) : 0;
 
     const timeline = o ? [
         { label: 'Creación', date: asDate(o.createdAt), text: new Date(o.createdAt).toLocaleDateString('es-MX') },

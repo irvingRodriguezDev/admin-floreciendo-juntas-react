@@ -1,10 +1,9 @@
 import React from 'react';
 import {
-    Box, Button, FormControl, Grid, IconButton, InputLabel,
+    Box, Button, FormControl, Grid, InputLabel,
     MenuItem, Select, TextField, FormHelperText
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
-import CloseIcon from '@mui/icons-material/Close';
 import ClearAllIcon from '@mui/icons-material/ClearAll';
 import SchoolIcon from '@mui/icons-material/School';
 import BookIcon from '@mui/icons-material/Book';

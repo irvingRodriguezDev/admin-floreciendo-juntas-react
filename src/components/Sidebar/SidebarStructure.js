@@ -4,8 +4,6 @@ import {
   School as SchoolIcon,
   AccountCircle as ProfileIcon,
   Lock as SecretIcon,
-  Event as EventIcon,
-  CameraAlt as CameraIcon,
   Inventory2 as ProductsIcon,
   Spa as SpaIcon,
   LiveTv as LiveTvIcon,
