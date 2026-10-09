@@ -63,7 +63,7 @@ const PdfPreview = ({ url, title }) => {
             }}
         >
             {loading ? <CircularProgress size={28} />
-                : blobUrl ? <iframe src={blobUrl} title={title} style={{ width: "100%", height: "100%", border: "none", display: "block" }} />
+                : blobUrl ? <iframe src={blobUrl} title={title} sx={{ width: "100%", height: "100%", border: "none", display: "block" }} />
                     : <Typography variant="body2" color="text.secondary">No se pudo cargar el PDF.</Typography>}
         </Box>
     );
