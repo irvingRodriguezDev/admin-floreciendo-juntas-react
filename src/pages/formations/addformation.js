@@ -54,17 +54,47 @@ const usePdfBlobUrl = (url) => {
 
 const PdfPreview = ({ url, title }) => {
     const { blobUrl, loading } = usePdfBlobUrl(url);
+
     return (
         <Box
             sx={{
-                width: "100%", maxWidth: 380, aspectRatio: "8.5 / 11", bgcolor: "#fff", overflow: "hidden",
-                borderRadius: 2, border: `1px solid ${alpha(PINK, 0.25)}`, boxShadow: `0 6px 18px ${alpha(PINK, 0.15)}`,
-                display: "flex", alignItems: "center", justifyContent: "center",
+                width: "100%",
+                maxWidth: 380,
+                aspectRatio: "8.5 / 11",
+                bgcolor: "background.paper",
+                overflow: "hidden",
+                borderRadius: 2,
+                border: 1,
+                borderColor: alpha(PINK, 0.25),
+                boxShadow: `0 6px 18px ${alpha(PINK, 0.15)}`,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                boxSizing: "border-box",
             }}
         >
-            {loading ? <CircularProgress size={28} />
-                : blobUrl ? <iframe src={blobUrl} title={title} sx={{ width: "100%", height: "100%", border: "none", display: "block" }} />
-                    : <Typography variant="body2" color="text.secondary">No se pudo cargar el PDF.</Typography>}
+            {loading ? (
+                <CircularProgress size={28} />
+            ) : blobUrl ? (
+                <Box
+                    component="iframe"
+                    src={`${blobUrl}#view=FitH&toolbar=0&navpanes=0`}
+                    title={title}
+                    sx={{
+                        width: "100%",
+                        height: "100%",
+                        border: 0,
+                        display: "block",
+                    }}
+                />
+            ) : (
+                <Typography
+                    variant="body2"
+                    color="text.secondary"
+                >
+                    No se pudo cargar el PDF.
+                </Typography>
+            )}
         </Box>
     );
 };
