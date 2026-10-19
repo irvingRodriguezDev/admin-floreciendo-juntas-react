@@ -262,7 +262,7 @@ const AddLive = ({ onCancel }) => {
                                         <Box
                                             component="img" src={previewUrl} alt="Vista previa"
                                             sx={{
-                                                width: { xs: "100%", sm: 220 }, height: { xs: 220, sm: 140 }, objectFit: "cover",
+                                                width: { xs: "100%", sm: 200 }, height: { xs: 220, sm: 350 }, objectFit: "cover",
                                                 borderRadius: 3, border: `1px solid ${alpha(PINK, 0.25)}`,
                                             }}
                                         />
