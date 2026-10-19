@@ -13,7 +13,6 @@ import LiveState from "./context/LiveContext/LiveState";
 import CertificationState from "./context/CertificationContext/CertificationState";
 import FormationState from "./context/FormationContext/FormationState";
 import SubscriptionsState from "./context/SubscriptionsContext/SubscriptionsState";
-// import SecretsState from "./context/SecretsContext/SecretsState";
 
 const App = () => {
   return (
@@ -28,12 +27,10 @@ const App = () => {
                     <LiveState>
                       <CertificationState>
                         <FormationState>
-                          {/* <SecretsState> */}
                           <SubscriptionsState>
                             <Router>
                               <AppRouter />
                             </Router>
-                            {/* </SecretsState> */}
                           </SubscriptionsState>
                         </FormationState>
                       </CertificationState>
