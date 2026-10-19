@@ -27,7 +27,8 @@
     "react-quill-new": "^3.6.0",
     "react-router-dom": "^5.3.4",
     "react-scripts": "^5.0.1",
-    "sweetalert2": "^11.24.0"
+    "sweetalert2": "^11.24.0",
+    "video.js": "^8.24.1"
   },
   "eslintConfig": {
     "extends": "react-app"
