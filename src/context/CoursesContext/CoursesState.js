@@ -1,4 +1,4 @@
-import React, { useReducer } from 'react';
+import React, { useReducer, useCallback } from 'react';
 import CoursesContext from './CoursesContext';
 import CoursesReducer from './CoursesReducer';
 import MethodGet, {
@@ -159,19 +159,21 @@ const CoursesState = (props) => {
   };
 
   // Obtener un curso por ID
-  const obtenerCursoPorId = async (id) => {
+  const obtenerCursoPorId = useCallback(async (id) => {
     try {
       const { data } = await MethodGet(`/courses/${id}`);
+
       dispatch({
         type: OBTENER_COURSE,
         payload: data,
       });
-      return data; // <-- Retorna los datos
+
+      return data;
     } catch (error) {
       dispatch({ type: SHOW_ERRORS_API });
-      return null; // <-- Retorna null en caso de error
+      return null;
     }
-  };
+  }, []);
 
   return (
     <CoursesContext.Provider
