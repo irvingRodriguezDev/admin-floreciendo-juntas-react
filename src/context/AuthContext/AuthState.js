@@ -5,15 +5,11 @@ import MethodGet, { MethodPost, MethodPut } from "../../config/Service";
 // import headerConfig from "../../config/imageHeaders";
 import Swal from "sweetalert2";
 
-/**Importar componente token headers */
-import tokenAuth from "../../config/TokenAuth";
-
 import { SHOW_ERRORS_API, types } from "../../types";
 
 const AuthState = (props) => {
   //Agregar state inicial
   const initialState = {
-    token: localStorage.getItem("token"),
     autenticado: false,
     usuario: {},
     cargando: true,
@@ -25,32 +21,13 @@ const AuthState = (props) => {
   //funciones
   //Retorna el usuario autenticado
   const usuarioAutenticado = async () => {
-    const token = localStorage.getItem("token");
-
-    if (token) {
-      tokenAuth(token);
+    try {
+      const { data } = await MethodGet("/auth/me");
+      dispatch({ type: types.OBTENER_USUARIO, payload: data });
+      return data;
+    } catch (error) {
+      dispatch({ type: types.LOGIN_ERROR });
     }
-
-    MethodGet("/auth/me")
-      .then(({ data }) => {
-        dispatch({
-          type: types.OBTENER_USUARIO,
-          payload: data,
-        });
-
-        // Guardar roleId y usuario en localStorage
-        if (data.user) {
-          localStorage.setItem("roleId", data.user.roleId); // Actualiza roleId
-          localStorage.setItem("usuario", JSON.stringify(data.user));
-        }
-      })
-      .catch((error) => {
-        dispatch({
-          type: types.LOGIN_ERROR,
-        });
-        localStorage.removeItem("roleId");
-        localStorage.removeItem("usuario");
-      });
   };
 
 
@@ -70,11 +47,6 @@ const AuthState = (props) => {
           "error"
         );
 
-        // Limpieza total
-        localStorage.removeItem("token");
-        localStorage.removeItem("usuario");
-        localStorage.removeItem("roleId");
-
         return { unauthorized: true };
       }
 
@@ -83,8 +55,6 @@ const AuthState = (props) => {
         type: types.LOGIN_EXITOSO,
         payload: res.data,
       });
-
-      tokenAuth(res.data.token);
 
       // Obtener usuario autenticado y guardar roleId en localStorage
       await usuarioAutenticado();
@@ -142,16 +112,11 @@ const AuthState = (props) => {
       type: types.CERRAR_SESION,
     });
 
-    // 🔹 Limpiar localStorage
-    localStorage.removeItem("roleId");
-    localStorage.removeItem("usuario");
-    localStorage.removeItem("token");
   };
 
   return (
     <AuthContext.Provider
       value={{
-        token: state.token,
         autenticado: state.autenticado,
         usuario: state.usuario,
         success: state.success,

@@ -46,17 +46,18 @@ export default function Header(props) {
   const [profileMenu, setProfileMenu] = useState(null);
   const [isSmall, setSmall] = useState(false);
 
-  // Usuario autenticado
+  // Usuario autenticado (funciona si el reducer guarda { user } o el user directo)
   const { usuario, cerrarSesion } = useContext(AuthContext);
 
-  const userName = usuario?.user?.name || "Usuario";
-  const userInitial = userName?.[0]?.toUpperCase();
-  const hasAvatarImage = Boolean(usuario?.user?.profileImage);
+  const user = usuario?.user ?? usuario;
 
-  const handleLogout = () => {
+  const userName = user?.name || "Usuario";
+  const userInitial = userName?.[0]?.toUpperCase();
+  const hasAvatarImage = Boolean(user?.profileImage);
+
+  const handleLogout = async () => {
     setProfileMenu(null);
-    cerrarSesion();
-    localStorage.removeItem("token");
+    await cerrarSesion();
     props.history.push("/login");
   };
 
@@ -201,7 +202,7 @@ export default function Header(props) {
           {/* Avatar */}
           <Avatar
             alt={userName}
-            src={usuario?.user?.profileImage || ""}
+            src={user?.profileImage || ""}
             sx={{
               width: 30,
               height: 30,
@@ -267,8 +268,7 @@ export default function Header(props) {
               minWidth: 250,
               maxWidth: 320,
               overflow: "hidden",
-              backgroundColor:
-                theme.palette.background.paper,
+              backgroundColor: theme.palette.background.paper,
             },
           }}
         >
@@ -280,15 +280,12 @@ export default function Header(props) {
               gap: 1.5,
               px: 2,
               py: 2,
-              backgroundColor: alpha(
-                "#FF5C95",
-                0.06
-              ),
+              backgroundColor: alpha("#FF5C95", 0.06),
             }}
           >
             <Avatar
               alt={userName}
-              src={usuario?.user?.profileImage || ""}
+              src={user?.profileImage || ""}
               sx={{
                 width: 44,
                 height: 44,
@@ -321,7 +318,7 @@ export default function Header(props) {
                 {userName}
               </Typography>
 
-              {usuario?.user?.email && (
+              {user?.email && (
                 <Typography
                   sx={{
                     mt: 0.25,
@@ -332,7 +329,7 @@ export default function Header(props) {
                     textOverflow: "ellipsis",
                   }}
                 >
-                  {usuario.user.email}
+                  {user.email}
                 </Typography>
               )}
             </Box>

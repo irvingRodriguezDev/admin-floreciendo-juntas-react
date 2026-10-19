@@ -16,7 +16,6 @@ import {
   ACTUALIZAR_COURSE,
   ELIMINAR_COURSE,
 } from '../../types';
-import tokenAuth from '../../config/TokenAuth';
 
 const CoursesState = (props) => {
   const initialState = {

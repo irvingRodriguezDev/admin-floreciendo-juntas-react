@@ -53,7 +53,6 @@ export default function SidebarLink({
 
   // Login
   const onLogin = () => {
-    localStorage.removeItem("token");
     window.location.reload();
   };
 

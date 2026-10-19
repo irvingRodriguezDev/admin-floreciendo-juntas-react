@@ -20,7 +20,7 @@ import AuthContext from '../../context/AuthContext/AuthContext';
 export const useSidebarStructure = () => {
   const { usuario } = useContext(AuthContext);
 
-  const roleId = usuario?.roleId || localStorage.getItem('roleId');
+  const roleId = usuario?.roleId;
 
   const structure = [
     {

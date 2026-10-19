@@ -7,7 +7,6 @@ export default (state, action) => {
         ...state,
       };
     case types.LOGIN_EXITOSO:
-      localStorage.setItem("token", action.payload.token);
       return {
         ...state,
         autenticado: true,
@@ -17,7 +16,7 @@ export default (state, action) => {
       return {
         ...state,
         autenticado: true,
-        usuario: action.payload,
+        usuario: action.payload.user,
         cargando: false,
       };
     // case GET_DIRECTIONS_USER:
@@ -42,11 +41,8 @@ export default (state, action) => {
     //   };
     case types.LOGIN_ERROR:
     case types.CERRAR_SESION:
-      localStorage.removeItem("token");
-      localStorage.removeItem("expires_at");
       return {
         ...state,
-        token: null,
         usuario: null,
         autenticado: false,
         cargando: false,
