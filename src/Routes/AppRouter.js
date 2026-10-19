@@ -37,8 +37,8 @@ export default function AppRouter() {
 						bgcolor: "background.default",
 					}}
 				>
-					<CircularProgress size={60} thickness={5} color="primary" />
-					<Typography sx={{ mt: 2.5, fontSize: 18, color: "#555" }}>
+					<CircularProgress size={60} thickness={5} sx={{ color: "#FF609F" }} />
+					<Typography sx={{ mt: 2.5, fontSize: 18, color: "#363535" }}>
 						Cargando...
 					</Typography>
 				</Box>
