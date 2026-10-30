@@ -55,7 +55,7 @@ const Live = () => {
 
     const { usuario } = useContext(AuthContext);
 
-    const roleId = usuario?.user?.roleId;
+    const roleId = usuario?.roleId;
 
     // ❌ COMENTADO: estados del modal de admin
     // const [openAdminModal, setOpenAdminModal] = useState(false);
