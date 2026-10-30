@@ -44,11 +44,12 @@ const CoursesState = (props) => {
   const crearCurso = async (datos) => {
     try {
       const formData = new FormData();
-      formData.append('title', datos.title);
-      formData.append('description', datos.description);
-      formData.append('level', datos.level);
-      formData.append('system_id', datos.system_id);
-      formData.append('has_certificate', datos.hasCertificate ? true : false);
+
+      formData.append('title', datos.title || '');
+      formData.append('description', datos.description || '');
+      formData.append('level', datos.level || '');
+      formData.append('system_id', datos.system_id || '');
+      formData.append('has_certificate', datos.hasCertificate ? 'true' : 'false');
 
       if (datos.coverImage instanceof File) {
         formData.append('coverImage', datos.coverImage);
@@ -62,25 +63,20 @@ const CoursesState = (props) => {
         formData.append('workbook', datos.workbook);
       }
 
-      for (let pair of formData.entries()) {
-        console.log(pair[0], pair[1]); // Verifica lo que se envía
+      // Verificar información enviada
+      for (const [key, value] of formData.entries()) {
+        console.log(`${key}:`, value);
       }
 
-      await MethodPost('/courses', formData);
+      const response = await MethodPost('/courses', formData);
 
-      Swal.fire({
-        title: 'Éxito',
-        text: 'Curso creado correctamente',
-        icon: 'success',
-        timer: 1500,
-        showConfirmButton: false,
-      });
+      return response.data;
+
     } catch (error) {
-      Swal.fire({
-        title: 'Error',
-        text: error.response?.data?.message || 'No se pudo crear el curso',
-        icon: 'error',
-      });
+      console.error('Error al crear curso:', error);
+
+      // IMPORTANTE: enviar el error nuevamente al componente
+      throw error;
     }
   };
 

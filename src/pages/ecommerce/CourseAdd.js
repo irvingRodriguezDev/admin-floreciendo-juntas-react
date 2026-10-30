@@ -208,18 +208,135 @@ const CourseAdd = ({ onCancel }) => {
     if (!checked) setPreview('certificate', null);
   };
 
+  const getErrorMessage = (error) => {
+    // Errores enviados por Axios o el backend
+    const data = error?.response?.data;
+
+    if (data) {
+      if (typeof data === 'string') return data;
+
+      if (data.message) return data.message;
+      if (data.error) {
+        return typeof data.error === 'string'
+          ? data.error
+          : JSON.stringify(data.error);
+      }
+
+      if (data.errors) {
+        if (Array.isArray(data.errors)) {
+          return data.errors.join('\n');
+        }
+
+        if (typeof data.errors === 'object') {
+          return Object.entries(data.errors)
+            .map(([field, messages]) =>
+              `${field}: ${Array.isArray(messages)
+                ? messages.join(', ')
+                : messages}`
+            )
+            .join('\n');
+        }
+      }
+    }
+
+    if (error?.message) return error.message;
+
+    return 'Ocurrió un error inesperado al guardar el curso.';
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (form.hasCertificate && !form.certificate && !previews.certificate) {
-      return Swal.fire('Falta certificado', 'Debes subir un certificado', 'warning');
+
+    // Validaciones antes de enviar
+    const errors = [];
+
+    if (!form.title.trim()) {
+      errors.push('El título del curso es obligatorio.');
     }
+
+    if (!form.level) {
+      errors.push('Debes seleccionar el nivel del curso.');
+    }
+
+    if (!form.system_id) {
+      errors.push('Debes seleccionar un sistema.');
+    }
+
+    if (!form.description || !form.description.replace(/<[^>]*>/g, '').trim()) {
+      errors.push('La descripción del curso es obligatoria.');
+    }
+
+    if (form.hasCertificate && !form.certificate && !previews.certificate) {
+      errors.push('Debes subir el certificado del curso.');
+    }
+
+    // Mostrar errores de validación
+    if (errors.length > 0) {
+      return Swal.fire({
+        icon: 'warning',
+        title: 'Faltan datos por completar',
+        html: `
+        <div style="text-align: left;">
+          <p>Por favor, revisa los siguientes campos:</p>
+          <ul style="padding-left: 20px;">
+            ${errors.map(error => `<li style="margin-bottom: 8px;">${error}</li>`).join('')}
+          </ul>
+        </div>
+      `,
+        confirmButtonText: 'Entendido',
+        confirmButtonColor: PINK,
+      });
+    }
+
     setLoading(true);
+
     try {
-      id ? await actualizarCurso(id, form) : await crearCurso(form);
-      Swal.fire('Éxito', 'Curso guardado correctamente', 'success');
+      if (id) {
+        await actualizarCurso(id, form);
+      } else {
+        await crearCurso(form);
+      }
+
+      await Swal.fire({
+        icon: 'success',
+        title: '¡Operación exitosa!',
+        text: id
+          ? 'El curso se actualizó correctamente.'
+          : 'El curso se creó correctamente.',
+        confirmButtonText: 'Aceptar',
+        confirmButtonColor: PINK,
+      });
+
       goBack();
+
     } catch (error) {
-      console.error(error);
+      console.error('Error al guardar el curso:', error);
+
+      const message = getErrorMessage(error);
+
+      Swal.fire({
+        icon: 'error',
+        title: 'No se pudo guardar el curso',
+        html: `
+        <div style="text-align: left;">
+          <p>Ocurrió un problema al ${id ? 'actualizar' : 'crear'} el curso:</p>
+          <div style="
+            background: #fff1f2;
+            color: #be123c;
+            padding: 14px;
+            border-radius: 10px;
+            margin-top: 12px;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+          ">
+            ${message.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}
+          </div>
+        </div>
+      `,
+        confirmButtonText: 'Entendido',
+        confirmButtonColor: PINK,
+      });
+
     } finally {
       setLoading(false);
     }
