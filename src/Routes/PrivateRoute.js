@@ -52,12 +52,12 @@ export const PrivateRouter = ({
                     return <Component {...props} />;
                 }
 
-                if (roleId === 6) {
-                    if (!path.startsWith("/lives/live_playlist")) {
-                        return <Redirect to="/lives/live_playlist" />;
-                    }
-                    return <Component {...props} />;
-                }
+                // if (roleId === 6) {
+                //     if (!path.startsWith("/lives/live_playlist")) {
+                //         return <Redirect to="/lives/live_playlist" />;
+                //     }
+                //     return <Component {...props} />;
+                // }
 
                 if (allowedRoles.length > 0 && !allowedRoles.includes(roleId)) {
                     Swal.fire({
