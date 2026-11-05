@@ -90,7 +90,7 @@ const Lottery = () => {
     const {
         spinning,
         setSpinning,
-        rotation,
+        rotationRef, // 🔥 Ahora es un Ref
         winningIndex,
         setWinningIndex,
         calculateWinningRotation,
@@ -484,7 +484,7 @@ const Lottery = () => {
                         >
                             <WheelCanvas
                                 prizes={prizes}
-                                rotation={rotation}
+                                rotationRef={rotationRef} // 🔥 Cambiado a rotationRef
                                 winningIndex={winningIndex}
                                 selectedPrize={selectedPrize}
                                 onFullscreen={() => setIsFullscreen(true)}
@@ -575,7 +575,7 @@ const Lottery = () => {
                 {isFullscreen && (
                     <FullscreenWheel
                         prizes={prizes}
-                        rotation={rotation}
+                        rotationRef={rotationRef} // 🔥 Cambiado a rotationRef
                         winningIndex={winningIndex}
                         selectedPrize={selectedPrize}
                         spinning={spinning}

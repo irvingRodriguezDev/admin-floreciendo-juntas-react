@@ -9,42 +9,45 @@ import { keyframes } from '@mui/system';
 import WheelCanvas from './WheelCanvas';
 
 const fsFall = keyframes`
-    0%   { transform: translate3d(0, -10vh, 0) rotate(0deg); }
-    20%  { transform: translate3d(35px, 20vh, 0) rotate(70deg); }
-    40%  { transform: translate3d(-25px, 40vh, 0) rotate(150deg); }
-    60%  { transform: translate3d(30px, 60vh, 0) rotate(230deg); }
-    80%  { transform: translate3d(-35px, 80vh, 0) rotate(300deg); }
-    100% { transform: translate3d(20px, 110vh, 0) rotate(360deg); }
+  0%   { transform: translate3d(0, -12vh, 0) rotate(0deg); }
+  25%  { transform: translate3d(35px, 22vh, 0) rotate(90deg); }
+  50%  { transform: translate3d(-28px, 45vh, 0) rotate(180deg); }
+  75%  { transform: translate3d(32px, 70vh, 0) rotate(270deg); }
+  100% { transform: translate3d(-18px, 115vh, 0) rotate(360deg); }
 `;
 
 const shimmerText = keyframes`
-    0%, 100% { background-position: 0% center; }
-    50%      { background-position: 100% center; }
+  0%, 100% { background-position: 0% center; }
+  50%      { background-position: 100% center; }
 `;
 
 const pulse = keyframes`
-    0%, 100% { transform: scale(1); opacity: 0.9; }
-    50%      { transform: scale(1.06); opacity: 1; }
+  0%, 100% { transform: scale(1); opacity: 0.85; }
+  50%      { transform: scale(1.06); opacity: 1; }
+`;
+
+const bgShift = keyframes`
+  0%, 100% { background-position: 0% 50%; }
+  50%      { background-position: 100% 50%; }
 `;
 
 const FullscreenWheel = ({
     prizes,
-    rotation,
+    rotationRef, // 🔥 Recibe el Ref
     winningIndex,
     selectedPrize,
     spinning,
     onClose,
     onSpin
 }) => {
-    // Los pétalos se generan UNA SOLA VEZ para que no cambien con "rotation"
     const petals = useMemo(
         () =>
-            Array.from({ length: 30 }, (_, i) => ({
+            Array.from({ length: 28 }, (_, i) => ({
                 emoji: ['🌸', '🌷', '🌺'][i % 3],
                 left: Math.random() * 100,
                 delay: Math.random() * -20,
-                duration: 12 + Math.random() * 14,
-                size: 16 + Math.random() * 18
+                duration: 14 + Math.random() * 14,
+                size: 16 + Math.random() * 20
             })),
         []
     );
@@ -64,7 +67,9 @@ const FullscreenWheel = ({
                         radial-gradient(circle at 20% 15%, rgba(255,182,213,0.55), transparent 55%),
                         radial-gradient(circle at 85% 80%, rgba(255,140,190,0.45), transparent 50%),
                         linear-gradient(160deg, #fff0f6 0%, #ffd6e8 40%, #ff9fc4 100%)
-                    `
+                    `,
+                    backgroundSize: '200% 200%',
+                    animation: `${bgShift} 18s ease-in-out infinite`
                 }}
             >
                 {/* Pétalos de fondo */}
@@ -73,8 +78,6 @@ const FullscreenWheel = ({
                     sx={{
                         position: 'fixed',
                         inset: 0,
-                        width: '100vw',
-                        height: '100vh',
                         pointerEvents: 'none',
                         overflow: 'hidden',
                         zIndex: 1
@@ -86,11 +89,11 @@ const FullscreenWheel = ({
                             component="span"
                             sx={{
                                 position: 'absolute',
-                                top: '-10%',
-                                display: 'block',
+                                top: '-12%',
                                 left: `${petal.left}%`,
+                                display: 'block',
                                 fontSize: `${petal.size}px`,
-                                opacity: { xs: 0.45, sm: 0.55 },
+                                opacity: { xs: 0.45, sm: 0.6 },
                                 pointerEvents: 'none',
                                 filter: 'drop-shadow(0 2px 4px rgba(214,71,143,0.25))',
                                 willChange: 'transform',
@@ -112,8 +115,8 @@ const FullscreenWheel = ({
                         alignItems: 'center',
                         justifyContent: 'center',
                         px: 2.5,
-                        pt: 2.75,
-                        pb: 1.25,
+                        pt: 2.5,
+                        pb: 1,
                         flexShrink: 0
                     }}
                 >
@@ -121,9 +124,9 @@ const FullscreenWheel = ({
                         variant="h1"
                         sx={{
                             m: 0,
-                            fontSize: { xs: '1.3rem', sm: '1.7rem' },
-                            fontWeight: 800,
-                            letterSpacing: '0.3px',
+                            fontSize: { xs: '1.35rem', sm: '1.75rem' },
+                            fontWeight: 900,
+                            letterSpacing: '0.4px',
                             background: 'linear-gradient(90deg, #ef55a2, #ff6fa5 45%, #e34695)',
                             backgroundSize: '200% auto',
                             WebkitBackgroundClip: 'text',
@@ -143,16 +146,16 @@ const FullscreenWheel = ({
                             position: 'absolute',
                             right: 20,
                             top: 20,
-                            width: 42,
-                            height: 42,
+                            width: 44,
+                            height: 44,
                             color: '#8a1f5c',
-                            fontSize: '1.1rem',
+                            fontSize: '1.05rem',
                             border: '1px solid rgba(255,255,255,0.6)',
-                            bgcolor: 'rgba(255,255,255,0.35)',
-                            backdropFilter: 'blur(6px)',
-                            transition: 'transform 0.2s ease, background 0.2s ease',
+                            bgcolor: 'rgba(255,255,255,0.4)',
+                            backdropFilter: 'blur(8px)',
+                            transition: 'transform 0.25s ease, background 0.2s ease',
                             '&:hover': {
-                                bgcolor: 'rgba(255,255,255,0.6)',
+                                bgcolor: 'rgba(255,255,255,0.65)',
                                 transform: 'rotate(90deg) scale(1.05)'
                             }
                         }}
@@ -179,8 +182,8 @@ const FullscreenWheel = ({
                     <Box
                         sx={{
                             position: 'relative',
-                            width: 'min(78vmin, 620px)',
-                            height: 'min(78vmin, 620px)',
+                            width: 'min(80vmin, 640px)',
+                            height: 'min(80vmin, 640px)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center'
@@ -190,19 +193,20 @@ const FullscreenWheel = ({
                             aria-hidden="true"
                             sx={{
                                 position: 'absolute',
-                                width: '100%',
-                                height: '100%',
+                                inset: '-6%',
                                 borderRadius: '50%',
                                 zIndex: -1,
-                                filter: 'blur(4px)',
+                                filter: 'blur(8px)',
                                 background:
-                                    'radial-gradient(circle, rgba(255,255,255,0.85) 0%, rgba(255,182,213,0.35) 55%, transparent 75%)',
-                                animation: `${pulse} 3.2s ease-in-out infinite`
+                                    'radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(255,182,213,0.35) 55%, transparent 78%)',
+                                animation: `${pulse} 3.2s ease-in-out infinite`,
+                                willChange: 'transform, opacity'
                             }}
                         />
+                        {/* 🔥 Aquí pasamos rotationRef */}
                         <WheelCanvas
                             prizes={prizes}
-                            rotation={rotation}
+                            rotationRef={rotationRef}
                             winningIndex={winningIndex}
                             selectedPrize={selectedPrize}
                             isFullscreen
@@ -219,21 +223,48 @@ const FullscreenWheel = ({
                         justifyContent: 'center',
                         flexShrink: 0,
                         px: 2.5,
-                        pt: 2.25,
-                        pb: 4.25
+                        pt: 2,
+                        pb: 4
                     }}
                 >
                     <Button
-                        variant="pill"
+                        variant="contained"
+                        size="large"
                         onClick={onSpin}
                         disabled={spinning || prizes.length === 0}
                         startIcon={
                             spinning ? (
                                 <CircularProgress size={20} thickness={5} color="inherit" />
                             ) : (
-                                '🌸'
+                                <span style={{ fontSize: '1.1em' }}>🌸</span>
                             )
                         }
+                        sx={{
+                            px: 4,
+                            py: 1.3,
+                            borderRadius: 999,
+                            fontWeight: 800,
+                            textTransform: 'none',
+                            fontSize: '1rem',
+                            letterSpacing: '0.3px',
+                            color: '#fff',
+                            background: 'linear-gradient(135deg, #ff4d94 0%, #e0247a 100%)',
+                            boxShadow: '0 10px 28px rgba(224, 36, 122, 0.45)',
+                            transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                            '&:hover': {
+                                background: 'linear-gradient(135deg, #ff5fa2 0%, #e82b85 100%)',
+                                transform: 'translateY(-2px)',
+                                boxShadow: '0 14px 32px rgba(224, 36, 122, 0.55)'
+                            },
+                            '&:active': {
+                                transform: 'translateY(0)'
+                            },
+                            '&.Mui-disabled': {
+                                color: 'rgba(255,255,255,0.85)',
+                                background: 'linear-gradient(135deg, #ffa8c9 0%, #e88ab0 100%)',
+                                boxShadow: 'none'
+                            }
+                        }}
                     >
                         {spinning ? 'Girando...' : 'Girar Flor'}
                     </Button>
