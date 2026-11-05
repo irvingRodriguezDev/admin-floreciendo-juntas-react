@@ -110,7 +110,7 @@ export const useRaffle = ({
         setSpinning(true);
 
         try {
-            const response = await MethodGet('/admin/run-raffle');
+            const response = await MethodGet('/admin/run-raffle-personalize');
 
             if (response?.message?.includes('no quedan usuarios disponibles')) {
                 runningRef.current = false;
